@@ -532,10 +532,10 @@ capture important decisions and which parts add unnecessary friction.
 14. [next] Add the structured frontend and model-equivalence tests.
 15. Add the second backend.
 16. [done] Add the first VS Code extension slice under
-   `implementations/typescript/vscode-extension/`: `.orin` language
-   registration, syntax highlighting, and an analyzer command backed by the
-   optional reference checker. Keep future editor features focused on
-   progressive formalization and reviewable semantic changes.
+    `implementations/typescript/vscode-extension/`: `.orin` language
+    registration, syntax highlighting, and an analyzer command backed by the
+    optional reference checker. Keep future editor features focused on
+    progressive formalization and reviewable semantic changes.
 17. Revise ORIN-0001 and ORIN-0002 based on implementation findings.
 
 ## Test strategy
