@@ -71,6 +71,12 @@ class ResetResult:
     recovery: str | None = None
     transitions: tuple[str, ...] = ()
     reset_token: str | None = None
+    inputs: dict[str, str | int] = field(default_factory=dict)
+    decisions: dict[str, str | bool] = field(default_factory=dict)
+    state_changes: tuple[str, ...] = ()
+    effects: tuple[str, ...] = ()
+    outputs: dict[str, str | bool] = field(default_factory=dict)
+    failures: tuple[str, ...] = ()
 
 
 class PasswordResetRuntime:
@@ -86,6 +92,8 @@ class PasswordResetRuntime:
             raise CapabilityDenied(PERSON_CAPABILITY)
 
         transitions = ["request received", "request normalized", "account lookup performed"]
+        inputs = {"email": email, "now": now}
+        effects = ["account-store.lookup"]
         try:
             account_exists = self.account_store.lookup(email)
         except RuntimeError:
@@ -93,6 +101,12 @@ class PasswordResetRuntime:
                 "standard-confirmation", "not-sent", False,
                 "no-account-state-disclosed",
                 tuple(transitions + ["standard response returned"]),
+                inputs=inputs,
+                decisions={"account_exists": "unknown"},
+                state_changes=("request-received",),
+                effects=tuple(effects),
+                outputs={"response": "standard-confirmation", "accountExistenceDisclosed": False},
+                failures=("account-store.unavailable",),
             )
 
         if not account_exists:
@@ -100,26 +114,51 @@ class PasswordResetRuntime:
             return ResetResult(
                 "standard-confirmation", "not-sent", False,
                 transitions=tuple(transitions + ["standard response returned"]),
+                inputs=inputs,
+                decisions={"account_exists": False, "issue_token": False},
+                state_changes=("request-received", "request-normalized"),
+                effects=tuple(effects),
+                outputs={"response": "standard-confirmation", "resetMessage": "not-sent", "accountExistenceDisclosed": False},
             )
 
         if SEND_MESSAGE_CAPABILITY not in capabilities:
             raise CapabilityDenied(SEND_MESSAGE_CAPABILITY)
         reset_token = self.token_store.issue(email, now)
         transitions.append("reset token created")
+        effects.append("reset-token.issue")
         try:
             self.email_provider.send_reset_message(email)
         except RuntimeError:
+            effects.append("email-provider.send-reset-message")
             return ResetResult(
                 "standard-confirmation", "not-sent", False,
                 "no-account-state-disclosed",
                 tuple(transitions + ["standard response returned"]),
                 reset_token,
+                inputs=inputs,
+                decisions={"account_exists": True, "issue_token": True, "send_message": False},
+                state_changes=("request-received", "request-normalized", "reset-token-issued"),
+                effects=tuple(effects),
+                outputs={"response": "standard-confirmation", "resetMessage": "not-sent", "accountExistenceDisclosed": False},
+                failures=("email-provider.unavailable",),
             )
+        effects.append("email-provider.send-reset-message")
         return ResetResult(
             "standard-confirmation", "sent", False,
             transitions=tuple(transitions + ["reset message conditionally sent", "standard response returned"]),
             reset_token=reset_token,
+            inputs=inputs,
+            decisions={"account_exists": True, "issue_token": True, "send_message": True},
+            state_changes=("request-received", "request-normalized", "reset-token-issued", "reset-message-sent"),
+            effects=tuple(effects),
+            outputs={"response": "standard-confirmation", "resetMessage": "sent", "accountExistenceDisclosed": False},
         )
 
     def redeem_reset(self, token: str, now: int) -> str:
         return self.token_store.redeem(token, now)
+
+    def request_resets_concurrently(
+        self, emails: list[str], capabilities: set[str], now: int = 0
+    ) -> tuple[ResetResult, ...]:
+        """Run concurrent requests through a deterministic input-order scheduler."""
+        return tuple(self.request_reset(email, capabilities, now) for email in emails)

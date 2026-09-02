@@ -8,9 +8,11 @@ from orin_model import SemanticModel
 from password_reset import AccountStore, CapabilityDenied, EmailProvider, PasswordResetRuntime, TokenRejected
 from orin_parser import OrinParser, analyze
 from lowering import lower
+from conformance_runner import execute_case, expected_case_result, load_cases
 
 
 FIXTURE = Path(__file__).parents[2] / "tests" / "conformance" / "password-reset.model.json"
+CASES = FIXTURE.parent / "password-reset.cases.json"
 
 
 class SemanticModelTests(unittest.TestCase):
@@ -64,6 +66,12 @@ class PasswordResetRuntimeTests(unittest.TestCase):
         self.assertEqual(result.reset_message, "sent")
         self.assertFalse(result.account_existence_disclosed)
         self.assertEqual(self.email_provider.sent_messages, ["person@example.com"])
+        self.assertEqual(result.inputs["email"], "person@example.com")
+        self.assertEqual(result.decisions["send_message"], True)
+        self.assertIn("reset-token-issued", result.state_changes)
+        self.assertIn("email-provider.send-reset-message", result.effects)
+        self.assertEqual(result.outputs["response"], "standard-confirmation")
+        self.assertEqual(result.failures, ())
 
     def test_unknown_address_returns_same_response_without_message(self):
         result = self.runtime.request_reset("unknown@example.com", {"person.request-password-reset"})
@@ -87,6 +95,8 @@ class PasswordResetRuntimeTests(unittest.TestCase):
 
         self.assertEqual(result.recovery, "no-account-state-disclosed")
         self.assertFalse(result.account_existence_disclosed)
+        self.assertEqual(result.decisions["account_exists"], "unknown")
+        self.assertEqual(result.failures, ("account-store.unavailable",))
 
     def test_token_expires_after_fifteen_minutes(self):
         result = self.runtime.request_reset("person@example.com", {"person.request-password-reset", "system.send-reset-message"}, now=100)
@@ -139,6 +149,18 @@ class OrinParserTests(unittest.TestCase):
     def test_invalid_syntax_is_rejected(self):
         with self.assertRaises(ValueError):
             OrinParser().parse("module sample {\n unknown syntax\n}")
+
+
+class GeneratedConformanceTests(unittest.TestCase):
+    def test_cases_generated_from_language_neutral_fixture(self):
+        model = SemanticModel.from_json_file(FIXTURE)
+        fixture = load_cases(CASES)
+
+        for case in fixture["cases"]:
+            with self.subTest(case=case["id"]):
+                actual = execute_case(model, case)
+                for key, expected in expected_case_result(case).items():
+                    self.assertEqual(actual[key], expected)
 
 
 if __name__ == "__main__":

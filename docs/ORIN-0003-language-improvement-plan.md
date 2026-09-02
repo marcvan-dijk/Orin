@@ -513,8 +513,9 @@ capture important decisions and which parts add unnecessary friction.
    and source locations without adding host-language requirements to `.ori`.
    The parser preserves context/imports and source lines; effect declarations
    are accepted for the next semantic-linking increment.
-9. [next] Model unresolved rate-limit execution as a blocked example rather
-   than silently choosing a policy.
+9. [done] Model unresolved rate-limit execution as a blocked example rather
+   than silently choosing a policy. The fixture-driven runner now executes the
+   blocked compile case without applying a hidden rate-limit default.
 10. [done] Add implementation policies for lowering preferences and prove that
     policy variants preserve canonical semantic behavior while changing the
     reference artifact plan.
@@ -524,8 +525,11 @@ capture important decisions and which parts add unnecessary friction.
 12. [done] Define a language-neutral multiple-choice guided-question contract
     with explicit effects, affected objects, and accept/edit/reject/defer
     actions.
-13. Generate evidence for passing and blocked examples.
-14. Add the structured frontend and model-equivalence tests.
+13. [done] Generate conformance tests from `password-reset.cases.json` for
+    registered, unknown, token expiry, token reuse, duplicate, email failure,
+    database failure, and deterministic concurrent requests. The next evidence
+    increment must record claim, inputs, and runtime outputs.
+14. [next] Add the structured frontend and model-equivalence tests.
 15. Add the second backend.
 16. Revise ORIN-0001 and ORIN-0002 based on implementation findings.
 

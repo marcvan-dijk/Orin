@@ -22,5 +22,10 @@ options are reviewable proposals, not implicit decisions; accepting one must
 update the same semantic model used by direct authoring, while deferring keeps
 the affected behavior unresolved.
 
+`password-reset.cases.json` is executable specification data. The reference
+runner generates one test scenario per case, including failure and concurrent
+requests, so adding a case extends conformance coverage without duplicating
+the expected behavior in host-language test code.
+
 Future host-language runners belong in a separate directory named for the host
 language. They must consume these fixtures rather than redefine their contents.
