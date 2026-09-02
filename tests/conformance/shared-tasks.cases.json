@@ -1,0 +1,41 @@
+{
+  "fixtureVersion": "0.1.0",
+  "model": "shared-tasks.model.json",
+  "cases": [
+    {
+      "id": "shared-tasks/case/member-creates-task",
+      "steps": [
+        { "action": "create-list", "actor": "alice", "name": "Project" },
+        { "action": "add-member", "actor": "alice", "member": "bob" },
+        { "action": "create-task", "actor": "bob", "title": "Write tests" },
+        { "action": "list-tasks", "actor": "bob" }
+      ],
+      "then": { "ok": true, "taskState": "open", "taskTitle": "Write tests" }
+    },
+    {
+      "id": "shared-tasks/case/outsider-cannot-view",
+      "steps": [
+        { "action": "create-list", "actor": "alice", "name": "Private" },
+        { "action": "list-tasks", "actor": "eve" }
+      ],
+      "then": { "failure": "forbidden.member-required" }
+    },
+    {
+      "id": "shared-tasks/case/invalid-title",
+      "steps": [
+        { "action": "create-list", "actor": "alice", "name": "Project" },
+        { "action": "create-task", "actor": "alice", "title": "" }
+      ],
+      "then": { "failure": "validation.task-title", "taskCount": 0 }
+    },
+    {
+      "id": "shared-tasks/case/concurrent-completion",
+      "steps": [
+        { "action": "create-list", "actor": "alice", "name": "Project" },
+        { "action": "create-task", "actor": "alice", "title": "One time" },
+        { "action": "complete-concurrently", "actors": ["alice", "alice"] }
+      ],
+      "then": { "results": [true, false], "finalState": "completed" }
+    }
+  ]
+}

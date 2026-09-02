@@ -13,6 +13,7 @@ from conformance_runner import execute_case, expected_case_result, load_cases
 
 FIXTURE = Path(__file__).parents[2] / "tests" / "conformance" / "password-reset.model.json"
 CASES = FIXTURE.parent / "password-reset.cases.json"
+TASKS_FIXTURE = FIXTURE.parent / "shared-tasks.model.json"
 
 
 class SemanticModelTests(unittest.TestCase):
@@ -53,6 +54,38 @@ class SemanticModelTests(unittest.TestCase):
         model = SemanticModel(document)
         self.assertIn("ORIN-E007", [item.code for item in model.diagnostics()])
         self.assertEqual(model.compilation_status(), "blocked")
+
+    def test_shared_tasks_model_is_semantically_complete(self):
+        model = SemanticModel.from_json_file(TASKS_FIXTURE)
+
+        self.assertEqual(model.diagnostics(), [])
+        self.assertEqual(model.compilation_status(), "eligible")
+
+    def test_entity_requires_typed_identity_field(self):
+        document = json.loads(TASKS_FIXTURE.read_text(encoding="utf-8"))
+        document["objects"][4]["fields"][0]["type"] = "missing"
+
+        self.assertIn("ORIN-E024", [item.code for item in SemanticModel(document).diagnostics()])
+
+    def test_invalid_relation_and_transition_are_rejected(self):
+        document = json.loads(TASKS_FIXTURE.read_text(encoding="utf-8"))
+        document["objects"][7]["cardinality"] = "invalid"
+        document["objects"][11]["transitions"][0]["to"] = "shared-tasks/state/missing"
+
+        codes = [item.code for item in SemanticModel(document).diagnostics()]
+
+        self.assertIn("ORIN-E027", codes)
+        self.assertIn("ORIN-E034", codes)
+
+    def test_shared_tasks_source_maps_to_valid_semantic_model(self):
+        source = Path(__file__).parents[2] / "examples" / "shared-tasks.orin"
+        model = OrinParser().parse_file(source)
+
+        self.assertEqual(model.compilation_status(), "eligible")
+        self.assertEqual(model.document["objects"][4]["kind"], "entity-type")
+        workflow = next(item for item in model.document["objects"] if item["kind"] == "workflow" and item["name"] == "complete-task")
+        self.assertEqual(workflow["inputs"][0]["type"], "shared-tasks/entity-type/person")
+        self.assertEqual(workflow["transitions"][0]["to"], "shared-tasks/state/completed")
 
 
 class PasswordResetRuntimeTests(unittest.TestCase):

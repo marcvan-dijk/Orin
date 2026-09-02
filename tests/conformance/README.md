@@ -27,5 +27,10 @@ runner generates one test scenario per case, including failure and concurrent
 requests, so adding a case extends conformance coverage without duplicating
 the expected behavior in host-language test code.
 
+`shared-tasks.model.json` is the first complete-application semantic fixture.
+It exercises typed entity fields and identities, relationship cardinality,
+typed workflow inputs and outputs, capabilities, and explicit state
+transitions. Its reference runtime is the next vertical-slice increment.
+
 Future host-language runners belong in a separate directory named for the host
 language. They must consume these fixtures rather than redefine their contents.

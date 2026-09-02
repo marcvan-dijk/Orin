@@ -500,9 +500,10 @@ capture important decisions and which parts add unnecessary friction.
    in `implementations/python/password_reset.py`.
 3. [done] Add language-level fixtures under `tests/conformance/`; keep any future
    host-language runners separate from the fixtures.
-4. [in progress] Implement the semantic validator; the current Python slice covers
-   identity uniqueness, reference resolution, canonical ordering, and
-   consequential-uncertainty blocking. Add relationship/type/capability checks.
+4. [in progress] Implement the semantic validator; entity field/identity
+   schemas, relation endpoints/cardinality, typed workflow values, and state
+   transition checks now cover the shared-task model. Add capability binding,
+   persistence contracts, and readiness diagnostics.
 5. [done] Make unresolved `rate-limit` block compilation.
 6. [done] Implement the minimal `.orin` parser and analyzer in the separate
    `implementations/python/` host-language folder. It parses the password-reset
@@ -536,7 +537,24 @@ capture important decisions and which parts add unnecessary friction.
     registration, syntax highlighting, and an analyzer command backed by the
     optional reference checker. Keep future editor features focused on
     progressive formalization and reviewable semantic changes.
-17. Revise ORIN-0001 and ORIN-0002 based on implementation findings.
+17. [done] Revise ORIN-0001 and ORIN-0002 based on implementation findings.
+18. [done] Define the first complete application proposal in
+    `docs/ORIN-0005-first-complete-application.md`.
+19. [done] Add the language-neutral shared-task semantic fixture and focused
+    validator tests.
+20. [done] Implement the deterministic shared-task runtime and stateful
+    conformance scenarios for persistence, relationships, permissions,
+    validation, terminal transitions, missing entities, and concurrent
+    completion.
+21. [next] Extend the `.orin` parser and semantic model mapping for the
+    structured shared-task entities, relations, workflow contracts, and
+    persistence effects.
+22. [done] Add `examples/shared-tasks.orin` and map its entity fields,
+    relation endpoints/cardinality, typed workflow values, and state
+    transitions into the validated semantic model.
+23. [next] Bind parsed capabilities and persistence effects to actor-scoped
+    workflows and validate the resulting authorization and durability
+    contracts.
 
 ## Test strategy
 

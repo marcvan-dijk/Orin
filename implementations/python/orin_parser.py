@@ -9,6 +9,8 @@ from orin_model import Diagnostic, SemanticModel
 
 DECLARATION_KINDS = {
     "type": "value-type",
+    "entity": "entity-type",
+    "relation": "relation",
     "state": "state",
     "capability": "capability",
     "effect": "effect",
@@ -94,7 +96,7 @@ class OrinParser:
             if declaration:
                 objects.append(self._new_object(module_name, DECLARATION_KINDS[declaration.group(1)], declaration.group(2), line_number))
                 continue
-            declaration = re.match(r"^(rule|workflow|example|uncertainty|target|effect)\s+([\w.-]+)\s*\{\s*$", line)
+            declaration = re.match(r"^(entity|relation|rule|workflow|example|uncertainty|target|effect)\s+([\w.-]+)\s*\{\s*$", line)
             if declaration:
                 active = self._new_object(module_name, DECLARATION_KINDS[declaration.group(1)], declaration.group(2), line_number)
                 depth += 1
@@ -124,7 +126,24 @@ class OrinParser:
 
         if active is not None:
             raise ValueError("ORIN-P003: unterminated declaration block")
-        return SemanticModel({"modelVersion": "0.1.0", "module": module, "objects": objects})
+        model = SemanticModel({"modelVersion": "0.1.0", "module": module, "objects": objects})
+        self._resolve_type_references(model.document)
+        return model
+
+    @staticmethod
+    def _resolve_type_references(document: dict[str, Any]) -> None:
+        objects = document.get("objects", [])
+        types: dict[str, str] = {}
+        for obj in objects:
+            if obj.get("kind") in {"value-type", "entity-type"}:
+                types[obj["name"]] = obj["id"]
+        for obj in objects:
+            if obj.get("kind") != "workflow":
+                continue
+            for field in ("inputs", "outputs"):
+                for value in obj.get(field, []):
+                    if isinstance(value, dict) and value.get("type") in types:
+                        value["type"] = types[value["type"]]
 
     @staticmethod
     def _new_object(module_name: str, kind: str, name: str, line_number: int) -> dict[str, Any]:
@@ -144,12 +163,43 @@ class OrinParser:
         return bytes(match.group(1), "utf-8").decode("unicode_escape")
 
     def _read_attribute(self, obj: dict[str, Any], line: str) -> None:
+        if obj["kind"] == "entity-type" and line.startswith("field "):
+            parts = line.split()
+            if len(parts) not in {3, 4}:
+                raise ValueError(f"ORIN-P008: entity field requires name and type: {line}")
+            field = {"name": parts[1], "type": self._reference(obj, parts[2], "value-type")}
+            if len(parts) == 4:
+                if parts[3] != "identity":
+                    raise ValueError(f"ORIN-P009: unsupported entity field modifier: {parts[3]}")
+                field["identity"] = True
+            obj.setdefault("fields", []).append(field)
+            return
+        if obj["kind"] == "relation":
+            relation = re.match(r"^(from|to)\s+([\w.-]+)$", line)
+            if relation:
+                obj.setdefault("endpoints", []).append({"type": self._reference(obj, relation.group(2), "entity-type")})
+                return
+            if line.startswith("cardinality "):
+                obj["cardinality"] = line[12:].strip()
+                return
+        transition = re.match(r"^transition\s+([\w.-]+)\s*->\s*([\w.-]+)$", line)
+        if transition:
+            obj.setdefault("transitions", []).append({
+                "from": self._reference(obj, transition.group(1), "state"),
+                "to": self._reference(obj, transition.group(2), "state"),
+            })
+            return
+        typed_value = re.match(r"^(input|output)\s+([\w.-]+)\s+([\w.-]+)$", line)
+        if typed_value:
+            field, name, value_type = typed_value.groups()
+            obj.setdefault(f"{field}s", []).append({"name": name, "type": self._reference(obj, value_type, None)})
+            return
         attribute = re.match(r"^(purpose|guarantee|question|authority|outcome|recovery|given|when|then|impact|severity)\s+(.+)$", line)
         if not attribute:
             if line.startswith("budget "):
                 return
             if line.startswith("requires "):
-                obj.setdefault("requires", []).append(self._reference(obj, line[9:]))
+                obj.setdefault("requires", []).append(self._reference(obj, line[9:], "capability"))
                 return
             if line.startswith("input "):
                 obj.setdefault("inputs", []).append(line[6:].strip())
@@ -167,9 +217,13 @@ class OrinParser:
             obj["consequential"] = True
 
     @staticmethod
-    def _reference(obj: dict[str, Any], attribute_text: str) -> str:
+    def _reference(obj: dict[str, Any], attribute_text: str, kind: str | None = "capability") -> str:
         module_name = obj["id"].rsplit("/", 2)[0]
-        return f"{module_name}/capability/{attribute_text.strip()}"
+        if attribute_text.strip().startswith(f"{module_name}/"):
+            return attribute_text.strip()
+        if kind is None:
+            return attribute_text.strip()
+        return f"{module_name}/{kind}/{attribute_text.strip()}"
 
 
 def analyze(path: str | Path) -> list[Diagnostic]:

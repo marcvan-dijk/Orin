@@ -1,0 +1,40 @@
+module shared-tasks {
+  purpose "People can share and complete tasks with controlled access."
+
+  type person-id
+  type list-name
+  type task-id
+  type task-title
+
+  entity person {
+    field id person-id identity
+  }
+
+  entity task-list {
+    field id task-id identity
+    field name list-name
+  }
+
+  entity task {
+    field id task-id identity
+    field title task-title
+  }
+
+  relation member-of {
+    from person
+    to task-list
+    cardinality many-to-many
+  }
+
+  state open
+  state completed
+  capability complete-task
+
+  workflow complete-task {
+    input actor person
+    input task task
+    output task task
+    requires complete-task
+    transition open -> completed
+  }
+}
