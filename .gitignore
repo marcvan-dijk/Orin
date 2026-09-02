@@ -32,6 +32,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# TypeScript extension dependencies and build output
+node_modules/
+implementations/typescript/vscode-extension/out/
+*.vsix
+
 
 # disable committing symlink files from submodule
 /.github/skills

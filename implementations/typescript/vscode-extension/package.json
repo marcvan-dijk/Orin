@@ -1,0 +1,56 @@
+{
+  "name": "orin-language",
+  "displayName": "Orin Language",
+  "description": "Syntax support and semantic checks for Orin files.",
+  "version": "0.0.1",
+  "publisher": "orin",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:orin"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "orin",
+        "aliases": [
+          "Orin",
+          "orin"
+        ],
+        "extensions": [
+          ".orin"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "orin",
+        "scopeName": "source.orin",
+        "path": "./syntaxes/orin.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "orin.analyzeCurrentFile",
+        "title": "Orin: Analyze Current File",
+        "category": "Orin"
+      }
+    ]
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "vscode:prepublish": "npm run compile"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "@vscode/vsce": "^3.9.2",
+    "typescript": "^5.0.0"
+  }
+}

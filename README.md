@@ -114,6 +114,7 @@ generator.
 - [Semantic model](docs/ORIN-0004-semantic-model.md)
 - [Implementation plan](docs/ORIN-0003-language-improvement-plan.md)
 - [Conformance fixtures](tests/conformance/README.md)
+- [VS Code extension](implementations/typescript/vscode-extension/README.md)
 
 Orin's long-term goal is to let developers define any new software system
 primarily in terms of its purpose, behavior, constraints, and intent, then let

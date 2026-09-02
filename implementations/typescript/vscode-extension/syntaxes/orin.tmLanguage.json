@@ -1,0 +1,23 @@
+{
+  "scopeName": "source.orin",
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#strings" },
+    { "include": "#keywords" },
+    { "include": "#declarations" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [{ "match": "//.*$", "name": "comment.line.orin" }]
+    },
+    "strings": {
+      "patterns": [{ "name": "string.quoted.double.orin", "begin": "\"", "end": "\"" }]
+    },
+    "keywords": {
+      "patterns": [{ "match": "\\b(module|purpose|context|import|type|state|capability|effect|rule|workflow|example|uncertainty|target|evidence|policy|implementation|when|then|always|requires|input|given|authority)\\b", "name": "keyword.control.orin" }]
+    },
+    "declarations": {
+      "patterns": [{ "match": "\\b[A-Za-z_][A-Za-z0-9_.-]*\\b", "name": "entity.name.type.orin" }]
+    }
+  }
+}
