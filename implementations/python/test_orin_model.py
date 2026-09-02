@@ -7,6 +7,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from orin_model import SemanticModel
 from password_reset import AccountStore, CapabilityDenied, EmailProvider, PasswordResetRuntime, TokenRejected
 from orin_parser import OrinParser, analyze
+from lowering import lower
 
 
 FIXTURE = Path(__file__).parents[2] / "tests" / "conformance" / "password-reset.model.json"
@@ -29,6 +30,20 @@ class SemanticModelTests(unittest.TestCase):
         changed = json.loads(json.dumps(model.document))
         changed["objects"][0]["source"] = {"line": 999}
         self.assertEqual(model.canonical(), SemanticModel(changed).canonical())
+
+    def test_implementation_policies_do_not_change_semantic_model(self):
+        model = SemanticModel.from_json_file(FIXTURE)
+        policy_fixture = json.loads((FIXTURE.parent / "password-reset.policies.json").read_text(encoding="utf-8"))
+        variants = policy_fixture["variants"]
+        managed = json.loads(json.dumps(model.document))
+        managed["implementationPolicies"] = variants[0]["implementationPolicies"]
+        existing = json.loads(json.dumps(model.document))
+        existing["implementationPolicies"] = variants[1]["implementationPolicies"]
+
+        self.assertEqual(SemanticModel(managed).canonical(), SemanticModel(existing).canonical())
+        self.assertNotEqual(lower(SemanticModel(managed)), lower(SemanticModel(existing)))
+        self.assertTrue(policy_fixture["assertions"]["semanticBehaviorUnchanged"])
+        self.assertTrue(policy_fixture["assertions"]["artifactStrategyChanges"])
 
     def test_unknown_reference_fails(self):
         document = json.loads(FIXTURE.read_text(encoding="utf-8"))
@@ -111,8 +126,10 @@ class OrinParserTests(unittest.TestCase):
         model = OrinParser().parse_file(Path(__file__).parents[2] / "examples" / "password-reset.orin")
 
         self.assertEqual(model.document["module"]["imports"], ["account-store", "email-provider"])
-        self.assertEqual(model.document["objects"][0]["source"]["line"], 17)
+        self.assertEqual(model.document["objects"][0]["source"]["line"], 24)
         self.assertEqual(model.document["module"]["context"]["risk"], "Account enumeration and reset-token abuse")
+        self.assertEqual(model.document["module"]["implementationPolicies"]["optimize-for"], "low-latency")
+        self.assertEqual(model.document["module"]["implementationPolicies"]["deploy-to"], "existing-infrastructure")
 
     def test_source_analysis_reports_only_rate_limit_blocker(self):
         diagnostics = analyze(Path(__file__).parents[2] / "examples" / "password-reset.orin")

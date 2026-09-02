@@ -298,6 +298,26 @@ A canonical model must:
 Two frontends are semantically equivalent when their canonical models are
 equal. A change in source formatting alone must not create a semantic revision.
 
+## Implementation policies
+
+An implementation policy guides lowering without becoming part of semantic
+meaning. Policies may express preferences such as low latency, simplicity,
+managed services, relational persistence, or deployment to existing
+infrastructure. They belong in an `implementationPolicies` section of a
+structured model or an equivalent `policy implementation` block in a text
+frontend.
+
+Policies MUST NOT change requirements, rules, examples, state transitions,
+effects, capabilities, or observable outputs. A backend MAY use a policy to
+choose a target artifact, storage arrangement, scheduling strategy, or
+deployment plan. Policy data is excluded from canonical semantic equality but
+preserved for lowering and artifact provenance.
+
+Changing only implementation policies MUST produce the same canonical semantic
+model and the same example results. It MAY produce a different target plan or
+generated artifact. A policy that changes behavior is a requirement and MUST be
+represented as a semantic claim instead.
+
 ## Revision and change impact
 
 A model revision is an immutable snapshot identified by its parent revision and

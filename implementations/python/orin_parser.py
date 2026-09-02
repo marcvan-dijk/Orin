@@ -43,6 +43,7 @@ class OrinParser:
         active: dict[str, Any] | None = None
         ignored_depth = 0
         context_depth = 0
+        policy_depth = 0
         depth = 0
 
         for line_number, raw_line in enumerate(lines, 1):
@@ -59,6 +60,16 @@ class OrinParser:
                     module.setdefault("context", {})[key] = self._string_value(value, line_number)
                     continue
                 raise ValueError(f"ORIN-P006: unsupported context attribute at line {line_number}: {line}")
+            if policy_depth:
+                if line == "}":
+                    policy_depth = 0
+                    continue
+                policy_attribute = re.match(r'^(optimize-for|prefer|require|deploy-to)\s+"([^"]+)"$', line)
+                if policy_attribute:
+                    key, value = policy_attribute.groups()
+                    module.setdefault("implementationPolicies", {})[key] = value
+                    continue
+                raise ValueError(f"ORIN-P007: unsupported implementation policy at line {line_number}: {line}")
             if ignored_depth:
                 ignored_depth += line.count("{") - line.count("}")
                 continue
@@ -97,6 +108,9 @@ class OrinParser:
                 continue
             if line.startswith("context ") and "{" in line:
                 context_depth = line.count("{") - line.count("}")
+                continue
+            if line.startswith("policy implementation") and "{" in line:
+                policy_depth = line.count("{") - line.count("}")
                 continue
             if line.startswith(("scope ", "risk ")) and "{" in line:
                 ignored_depth = line.count("{") - line.count("}")

@@ -12,5 +12,15 @@ A conforming implementation should be able to:
 5. Produce equivalent canonical output when the same model is loaded through
    another frontend.
 
+`password-reset.policies.json` adds two lowering-policy variants. A conforming
+implementation should preserve equal semantic behavior for both variants while
+allowing their target artifact strategies to differ. Policy data guides
+lowering; it is not part of canonical semantic equality.
+
+`authoring-choices.json` defines a language-neutral guided question. Its
+options are reviewable proposals, not implicit decisions; accepting one must
+update the same semantic model used by direct authoring, while deferring keeps
+the affected behavior unresolved.
+
 Future host-language runners belong in a separate directory named for the host
 language. They must consume these fixtures rather than redefine their contents.

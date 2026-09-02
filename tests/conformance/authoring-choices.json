@@ -1,0 +1,33 @@
+{
+  "fixtureVersion": "0.1.0",
+  "kind": "guided-question",
+  "question": "What should happen when reset-email delivery is unavailable?",
+  "affectedObjects": [
+    "account.password-reset/workflow/request-reset",
+    "account.password-reset/rule/response-does-not-disclose-account"
+  ],
+  "options": [
+    {
+      "id": "standard-confirmation",
+      "kind": "semantic-proposal",
+      "label": "Return the standard confirmation and disclose nothing.",
+      "effects": ["preserves privacy rule", "adds recovery behavior"],
+      "compilation": "eligible-after-acceptance"
+    },
+    {
+      "id": "delivery-error",
+      "kind": "semantic-proposal",
+      "label": "Show a delivery error.",
+      "effects": ["changes observable response", "requires privacy review"],
+      "compilation": "eligible-after-acceptance"
+    },
+    {
+      "id": "defer",
+      "kind": "defer",
+      "label": "Defer this decision.",
+      "effects": ["leaves delivery behavior unresolved"],
+      "compilation": "blocked"
+    }
+  ],
+  "actions": ["choose", "edit", "reject", "defer", "explain"]
+}

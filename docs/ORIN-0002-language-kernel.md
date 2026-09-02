@@ -135,6 +135,38 @@ These MUST have visibly different presentation and semantic status. A
 continuation MUST NOT smuggle in a new requirement. A suggestion MUST NOT be
 treated as approved until the human accepts it.
 
+### Guided choices
+
+When a decision has a bounded set of meaningful alternatives, the authoring
+interface SHOULD present a multiple-choice question instead of requiring the
+developer to invent formal syntax. Each choice MUST show:
+
+- the proposed semantic change or implementation policy;
+- the objects and constraints it affects;
+- assumptions, tradeoffs, and consequences;
+- whether it blocks compilation or only changes lowering.
+
+The developer MUST be able to choose an option, edit it, reject it, defer the
+question, or request an explanation. Selecting an option is a proposal until
+accepted. The accepted option becomes a semantic patch or policy record in the
+same model used by direct authoring; the choice presentation is not a second
+source of truth.
+
+Example:
+
+```text
+AI question: What should happen when reset-email delivery is unavailable?
+
+1. Return the standard confirmation and disclose nothing.
+   Affects: workflow request-reset, rule response-does-not-disclose-account
+2. Show a delivery error.
+   Affects: workflow request-reset, example delivery-unavailable
+3. Defer this decision.
+   Effect: compilation remains blocked
+
+[choose] [edit] [reject] [defer] [explain]
+```
+
 ### Progressive disclosure
 
 The human-facing view SHOULD show, in this order:
@@ -340,6 +372,14 @@ When multiple implementations satisfy the same model, the compiler SHOULD choose
 the one that best satisfies declared budgets and SHOULD explain the tradeoff.
 Efficiency MUST be measurable against declared objectives; it MUST NOT mean
 shorter generated source by default.
+
+Implementation policies such as “optimize for low latency”, “prefer managed
+services”, or “deploy to existing infrastructure” guide this choice. They are
+lowering preferences, not system behavior. Changing a policy MAY change the
+target plan or artifact, but MUST preserve the semantic model, acceptance
+examples, rules, capabilities, effects, and observable behavior. A condition
+that must hold belongs in the semantic model even when it also influences
+implementation selection.
 
 ## Verification model
 

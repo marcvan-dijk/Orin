@@ -440,10 +440,12 @@ without depending on the `.orin` parser.
 initial request-reset state machine and deterministic account-store and email
 provider effect boundaries. The minimal `.orin` parser/analyzer now loads the
 provisional password-reset source and preserves context, imports, source
-locations, and the intentional rate-limit blocker. Token expiry, single-use
-protection, repeated requests, and account-store failure behavior are covered
-by the reference runtime. Remaining tasks are parser semantic mapping and
-execution of the unresolved-rate-limit case.
+locations, implementation policies, and the intentional rate-limit blocker.
+Token expiry, single-use protection, repeated requests, and account-store
+failure behavior are covered by the reference runtime. Policy variants prove
+that lowering choices can change while canonical semantic behavior stays equal.
+Remaining tasks are parser semantic mapping and execution of the
+unresolved-rate-limit case.
 
 **Deliver:** `.orin` parser, analyzer, password-reset state model, deterministic
 interpreter, and initial executable examples.
@@ -513,12 +515,19 @@ capture important decisions and which parts add unnecessary friction.
    are accepted for the next semantic-linking increment.
 9. [next] Model unresolved rate-limit execution as a blocked example rather
    than silently choosing a policy.
-10. [next] Link parsed effects and imports to workflow references and validate
-    their declared capabilities.
-11. Generate evidence for passing and blocked examples.
-12. Add the structured frontend and model-equivalence tests.
-13. Add the second backend.
-14. Revise ORIN-0001 and ORIN-0002 based on implementation findings.
+10. [done] Add implementation policies for lowering preferences and prove that
+    policy variants preserve canonical semantic behavior while changing the
+    reference artifact plan.
+11. [next] Link parsed effects and imports to workflow references and validate
+    their declared capabilities; reject policies that attempt to change
+    semantic behavior.
+12. [done] Define a language-neutral multiple-choice guided-question contract
+    with explicit effects, affected objects, and accept/edit/reject/defer
+    actions.
+13. Generate evidence for passing and blocked examples.
+14. Add the structured frontend and model-equivalence tests.
+15. Add the second backend.
+16. Revise ORIN-0001 and ORIN-0002 based on implementation findings.
 
 ## Test strategy
 

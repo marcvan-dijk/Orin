@@ -33,6 +33,7 @@ class SemanticModel:
 
     def canonical(self) -> dict[str, Any]:
         canonical = deepcopy(self.document)
+        canonical.pop("implementationPolicies", None)
         self._remove_metadata(canonical)
         objects = canonical.get("objects", [])
         for obj in objects:
