@@ -169,7 +169,7 @@ class OrinParserTests(unittest.TestCase):
         model = OrinParser().parse_file(Path(__file__).parents[2] / "examples" / "password-reset.orin")
 
         self.assertEqual(model.document["module"]["imports"], ["account-store", "email-provider"])
-        self.assertEqual(model.document["objects"][0]["source"]["line"], 24)
+        self.assertEqual(model.document["objects"][0]["source"]["line"], 19)
         self.assertEqual(model.document["module"]["context"]["risk"], "Account enumeration and reset-token abuse")
         self.assertEqual(model.document["module"]["implementationPolicies"]["optimize-for"], "low-latency")
         self.assertEqual(model.document["module"]["implementationPolicies"]["deploy-to"], "existing-infrastructure")
