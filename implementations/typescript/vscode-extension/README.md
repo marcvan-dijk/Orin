@@ -9,9 +9,9 @@ Current scope:
 
 ## Try it
 
-1. Open `/home/runner/work/Orin/Orin` in VS Code.
-2. Open `/home/runner/work/Orin/Orin/implementations/typescript/vscode-extension/` and run `F5`.
-3. Open `/home/runner/work/Orin/Orin/examples/password-reset.orin` in the Extension Development Host.
+1. Open the repository root in VS Code.
+2. Open `implementations/typescript/vscode-extension/` and run `F5`.
+3. Open `examples/password-reset.orin` in the Extension Development Host.
 4. Run **Orin: Analyze Current File**.
 
 Notes:

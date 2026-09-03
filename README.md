@@ -34,32 +34,32 @@ Human expresses intent
 
 Start here:
 
-1. Read `/home/runner/work/Orin/Orin/examples/password-reset.orin`.
-2. Inspect `/home/runner/work/Orin/Orin/tests/conformance/password-reset.model.json`.
-3. Review `/home/runner/work/Orin/Orin/tests/conformance/password-reset.cases.json`.
-4. Read `/home/runner/work/Orin/Orin/tests/conformance/README.md`.
+1. Read `examples/password-reset.orin`.
+2. Inspect `tests/conformance/password-reset.model.json`.
+3. Review `tests/conformance/password-reset.cases.json`.
+4. Read `tests/conformance/README.md`.
 
 Optional host-language execution proof (Python reference only):
 
 ```bash
-cd /home/runner/work/Orin/Orin/implementations/python
-python -m unittest test_orin_model.py
+cd implementations/python
+python -m unittest test_orin_model
 ```
 
 ## Repository map
 
 ### Primary (user-facing)
-- `/home/runner/work/Orin/Orin/examples/password-reset.orin`
-- `/home/runner/work/Orin/Orin/tests/conformance/`
-- `/home/runner/work/Orin/Orin/docs/MVP-PLAN.md`
-- `/home/runner/work/Orin/Orin/docs/REFOCUS-ASSESSMENT.md`
+- `examples/password-reset.orin`
+- `tests/conformance/`
+- `docs/MVP-PLAN.md`
+- `docs/REFOCUS-ASSESSMENT.md`
 
 ### Internal and advanced
-- Semantic/language specs: `/home/runner/work/Orin/Orin/docs/ORIN-0002-language-kernel.md`, `/home/runner/work/Orin/Orin/docs/ORIN-0004-semantic-model.md`
-- Improvement backlog: `/home/runner/work/Orin/Orin/docs/ORIN-0003-language-improvement-plan.md`
-- Shared-tasks expansion slice (advanced): `/home/runner/work/Orin/Orin/examples/shared-tasks.orin`
-- VS Code extension (supporting): `/home/runner/work/Orin/Orin/implementations/typescript/vscode-extension/`
-- Julius Skills integration notes (internal): `/home/runner/work/Orin/Orin/docs/SKILLS-INTEGRATION.md`
+- Semantic/language specs: `docs/ORIN-0002-language-kernel.md`, `docs/ORIN-0004-semantic-model.md`
+- Improvement backlog: `docs/ORIN-0003-language-improvement-plan.md`
+- Shared-tasks expansion slice (advanced): `examples/shared-tasks.orin`
+- VS Code extension (supporting): `implementations/typescript/vscode-extension/`
+- Julius Skills integration notes (internal): `docs/SKILLS-INTEGRATION.md`
 
 ## Current MVP proof target
 
