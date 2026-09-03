@@ -555,6 +555,14 @@ capture important decisions and which parts add unnecessary friction.
 23. [next] Bind parsed capabilities and persistence effects to actor-scoped
     workflows and validate the resulting authorization and durability
     contracts.
+24. [done] Refocus the repository around the meaning-first thesis with a
+    strict password-reset MVP center: add `docs/REFOCUS-ASSESSMENT.md`,
+    tighten README/MVP/roadmap positioning, move tooling detail behind
+    supporting/internal framing, and trim non-semantic noise from the primary
+    example.
+25. [next] Implement item 23 by binding parsed capabilities and persistence
+    effects to actor-scoped workflows, then extend conformance diagnostics for
+    authorization and durability failures.
 
 ## Test strategy
 

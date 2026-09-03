@@ -1,121 +1,70 @@
 # Orin
 
-Orin is an experimental programming language for describing **what software
-must do**. It is intended to become a primary way to define new software
-systems, while AI and compilers help determine how those systems are built.
+Orin is an experiment in programming for an AI-native world.
 
-## 🌐 The vision
+Its core claim is simple: humans should define **program meaning** (intent, behavior, constraints, outcomes), and implementations should be generated and replaceable.
 
-Most programming languages ask developers to describe behavior and
-implementation together. Orin explores a different starting point: the source
-of truth is the system's purpose, behavior, constraints, and proof that it
-works.
+## What Orin is
 
-This could describe a web application, desktop tool, mobile app, service,
-command-line program, data pipeline, game, or embedded system. Web is only the
-first experimental profile because it provides a useful test of workflows,
-users, data, permissions, and external services.
+- A human-readable representation of program meaning.
+- A semantic model that frontends produce and backends consume.
+- A way to keep behavior stable while implementation changes.
+- A workflow that blocks unresolved consequential ambiguity.
 
-## 💡 Why Orin?
+## What Orin is not
 
-With ordinary programming, a developer often decides behavior and
-implementation at the same time:
+- an AI code generator
+- a prompt wrapper
+- low-code/no-code UI
+- a DSL that forces large new vocabulary
+- a tool for analyzing existing codebases
 
-```text
-Create a database table, call this API, retry three times, then return JSON.
+## Core progression
+
+Human expresses intent  
+→ AI helps clarify intent  
+→ Orin captures meaning  
+→ Orin flags consequential ambiguity  
+→ human decides  
+→ meaning becomes deterministic  
+→ compiler/AI derives implementation  
+→ implementation can change without changing Orin meaning
+
+## Beginner path (password-reset MVP)
+
+Start here:
+
+1. Read `examples/password-reset.orin`.
+2. Inspect `tests/conformance/password-reset.model.json`.
+3. Review `tests/conformance/password-reset.cases.json`.
+4. Read `tests/conformance/README.md`.
+
+Optional host-language execution proof (Python reference only):
+
+```bash
+python -m unittest discover -s implementations/python -p "test_*.py"
 ```
 
-Orin starts with the meaning instead:
+## Repository map
 
-```orin
-goal "People can reset their password without revealing whether an account exists."
+### Primary (user-facing)
+- `examples/password-reset.orin`
+- `tests/conformance/`
+- `docs/MVP-PLAN.md`
+- `docs/REFOCUS-ASSESSMENT.md`
 
-rule privacy:
-   registered and unknown addresses receive the same response
+### Internal and advanced
+- Semantic/language specs: `docs/ORIN-0002-language-kernel.md`, `docs/ORIN-0004-semantic-model.md`
+- Improvement backlog: `docs/ORIN-0003-language-improvement-plan.md`
+- Shared-tasks expansion slice (advanced): `examples/shared-tasks.orin`
+- VS Code extension (supporting): `implementations/typescript/vscode-extension/`
+- Julius Skills integration notes (internal): `docs/SKILLS-INTEGRATION.md`
 
-workflow request-reset:
-   when a person requests a reset
-   then send a message only for a registered address
-   always return the standard confirmation
-```
+## Current MVP proof target
 
-The implementation details can be chosen later, as long as the generated
-system preserves the goal and rule.
+Orin MVP succeeds when password-reset meaning is:
 
-## 🤝 AI-assisted authoring
-
-People should not need to learn every Orin keyword before they can begin. A
-developer can start with a sentence, and the AI can ask small, reviewable
-questions:
-
-```text
-What should happen when email delivery is unavailable?
-
-1. Return the standard confirmation and reveal nothing.
-2. Show a delivery error.
-3. Defer the decision.
-```
-
-The developer can choose, edit, reject, defer, or ask for an explanation. The
-AI proposes changes; only an accepted choice changes the Orin model.
-
-This is progressive formalisation: begin with a goal in ordinary language,
-then gradually add the precise rules, workflows, data, and examples needed to
-make the system executable. The simple view and detailed view describe the
-same semantic model.
-
-## ⚙️ Intent and implementation
-
-The developer can also give lowering preferences without turning them into
-application behavior:
-
-```orin
-policy implementation:
-   optimize-for "low-latency"
-   prefer "managed-services"
-   deploy-to "existing-infrastructure"
-```
-
-Changing these preferences may change generated code, databases, services, or
-deployment files. It must not change the rules, workflow results, permissions,
-or other semantic behavior.
-
-The universal core is intended to describe systems as:
-
-```text
-inputs -> decisions -> state changes -> effects -> outputs
-```
-
-Domain profiles can add useful concepts, but they must lower into this same
-core rather than create separate meanings.
-
-## 🚧 Current state
-
-Orin is a prototype, not yet a complete application generator. The repository
-currently includes:
-
-- a language-independent semantic model;
-- a provisional `.orin` parser;
-- deterministic password-reset runtime experiments;
-- conformance fixtures;
-- policy and guided-question examples;
-- a Python reference implementation kept under `implementations/python/`.
-
-The next major steps are a complete readiness checker, an executable
-intermediate representation, progressive authoring tools, and one end-to-end
-generated application. The implementation is currently focused on proving the
-model with a password-reset workflow; it is not yet a complete application
-generator.
-
-## 📚 Project documents
-
-- [Primary programming gap analysis](docs/ORIN-PRIMARY-PROGRAMMING-GAP-ANALYSIS.md)
-- [Language kernel](docs/ORIN-0002-language-kernel.md)
-- [Semantic model](docs/ORIN-0004-semantic-model.md)
-- [Implementation plan](docs/ORIN-0003-language-improvement-plan.md)
-- [Conformance fixtures](tests/conformance/README.md)
-- [VS Code extension](implementations/typescript/vscode-extension/README.md)
-
-Orin's long-term goal is to let developers define any new software system
-primarily in terms of its purpose, behavior, constraints, and intent, then let
-suitable implementations be generated from that meaning.
+- explicit,
+- deterministic,
+- blocked on unresolved consequential ambiguity,
+- and evidenced as implementation-equivalent across targets.

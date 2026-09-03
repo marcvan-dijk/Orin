@@ -1,36 +1,26 @@
 # Orin Conformance Fixtures
 
-This directory contains language-neutral data fixtures for Orin implementations.
-The files are not tied to a parser, runtime, programming language, or target.
+This directory contains language-neutral fixtures for proving Orin's core thesis:
 
-A conforming implementation should be able to:
+- deterministic program meaning,
+- explicit consequential-ambiguity gating,
+- implementation-equivalence evidence.
 
-1. Load `password-reset.model.json` as a semantic model.
-2. Report its compilation status as `blocked` because `rate-limit` is unresolved.
-3. Evaluate the cases in `password-reset.cases.json`.
-4. Preserve object identities and references.
-5. Produce equivalent canonical output when the same model is loaded through
-   another frontend.
+These files are not tied to a parser, runtime, or implementation language.
 
-`password-reset.policies.json` adds two lowering-policy variants. A conforming
-implementation should preserve equal semantic behavior for both variants while
-allowing their target artifact strategies to differ. Policy data guides
-lowering; it is not part of canonical semantic equality.
+## Required checks for a conforming implementation
 
-`authoring-choices.json` defines a language-neutral guided question. Its
-options are reviewable proposals, not implicit decisions; accepting one must
-update the same semantic model used by direct authoring, while deferring keeps
-the affected behavior unresolved.
+1. Load `password-reset.model.json` as semantic meaning.
+2. Report compile/readiness status as `blocked` while unresolved consequential `rate-limit` remains.
+3. Execute `password-reset.cases.json` deterministically.
+4. Preserve semantic identities and references.
+5. Produce equivalent canonical meaning from alternative frontends.
+6. Demonstrate policy/lowering variation without semantic behavior drift.
 
-`password-reset.cases.json` is executable specification data. The reference
-runner generates one test scenario per case, including failure and concurrent
-requests, so adding a case extends conformance coverage without duplicating
-the expected behavior in host-language test code.
+`password-reset.policies.json` provides lowering-policy variants. A conforming implementation may produce different artifact strategies, but must preserve the same canonical semantics and observable required behavior.
 
-`shared-tasks.model.json` is the first complete-application semantic fixture.
-It exercises typed entity fields and identities, relationship cardinality,
-typed workflow inputs and outputs, capabilities, and explicit state
-transitions. Its reference runtime is the next vertical-slice increment.
+`authoring-choices.json` defines a language-neutral consequential question. Options are reviewable proposals; defer keeps behavior unresolved and compile blocked.
 
-Future host-language runners belong in a separate directory named for the host
-language. They must consume these fixtures rather than redefine their contents.
+`shared-tasks.model.json` and `shared-tasks.cases.json` are an advanced/secondary slice and should not replace password-reset as the primary MVP proof path.
+
+Host-language runners must remain under `implementations/<language>/` and consume these fixtures unchanged.
