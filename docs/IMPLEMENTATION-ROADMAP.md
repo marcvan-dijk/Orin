@@ -40,3 +40,7 @@ This roadmap is intentionally narrow: prove Orin's core meaning-first hypothesis
 ## Exit for refocused MVP
 
 The MVP is complete when password-reset demonstrates deterministic meaning, ambiguity gating, and implementation-equivalence evidence with a clear beginner path.
+
+## Exact next implementation step
+
+Bind parsed capabilities and persistence effects to actor-scoped workflows, then extend conformance diagnostics for authorization and durability failures.

@@ -42,8 +42,7 @@ Start here:
 Optional host-language execution proof (Python reference only):
 
 ```bash
-cd implementations/python
-python -m unittest test_orin_model
+python -m unittest discover -s implementations/python -p "test_*.py"
 ```
 
 ## Repository map

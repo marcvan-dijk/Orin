@@ -17,4 +17,5 @@ Current scope:
 Notes:
 
 - Syntax highlighting works without Python.
-- The analysis command requires a Python launcher (`py`) in your environment.
+- The analysis command currently invokes the Windows Python launcher (`py`).
+- The analysis command is therefore currently Windows-oriented; on macOS/Linux, syntax highlighting remains available while analyzer portability is a follow-up task.
