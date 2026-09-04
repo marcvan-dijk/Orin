@@ -170,6 +170,15 @@ class SemanticModelTests(unittest.TestCase):
         self.assertIn("workflow actor must reference a declared input: missing-actor", messages)
         self.assertIn("workflow actor requires actorCapabilities contract for required capabilities/effects", messages)
 
+    def test_actor_must_be_string_input_name(self):
+        document = json.loads(TASKS_FIXTURE.read_text(encoding="utf-8"))
+        workflow = next(item for item in document["objects"] if item["id"] == "shared-tasks/workflow/complete-task")
+        workflow["actor"] = {"name": "actor"}
+
+        messages = [item.message for item in SemanticModel(document).diagnostics() if item.code == "ORIN-E038"]
+
+        self.assertIn("workflow actor must be a string input name", messages)
+
     def test_shared_tasks_source_maps_to_valid_semantic_model(self):
         source = Path(__file__).parents[2] / "examples" / "shared-tasks.orin"
         model = OrinParser().parse_file(source)

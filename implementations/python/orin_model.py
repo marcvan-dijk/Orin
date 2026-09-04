@@ -242,6 +242,22 @@ class SemanticModel:
         if actor is None:
             if has_actor_capabilities:
                 diagnostics.append(Diagnostic("ORIN-E038", "workflow actorCapabilities require actor declaration", obj.get("id")))
+        elif not isinstance(actor, str):
+            diagnostics.append(Diagnostic("ORIN-E038", "workflow actor must be a string input name", obj.get("id")))
+            required_capabilities = set(obj.get("requires", []))
+            for effect in used_effects:
+                effect_obj = objects_by_id.get(effect, {})
+                if isinstance(effect_obj, dict):
+                    for capability in effect_obj.get("requires", []):
+                        required_capabilities.add(capability)
+            if required_capabilities and not has_actor_capabilities:
+                diagnostics.append(
+                    Diagnostic(
+                        "ORIN-E038",
+                        "workflow actor requires actorCapabilities contract for required capabilities/effects",
+                        obj.get("id"),
+                    )
+                )
         else:
             required_capabilities = set(obj.get("requires", []))
             for effect in used_effects:
