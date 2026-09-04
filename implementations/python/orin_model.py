@@ -218,6 +218,7 @@ class SemanticModel:
             else:
                 used_effects.append(effect)
         actor = obj.get("actor")
+        has_actor_capabilities = "actorCapabilities" in obj
         raw_bindings = obj.get("actorCapabilities", [])
         if not isinstance(raw_bindings, list):
             diagnostics.append(Diagnostic("ORIN-E038", "workflow actorCapabilities must be a list", obj.get("id")))
@@ -225,7 +226,7 @@ class SemanticModel:
         else:
             bindings = raw_bindings
         if actor is None:
-            if bindings:
+            if has_actor_capabilities:
                 diagnostics.append(Diagnostic("ORIN-E038", "workflow actorCapabilities require actor declaration", obj.get("id")))
         else:
             inputs = obj.get("inputs", [])

@@ -119,6 +119,18 @@ class SemanticModelTests(unittest.TestCase):
         self.assertIn("ORIN-E038", codes)
         self.assertIn("ORIN-E034", codes)
 
+    def test_actor_capability_shape_and_actor_requirement_diagnostics_both_emit(self):
+        document = json.loads(TASKS_FIXTURE.read_text(encoding="utf-8"))
+        workflow = next(item for item in document["objects"] if item["id"] == "shared-tasks/workflow/complete-task")
+        workflow.pop("actor", None)
+        workflow["actorCapabilities"] = "invalid"
+
+        diagnostics = SemanticModel(document).diagnostics()
+        messages = [item.message for item in diagnostics if item.code == "ORIN-E038"]
+
+        self.assertIn("workflow actorCapabilities must be a list", messages)
+        self.assertIn("workflow actorCapabilities require actor declaration", messages)
+
     def test_shared_tasks_source_maps_to_valid_semantic_model(self):
         source = Path(__file__).parents[2] / "examples" / "shared-tasks.orin"
         model = OrinParser().parse_file(source)
