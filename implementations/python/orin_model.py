@@ -218,42 +218,46 @@ class SemanticModel:
             else:
                 used_effects.append(effect)
         actor = obj.get("actor")
-        bindings = obj.get("actorCapabilities", [])
-        if not isinstance(bindings, list):
+        raw_bindings = obj.get("actorCapabilities", [])
+        if not isinstance(raw_bindings, list):
             diagnostics.append(Diagnostic("ORIN-E038", "workflow actorCapabilities must be a list", obj.get("id")))
-            return
+            bindings: list[Any] = []
+        else:
+            bindings = raw_bindings
         if actor is None:
             if bindings:
                 diagnostics.append(Diagnostic("ORIN-E038", "workflow actorCapabilities require actor declaration", obj.get("id")))
-            return
-        inputs = obj.get("inputs", [])
-        actor_inputs = [value for value in inputs if isinstance(value, dict) and value.get("name") == actor]
-        if not actor_inputs:
-            diagnostics.append(Diagnostic("ORIN-E038", f"workflow actor must reference a declared input: {actor}", obj.get("id")))
-            return
-        if kinds.get(actor_inputs[0].get("type")) != "entity-type":
-            diagnostics.append(Diagnostic("ORIN-E038", f"workflow actor input must reference an entity-type: {actor}", obj.get("id")))
-            return
-        bound_capabilities = {
-            binding.get("capability")
-            for binding in bindings
-            if isinstance(binding, dict) and binding.get("actor") == actor
-        }
-        required_capabilities = set(obj.get("requires", []))
-        for effect in used_effects:
-            effect_obj = objects_by_id.get(effect, {})
-            if isinstance(effect_obj, dict):
-                for capability in effect_obj.get("requires", []):
-                    required_capabilities.add(capability)
-        missing = sorted(capability for capability in required_capabilities if capability not in bound_capabilities)
-        if missing:
-            diagnostics.append(
-                Diagnostic(
-                    "ORIN-E037",
-                    f"workflow actor is not bound to required capabilities: {', '.join(missing)}",
-                    obj.get("id"),
-                )
-            )
+        else:
+            inputs = obj.get("inputs", [])
+            actor_inputs = [value for value in inputs if isinstance(value, dict) and value.get("name") == actor]
+            actor_input_valid = True
+            if not actor_inputs:
+                diagnostics.append(Diagnostic("ORIN-E038", f"workflow actor must reference a declared input: {actor}", obj.get("id")))
+                actor_input_valid = False
+            elif kinds.get(actor_inputs[0].get("type")) != "entity-type":
+                diagnostics.append(Diagnostic("ORIN-E038", f"workflow actor input must reference an entity-type: {actor}", obj.get("id")))
+                actor_input_valid = False
+            if actor_input_valid:
+                bound_capabilities = {
+                    binding.get("capability")
+                    for binding in bindings
+                    if isinstance(binding, dict) and binding.get("actor") == actor
+                }
+                required_capabilities = set(obj.get("requires", []))
+                for effect in used_effects:
+                    effect_obj = objects_by_id.get(effect, {})
+                    if isinstance(effect_obj, dict):
+                        for capability in effect_obj.get("requires", []):
+                            required_capabilities.add(capability)
+                missing = sorted(capability for capability in required_capabilities if capability not in bound_capabilities)
+                if missing:
+                    diagnostics.append(
+                        Diagnostic(
+                            "ORIN-E037",
+                            f"workflow actor is not bound to required capabilities: {', '.join(missing)}",
+                            obj.get("id"),
+                        )
+                    )
 
     def compilation_status(self) -> str:
         diagnostics = self.diagnostics()
