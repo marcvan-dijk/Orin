@@ -99,6 +99,15 @@ class SemanticModelTests(unittest.TestCase):
         self.assertIn("ORIN-E037", codes)
         self.assertIn("ORIN-E039", codes)
 
+    def test_actor_capability_bindings_require_actor_declaration(self):
+        document = json.loads(TASKS_FIXTURE.read_text(encoding="utf-8"))
+        workflow = next(item for item in document["objects"] if item["id"] == "shared-tasks/workflow/complete-task")
+        workflow.pop("actor", None)
+
+        codes = [item.code for item in SemanticModel(document).diagnostics()]
+
+        self.assertIn("ORIN-E038", codes)
+
     def test_shared_tasks_source_maps_to_valid_semantic_model(self):
         source = Path(__file__).parents[2] / "examples" / "shared-tasks.orin"
         model = OrinParser().parse_file(source)

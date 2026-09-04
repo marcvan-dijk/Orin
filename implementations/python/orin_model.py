@@ -218,7 +218,13 @@ class SemanticModel:
             else:
                 used_effects.append(effect)
         actor = obj.get("actor")
+        bindings = obj.get("actorCapabilities", [])
+        if not isinstance(bindings, list):
+            diagnostics.append(Diagnostic("ORIN-E038", "workflow actorCapabilities must be a list", obj.get("id")))
+            return
         if actor is None:
+            if bindings:
+                diagnostics.append(Diagnostic("ORIN-E038", "workflow actorCapabilities require actor declaration", obj.get("id")))
             return
         inputs = obj.get("inputs", [])
         actor_inputs = [value for value in inputs if isinstance(value, dict) and value.get("name") == actor]
@@ -227,10 +233,6 @@ class SemanticModel:
             return
         if kinds.get(actor_inputs[0].get("type")) != "entity-type":
             diagnostics.append(Diagnostic("ORIN-E038", f"workflow actor input must reference an entity-type: {actor}", obj.get("id")))
-            return
-        bindings = obj.get("actorCapabilities", [])
-        if not isinstance(bindings, list):
-            diagnostics.append(Diagnostic("ORIN-E038", "workflow actorCapabilities must be a list", obj.get("id")))
             return
         bound_capabilities = {
             binding.get("capability")
