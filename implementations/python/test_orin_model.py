@@ -43,9 +43,9 @@ class SemanticModelTests(unittest.TestCase):
         policy_fixture = json.loads((FIXTURE.parent / "password-reset.policies.json").read_text(encoding="utf-8"))
         variants = policy_fixture["variants"]
         managed = json.loads(json.dumps(model.document))
-        managed["implementationPolicies"] = variants[0]["implementationPolicies"]
+        managed["module"]["implementationPolicies"] = variants[0]["implementationPolicies"]
         existing = json.loads(json.dumps(model.document))
-        existing["implementationPolicies"] = variants[1]["implementationPolicies"]
+        existing["module"]["implementationPolicies"] = variants[1]["implementationPolicies"]
 
         self.assertEqual(SemanticModel(managed).canonical(), SemanticModel(existing).canonical())
         self.assertNotEqual(lower(SemanticModel(managed)), lower(SemanticModel(existing)))
@@ -331,8 +331,14 @@ class PasswordResetProofRunTests(unittest.TestCase):
         self.assertEqual(proof["blockedCompilation"], "blocked")
         self.assertEqual(proof["resolvedCompilation"], "eligible")
         self.assertTrue(proof["canonicalMeaningStableAcrossVariants"])
+        self.assertGreaterEqual(len(proof["variants"]), 2)
         self.assertNotEqual(proof["variants"][0]["derivedArtifact"], proof["variants"][1]["derivedArtifact"])
-        self.assertGreaterEqual(len(proof["behaviorCases"]), 1)
+        expected_behavior_cases = [
+            case["id"]
+            for case in load_cases(CASES)["cases"]
+            if case.get("when", {}).get("action") != "compile"
+        ]
+        self.assertEqual(proof["behaviorCases"], expected_behavior_cases)
 
 
 if __name__ == "__main__":

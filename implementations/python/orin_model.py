@@ -38,6 +38,9 @@ class SemanticModel:
     def canonical(self) -> dict[str, Any]:
         canonical = deepcopy(self.document)
         canonical.pop("implementationPolicies", None)
+        module = canonical.get("module")
+        if isinstance(module, dict):
+            module.pop("implementationPolicies", None)
         self._remove_metadata(canonical)
         objects = canonical.get("objects", [])
         for obj in objects:
@@ -217,6 +220,12 @@ class SemanticModel:
                 diagnostics.append(Diagnostic("ORIN-E036", f"workflow uses must reference an effect: {effect}", obj.get("id")))
             else:
                 used_effects.append(effect)
+        required_capabilities = set(obj.get("requires", []))
+        for effect in used_effects:
+            effect_obj = objects_by_id.get(effect, {})
+            if isinstance(effect_obj, dict):
+                for capability in effect_obj.get("requires", []):
+                    required_capabilities.add(capability)
         actor = obj.get("actor")
         has_actor_capabilities = "actorCapabilities" in obj
         raw_bindings = obj.get("actorCapabilities", [])
@@ -244,12 +253,6 @@ class SemanticModel:
                 diagnostics.append(Diagnostic("ORIN-E038", "workflow actorCapabilities require actor declaration", obj.get("id")))
         elif not isinstance(actor, str):
             diagnostics.append(Diagnostic("ORIN-E038", "workflow actor must be a string input name", obj.get("id")))
-            required_capabilities = set(obj.get("requires", []))
-            for effect in used_effects:
-                effect_obj = objects_by_id.get(effect, {})
-                if isinstance(effect_obj, dict):
-                    for capability in effect_obj.get("requires", []):
-                        required_capabilities.add(capability)
             if required_capabilities and not has_actor_capabilities:
                 diagnostics.append(
                     Diagnostic(
@@ -259,12 +262,6 @@ class SemanticModel:
                     )
                 )
         else:
-            required_capabilities = set(obj.get("requires", []))
-            for effect in used_effects:
-                effect_obj = objects_by_id.get(effect, {})
-                if isinstance(effect_obj, dict):
-                    for capability in effect_obj.get("requires", []):
-                        required_capabilities.add(capability)
             if required_capabilities and not has_actor_capabilities:
                 diagnostics.append(
                     Diagnostic(
