@@ -580,9 +580,14 @@ capture important decisions and which parts add unnecessary friction.
 26. [done] Separate tooling from implementations by moving the VS Code
     extension from `implementations/typescript/vscode-extension/` to
     `tooling/vscode-extension/` and updating dependent paths.
-27. [next] Keep reviewing repository structure so authoring/analysis tools stay
+27. [done] Keep reviewing repository structure so authoring/analysis tools stay
     under `tooling/` while execution backends remain under
-    `implementations/<language>/`.
+    `implementations/<language>/`. Added a TypeScript host-language reference
+    implementation slice under `implementations/typescript/src/` and removed
+    VS Code extension remainder references from that folder.
+28. [next] Add focused TypeScript validation coverage for the password-reset
+    derivation proof flow so the TypeScript reference slice stays behaviorally
+    aligned with the language-neutral conformance fixtures.
 
 ## Test strategy
 
