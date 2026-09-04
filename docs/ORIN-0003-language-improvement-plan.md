@@ -537,7 +537,12 @@ capture important decisions and which parts add unnecessary friction.
     documents, and conformance tests assert canonical model equivalence between
     `.orin` source and structured input for password-reset (primary proof) and
     shared-tasks (advanced coverage).
-15. [next] Add the second backend.
+15. [done] Add a password-reset meaning-to-derivation proof run. The Python
+    proof runner now demonstrates one reproducible flow: unresolved
+    consequential ambiguity blocks compilation, resolving that ambiguity
+    enables derivation of two different implementation artifacts, and both
+    variants preserve identical required observable behavior from the shared
+    conformance cases while canonical meaning stays unchanged.
 16. [done] Add the first VS Code extension slice under
     `implementations/typescript/vscode-extension/`: `.orin` language
     registration, syntax highlighting, and an analyzer command backed by the
@@ -572,6 +577,10 @@ capture important decisions and which parts add unnecessary friction.
     authorization and durability failures. Added
     `shared-tasks.validation-cases.json` with unauthorized actor and
     missing/invalid durability model checks.
+26. [next] Add a single language-neutral proof evidence record for the
+    password-reset derivation run (claim IDs, inputs, outputs, and blocking
+    status transitions) so external reviewers can inspect the result without
+    reading host-language code.
 
 ## Test strategy
 

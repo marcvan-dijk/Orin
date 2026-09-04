@@ -45,6 +45,12 @@ Optional host-language execution proof (Python reference only):
 python -m unittest discover -s implementations/python -p "test_*.py"
 ```
 
+Optional host-language derivation proof run (Python reference only):
+
+```bash
+python implementations/python/password_reset_proof.py
+```
+
 ## Repository map
 
 ### Primary (user-facing)
