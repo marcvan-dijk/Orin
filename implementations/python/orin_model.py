@@ -225,6 +225,20 @@ class SemanticModel:
             bindings: list[Any] = []
         else:
             bindings = raw_bindings
+        valid_bindings: list[dict[str, str]] = []
+        for binding in bindings:
+            if not isinstance(binding, dict):
+                diagnostics.append(Diagnostic("ORIN-E038", "workflow actorCapabilities entries must be objects", obj.get("id")))
+                continue
+            actor_name = binding.get("actor")
+            capability_name = binding.get("capability")
+            if not isinstance(actor_name, str) or not isinstance(capability_name, str):
+                diagnostics.append(Diagnostic("ORIN-E038", "workflow actorCapabilities entries require actor and capability strings", obj.get("id")))
+                continue
+            if kinds.get(capability_name) != "capability":
+                diagnostics.append(Diagnostic("ORIN-E035", f"workflow actor capability must reference a capability: {capability_name}", obj.get("id")))
+                continue
+            valid_bindings.append({"actor": actor_name, "capability": capability_name})
         if actor is None:
             if has_actor_capabilities:
                 diagnostics.append(Diagnostic("ORIN-E038", "workflow actorCapabilities require actor declaration", obj.get("id")))
@@ -240,9 +254,9 @@ class SemanticModel:
                 actor_input_valid = False
             if actor_input_valid:
                 bound_capabilities = {
-                    binding.get("capability")
-                    for binding in bindings
-                    if isinstance(binding, dict) and binding.get("actor") == actor
+                    binding["capability"]
+                    for binding in valid_bindings
+                    if binding["actor"] == actor
                 }
                 required_capabilities = set(obj.get("requires", []))
                 for effect in used_effects:
