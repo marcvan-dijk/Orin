@@ -520,9 +520,11 @@ capture important decisions and which parts add unnecessary friction.
 10. [done] Add implementation policies for lowering preferences and prove that
     policy variants preserve canonical semantic behavior while changing the
     reference artifact plan.
-11. [next] Link parsed effects and imports to workflow references and validate
+11. [done] Link parsed effects and imports to workflow references and validate
     their declared capabilities; reject policies that attempt to change
-    semantic behavior.
+    semantic behavior. The parser now resolves workflow `uses` effect
+    references and actor capability bindings; semantic validation now blocks
+    unauthorized actor-capability contracts.
 12. [done] Define a language-neutral multiple-choice guided-question contract
     with explicit effects, affected objects, and accept/edit/reject/defer
     actions.
@@ -546,13 +548,14 @@ capture important decisions and which parts add unnecessary friction.
     conformance scenarios for persistence, relationships, permissions,
     validation, terminal transitions, missing entities, and concurrent
     completion.
-21. [next] Extend the `.orin` parser and semantic model mapping for the
+21. [done] Extend the `.orin` parser and semantic model mapping for the
     structured shared-task entities, relations, workflow contracts, and
-    persistence effects.
+    persistence effects. Shared-task workflows now parse actor-scoped
+    capability bindings, persistence-effect usage, and durability contracts.
 22. [done] Add `examples/shared-tasks.orin` and map its entity fields,
     relation endpoints/cardinality, typed workflow values, and state
     transitions into the validated semantic model.
-23. [next] Bind parsed capabilities and persistence effects to actor-scoped
+23. [done] Bind parsed capabilities and persistence effects to actor-scoped
     workflows and validate the resulting authorization and durability
     contracts.
 24. [done] Refocus the repository around the meaning-first thesis with a
@@ -560,9 +563,11 @@ capture important decisions and which parts add unnecessary friction.
     tighten README/MVP/roadmap positioning, move tooling detail behind
     supporting/internal framing, and trim non-semantic noise from the primary
     example.
-25. [next] Implement item 23 by binding parsed capabilities and persistence
+25. [done] Implement item 23 by binding parsed capabilities and persistence
     effects to actor-scoped workflows, then extend conformance diagnostics for
-    authorization and durability failures.
+    authorization and durability failures. Added
+    `shared-tasks.validation-cases.json` with unauthorized actor and
+    missing/invalid durability model checks.
 
 ## Test strategy
 

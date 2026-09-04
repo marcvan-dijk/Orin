@@ -1,0 +1,124 @@
+{
+  "modelVersion": "0.1.0",
+  "module": {
+    "id": "shared-tasks-validation/module",
+    "kind": "module",
+    "name": "shared-tasks-validation",
+    "status": "accepted"
+  },
+  "objects": [
+    {
+      "id": "shared-tasks-validation/value-type/person-id",
+      "kind": "value-type",
+      "name": "person-id",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks-validation/value-type/task-id",
+      "kind": "value-type",
+      "name": "task-id",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks-validation/entity-type/person",
+      "kind": "entity-type",
+      "name": "person",
+      "status": "accepted",
+      "fields": [
+        {
+          "name": "id",
+          "type": "shared-tasks-validation/value-type/person-id",
+          "identity": true
+        }
+      ]
+    },
+    {
+      "id": "shared-tasks-validation/entity-type/task",
+      "kind": "entity-type",
+      "name": "task",
+      "status": "accepted",
+      "fields": [
+        {
+          "name": "id",
+          "type": "shared-tasks-validation/value-type/task-id",
+          "identity": true
+        }
+      ]
+    },
+    {
+      "id": "shared-tasks-validation/state/open",
+      "kind": "state",
+      "name": "open",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks-validation/state/completed",
+      "kind": "state",
+      "name": "completed",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks-validation/capability/complete-task",
+      "kind": "capability",
+      "name": "complete-task",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks-validation/capability/write-task-state",
+      "kind": "capability",
+      "name": "write-task-state",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks-validation/effect/persistent-entity-store.write.task-state",
+      "kind": "effect",
+      "name": "persistent-entity-store.write.task-state",
+      "status": "accepted",
+      "requires": [
+        "shared-tasks-validation/capability/write-task-state"
+      ],
+      "durability": "strong"
+    },
+    {
+      "id": "shared-tasks-validation/workflow/complete-task",
+      "kind": "workflow",
+      "name": "complete-task",
+      "status": "accepted",
+      "inputs": [
+        {
+          "name": "actor",
+          "type": "shared-tasks-validation/entity-type/person"
+        },
+        {
+          "name": "task",
+          "type": "shared-tasks-validation/entity-type/task"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "task",
+          "type": "shared-tasks-validation/entity-type/task"
+        }
+      ],
+      "actor": "actor",
+      "requires": [
+        "shared-tasks-validation/capability/complete-task"
+      ],
+      "uses": [
+        "shared-tasks-validation/effect/persistent-entity-store.write.task-state"
+      ],
+      "actorCapabilities": [
+        {
+          "actor": "actor",
+          "capability": "shared-tasks-validation/capability/complete-task"
+        }
+      ],
+      "transitions": [
+        {
+          "from": "shared-tasks-validation/state/open",
+          "to": "shared-tasks-validation/state/completed"
+        }
+      ]
+    }
+  ]
+}

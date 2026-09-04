@@ -102,6 +102,20 @@
       "status": "accepted"
     },
     {
+      "id": "shared-tasks/capability/write-task-state",
+      "kind": "capability",
+      "name": "write-task-state",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks/effect/persistent-entity-store.write.task-state",
+      "kind": "effect",
+      "name": "persistent-entity-store.write.task-state",
+      "status": "accepted",
+      "requires": ["shared-tasks/capability/write-task-state"],
+      "durability": "strong"
+    },
+    {
       "id": "shared-tasks/workflow/complete-task",
       "kind": "workflow",
       "name": "complete-task",
@@ -111,7 +125,19 @@
         { "name": "task", "type": "shared-tasks/entity-type/task" }
       ],
       "outputs": [{ "name": "task", "type": "shared-tasks/entity-type/task" }],
+      "actor": "actor",
       "requires": ["shared-tasks/capability/complete-task"],
+      "uses": ["shared-tasks/effect/persistent-entity-store.write.task-state"],
+      "actorCapabilities": [
+        {
+          "actor": "actor",
+          "capability": "shared-tasks/capability/complete-task"
+        },
+        {
+          "actor": "actor",
+          "capability": "shared-tasks/capability/write-task-state"
+        }
+      ],
       "transitions": [
         {
           "from": "shared-tasks/state/open",

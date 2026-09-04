@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from typing import Any
 
+from orin_model import SemanticModel
 from shared_tasks import SharedTasksRuntime, TaskResult
 
 
@@ -44,3 +45,17 @@ def run_case(case: dict[str, Any]) -> dict[str, Any]:
 def run_fixture(path: str | Path) -> list[tuple[str, dict[str, Any], dict[str, Any]]]:
     fixture = json.loads(Path(path).read_text(encoding="utf-8"))
     return [(case["id"], run_case(case), case["then"]) for case in fixture["cases"]]
+
+
+def run_validation_fixture(path: str | Path) -> list[tuple[str, dict[str, Any], dict[str, Any]]]:
+    fixture_path = Path(path)
+    fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+    results: list[tuple[str, dict[str, Any], dict[str, Any]]] = []
+    for case in fixture["cases"]:
+        model = SemanticModel.from_json_file(fixture_path.parent / case["model"])
+        actual = {
+            "compilation": model.compilation_status(),
+            "diagnostics": sorted(diagnostic.code for diagnostic in model.diagnostics()),
+        }
+        results.append((case["id"], actual, case["then"]))
+    return results

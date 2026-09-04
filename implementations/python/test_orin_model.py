@@ -63,29 +63,55 @@ class SemanticModelTests(unittest.TestCase):
 
     def test_entity_requires_typed_identity_field(self):
         document = json.loads(TASKS_FIXTURE.read_text(encoding="utf-8"))
-        document["objects"][4]["fields"][0]["type"] = "missing"
+        person = next(item for item in document["objects"] if item["id"] == "shared-tasks/entity-type/person")
+        person["fields"][0]["type"] = "missing"
 
         self.assertIn("ORIN-E024", [item.code for item in SemanticModel(document).diagnostics()])
 
     def test_invalid_relation_and_transition_are_rejected(self):
         document = json.loads(TASKS_FIXTURE.read_text(encoding="utf-8"))
-        document["objects"][7]["cardinality"] = "invalid"
-        document["objects"][11]["transitions"][0]["to"] = "shared-tasks/state/missing"
+        relation = next(item for item in document["objects"] if item["id"] == "shared-tasks/relation/member-of")
+        workflow = next(item for item in document["objects"] if item["id"] == "shared-tasks/workflow/complete-task")
+        relation["cardinality"] = "invalid"
+        workflow["transitions"][0]["to"] = "shared-tasks/state/missing"
 
         codes = [item.code for item in SemanticModel(document).diagnostics()]
 
         self.assertIn("ORIN-E027", codes)
         self.assertIn("ORIN-E034", codes)
 
+    def test_workflow_actor_capability_bindings_and_effect_durability_are_required(self):
+        document = json.loads(TASKS_FIXTURE.read_text(encoding="utf-8"))
+        workflow = next(item for item in document["objects"] if item["id"] == "shared-tasks/workflow/complete-task")
+        effect = next(item for item in document["objects"] if item["id"] == "shared-tasks/effect/persistent-entity-store.write.task-state")
+
+        workflow["actorCapabilities"] = [
+            {"actor": "actor", "capability": "shared-tasks/capability/complete-task"}
+        ]
+        effect.pop("durability", None)
+        effect["requires"] = ["shared-tasks/capability/write-task-state"]
+
+        codes = [item.code for item in SemanticModel(document).diagnostics()]
+
+        self.assertIn("ORIN-E037", codes)
+        self.assertIn("ORIN-E039", codes)
+
     def test_shared_tasks_source_maps_to_valid_semantic_model(self):
         source = Path(__file__).parents[2] / "examples" / "shared-tasks.orin"
         model = OrinParser().parse_file(source)
 
         self.assertEqual(model.compilation_status(), "eligible")
-        self.assertEqual(model.document["objects"][4]["kind"], "entity-type")
+        self.assertEqual(next(item for item in model.document["objects"] if item["name"] == "person")["kind"], "entity-type")
         workflow = next(item for item in model.document["objects"] if item["kind"] == "workflow" and item["name"] == "complete-task")
+        effect = next(
+            item for item in model.document["objects"]
+            if item["kind"] == "effect" and item["name"] == "persistent-entity-store.write.task-state"
+        )
         self.assertEqual(workflow["inputs"][0]["type"], "shared-tasks/entity-type/person")
         self.assertEqual(workflow["transitions"][0]["to"], "shared-tasks/state/completed")
+        self.assertEqual(workflow["uses"], ["shared-tasks/effect/persistent-entity-store.write.task-state"])
+        self.assertEqual(workflow["actorCapabilities"][1]["capability"], "shared-tasks/capability/write-task-state")
+        self.assertEqual(effect["durability"], "strong")
 
 
 class PasswordResetRuntimeTests(unittest.TestCase):

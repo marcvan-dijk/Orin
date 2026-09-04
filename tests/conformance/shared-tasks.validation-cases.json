@@ -1,0 +1,29 @@
+{
+  "fixtureVersion": "0.1.0",
+  "cases": [
+    {
+      "id": "shared-tasks/validation/unauthorized-actor-capability-binding",
+      "model": "shared-tasks.unauthorized-actor.model.json",
+      "then": {
+        "compilation": "fail",
+        "diagnostics": ["ORIN-E037"]
+      }
+    },
+    {
+      "id": "shared-tasks/validation/missing-persistence-durability",
+      "model": "shared-tasks.missing-durability.model.json",
+      "then": {
+        "compilation": "fail",
+        "diagnostics": ["ORIN-E039"]
+      }
+    },
+    {
+      "id": "shared-tasks/validation/invalid-persistence-durability",
+      "model": "shared-tasks.invalid-durability.model.json",
+      "then": {
+        "compilation": "fail",
+        "diagnostics": ["ORIN-E040"]
+      }
+    }
+  ]
+}

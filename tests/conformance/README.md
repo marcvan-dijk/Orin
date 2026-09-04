@@ -23,4 +23,6 @@ These files are not tied to a parser, runtime, or implementation language.
 
 `shared-tasks.model.json` and `shared-tasks.cases.json` are an advanced/secondary slice and should not replace password-reset as the primary MVP proof path.
 
+`shared-tasks.validation-cases.json` adds advanced model-validation checks for actor-capability authorization and persistence durability contracts.
+
 Host-language runners must remain under `implementations/<language>/` and consume these fixtures unchanged.

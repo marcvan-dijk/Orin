@@ -194,12 +194,27 @@ class OrinParser:
             field, name, value_type = typed_value.groups()
             obj.setdefault(f"{field}s", []).append({"name": name, "type": self._reference(obj, value_type, None)})
             return
+        actor_binding = re.match(r"^bind\s+([\w.-]+)\s+([\w.-]+)$", line)
+        if actor_binding:
+            actor_name, capability = actor_binding.groups()
+            obj.setdefault("actorCapabilities", []).append({"actor": actor_name, "capability": self._reference(obj, capability, "capability")})
+            return
         attribute = re.match(r"^(purpose|guarantee|question|authority|outcome|recovery|given|when|then|impact|severity)\s+(.+)$", line)
         if not attribute:
             if line.startswith("budget "):
                 return
             if line.startswith("requires "):
                 obj.setdefault("requires", []).append(self._reference(obj, line[9:], "capability"))
+                return
+            if line.startswith("uses "):
+                obj.setdefault("uses", []).append(self._reference(obj, line[5:], "effect"))
+                return
+            if line.startswith("actor "):
+                obj["actor"] = line[6:].strip()
+                return
+            durability = re.match(r"^durability\s+([\w.-]+)$", line)
+            if durability:
+                obj["durability"] = durability.group(1)
                 return
             if line.startswith("input "):
                 obj.setdefault("inputs", []).append(line[6:].strip())
