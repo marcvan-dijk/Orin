@@ -34,7 +34,7 @@ __pycache__/
 
 # TypeScript extension dependencies and build output
 node_modules/
-implementations/typescript/vscode-extension/out/
+tooling/vscode-extension/out/
 *.vsix
 
 

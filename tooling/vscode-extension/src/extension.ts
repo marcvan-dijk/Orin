@@ -17,7 +17,7 @@ export function activate(context: vscode.ExtensionContext): void {
         return;
       }
 
-      const repository = path.resolve(context.extensionPath, "..", "..", "..");
+      const repository = path.resolve(context.extensionPath, "..", "..");
       const checker = path.join(
         repository,
         "implementations",
