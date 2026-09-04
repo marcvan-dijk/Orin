@@ -532,8 +532,12 @@ capture important decisions and which parts add unnecessary friction.
     registered, unknown, token expiry, token reuse, duplicate, email failure,
     database failure, and deterministic concurrent requests. The next evidence
     increment must record claim, inputs, and runtime outputs.
-14. [next] Add the structured frontend and model-equivalence tests.
-15. Add the second backend.
+14. [done] Add the structured frontend and model-equivalence tests. The Python
+    structured interchange frontend now loads internal JSON semantic-model
+    documents, and conformance tests assert canonical model equivalence between
+    `.orin` source and structured input for password-reset (primary proof) and
+    shared-tasks (advanced coverage).
+15. [next] Add the second backend.
 16. [done] Add the first VS Code extension slice under
     `implementations/typescript/vscode-extension/`: `.orin` language
     registration, syntax highlighting, and an analyzer command backed by the

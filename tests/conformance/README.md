@@ -25,4 +25,8 @@ These files are not tied to a parser, runtime, or implementation language.
 
 `shared-tasks.validation-cases.json` adds advanced model-validation checks for actor-capability authorization and persistence durability contracts.
 
+`password-reset.structured.json` is an internal/interchange structured frontend artifact used only to prove frontend-to-model equivalence against `examples/password-reset.orin`. It is not a primary beginner authoring format.
+
+`shared-tasks.structured.json` provides the same equivalence proof for advanced coverage only.
+
 Host-language runners must remain under `implementations/<language>/` and consume these fixtures unchanged.

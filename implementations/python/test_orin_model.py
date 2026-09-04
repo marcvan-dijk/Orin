@@ -7,6 +7,7 @@ sys.path.insert(0, str(Path(__file__).parent))
 from orin_model import SemanticModel
 from password_reset import AccountStore, CapabilityDenied, EmailProvider, PasswordResetRuntime, TokenRejected
 from orin_parser import OrinParser, analyze
+from orin_structured_frontend import StructuredOrinFrontend
 from lowering import lower
 from conformance_runner import execute_case, expected_case_result, load_cases
 
@@ -14,6 +15,8 @@ from conformance_runner import execute_case, expected_case_result, load_cases
 FIXTURE = Path(__file__).parents[2] / "tests" / "conformance" / "password-reset.model.json"
 CASES = FIXTURE.parent / "password-reset.cases.json"
 TASKS_FIXTURE = FIXTURE.parent / "shared-tasks.model.json"
+PASSWORD_RESET_STRUCTURED = FIXTURE.parent / "password-reset.structured.json"
+TASKS_STRUCTURED = FIXTURE.parent / "shared-tasks.structured.json"
 
 
 class SemanticModelTests(unittest.TestCase):
@@ -212,6 +215,20 @@ class OrinParserTests(unittest.TestCase):
     def test_invalid_syntax_is_rejected(self):
         with self.assertRaises(ValueError):
             OrinParser().parse("module sample {\n unknown syntax\n}")
+
+
+class FrontendEquivalenceTests(unittest.TestCase):
+    def test_password_reset_text_and_structured_frontends_are_equivalent(self):
+        orin_model = OrinParser().parse_file(Path(__file__).parents[2] / "examples" / "password-reset.orin")
+        structured_model = StructuredOrinFrontend().parse_file(PASSWORD_RESET_STRUCTURED)
+
+        self.assertEqual(orin_model.canonical(), structured_model.canonical())
+
+    def test_shared_tasks_text_and_structured_frontends_are_equivalent(self):
+        orin_model = OrinParser().parse_file(Path(__file__).parents[2] / "examples" / "shared-tasks.orin")
+        structured_model = StructuredOrinFrontend().parse_file(TASKS_STRUCTURED)
+
+        self.assertEqual(orin_model.canonical(), structured_model.canonical())
 
 
 class GeneratedConformanceTests(unittest.TestCase):
