@@ -150,14 +150,14 @@ class SemanticModelTests(unittest.TestCase):
 
         self.assertIn("workflow actorCapabilities actor must match workflow actor: task", messages)
 
-    def test_actor_capability_missing_bindings_do_not_fail_without_contract(self):
+    def test_actor_capability_contract_is_required_for_actor_scoped_workflow(self):
         document = json.loads(TASKS_FIXTURE.read_text(encoding="utf-8"))
         workflow = next(item for item in document["objects"] if item["id"] == "shared-tasks/workflow/complete-task")
         workflow.pop("actorCapabilities", None)
 
-        codes = [item.code for item in SemanticModel(document).diagnostics()]
+        messages = [item.message for item in SemanticModel(document).diagnostics() if item.code == "ORIN-E038"]
 
-        self.assertNotIn("ORIN-E037", codes)
+        self.assertIn("workflow actor requires actorCapabilities contract for required capabilities/effects", messages)
 
     def test_shared_tasks_source_maps_to_valid_semantic_model(self):
         source = Path(__file__).parents[2] / "examples" / "shared-tasks.orin"

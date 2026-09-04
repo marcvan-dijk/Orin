@@ -32,6 +32,14 @@
         "compilation": "fail",
         "diagnostics": ["ORIN-E038"]
       }
+    },
+    {
+      "id": "shared-tasks/validation/missing-actor-capability-contract",
+      "model": "shared-tasks.missing-actor-capabilities.model.json",
+      "then": {
+        "compilation": "fail",
+        "diagnostics": ["ORIN-E038"]
+      }
     }
   ]
 }

@@ -253,6 +253,12 @@ class SemanticModel:
                 diagnostics.append(Diagnostic("ORIN-E038", f"workflow actor input must reference an entity-type: {actor}", obj.get("id")))
                 actor_input_valid = False
             if actor_input_valid:
+                required_capabilities = set(obj.get("requires", []))
+                for effect in used_effects:
+                    effect_obj = objects_by_id.get(effect, {})
+                    if isinstance(effect_obj, dict):
+                        for capability in effect_obj.get("requires", []):
+                            required_capabilities.add(capability)
                 actor_bindings: list[dict[str, str]] = []
                 for binding in valid_bindings:
                     if binding["actor"] != actor:
@@ -265,17 +271,19 @@ class SemanticModel:
                         )
                         continue
                     actor_bindings.append(binding)
-                if has_actor_capabilities:
+                if required_capabilities and not has_actor_capabilities:
+                    diagnostics.append(
+                        Diagnostic(
+                            "ORIN-E038",
+                            "workflow actor requires actorCapabilities contract for required capabilities/effects",
+                            obj.get("id"),
+                        )
+                    )
+                elif has_actor_capabilities:
                     bound_capabilities = {
                         binding["capability"]
                         for binding in actor_bindings
                     }
-                    required_capabilities = set(obj.get("requires", []))
-                    for effect in used_effects:
-                        effect_obj = objects_by_id.get(effect, {})
-                        if isinstance(effect_obj, dict):
-                            for capability in effect_obj.get("requires", []):
-                                required_capabilities.add(capability)
                     missing = sorted(capability for capability in required_capabilities if capability not in bound_capabilities)
                     if missing:
                         diagnostics.append(
