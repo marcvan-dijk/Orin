@@ -43,4 +43,4 @@ The MVP is complete when password-reset demonstrates deterministic meaning, ambi
 
 ## Exact next implementation step
 
-Bind parsed capabilities and persistence effects to actor-scoped workflows, then extend conformance diagnostics for authorization and durability failures.
+Add focused TypeScript validation coverage for the password-reset derivation proof flow so the TypeScript reference slice stays behaviorally aligned with language-neutral conformance fixtures.

@@ -588,6 +588,10 @@ capture important decisions and which parts add unnecessary friction.
 28. [next] Add focused TypeScript validation coverage for the password-reset
     derivation proof flow so the TypeScript reference slice stays behaviorally
     aligned with the language-neutral conformance fixtures.
+29. [done] Add `docs/README.md` as the documentation entry point so
+    `REFOCUS-ASSESSMENT.md` is the first guideline, `ORIN-0003` is the single
+    done/next execution tracker, and roadmap/MVP docs remain supporting
+    references.
 
 ## Test strategy
 
