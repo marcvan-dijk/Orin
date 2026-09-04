@@ -1,8 +1,10 @@
 # Orin
 
-Orin is an experiment in programming for an AI-native world.
+Orin is an experiment in programming software by describing what it should do, rather than manually writing how it should be implemented. AI helps turn those descriptions into working software.
 
-Its core claim is simple: humans should define **program meaning** (intent, behavior, constraints, outcomes), and implementations should be generated and replaceable.
+## Core idea
+
+Instead of developers writing implementation code line-by-line, you write a clear description of what the software should do—its behavior, constraints, and outcomes. AI helps turn those descriptions into working implementations. The key difference: your description stays the primary representation. Generated source code becomes an implementation detail that can change without altering what the software actually does.
 
 ## What Orin is
 
