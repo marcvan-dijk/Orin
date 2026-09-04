@@ -265,25 +265,26 @@ class SemanticModel:
                         )
                         continue
                     actor_bindings.append(binding)
-                bound_capabilities = {
-                    binding["capability"]
-                    for binding in actor_bindings
-                }
-                required_capabilities = set(obj.get("requires", []))
-                for effect in used_effects:
-                    effect_obj = objects_by_id.get(effect, {})
-                    if isinstance(effect_obj, dict):
-                        for capability in effect_obj.get("requires", []):
-                            required_capabilities.add(capability)
-                missing = sorted(capability for capability in required_capabilities if capability not in bound_capabilities)
-                if missing:
-                    diagnostics.append(
-                        Diagnostic(
-                            "ORIN-E037",
-                            f"workflow actor is not bound to required capabilities: {', '.join(missing)}",
-                            obj.get("id"),
+                if has_actor_capabilities:
+                    bound_capabilities = {
+                        binding["capability"]
+                        for binding in actor_bindings
+                    }
+                    required_capabilities = set(obj.get("requires", []))
+                    for effect in used_effects:
+                        effect_obj = objects_by_id.get(effect, {})
+                        if isinstance(effect_obj, dict):
+                            for capability in effect_obj.get("requires", []):
+                                required_capabilities.add(capability)
+                    missing = sorted(capability for capability in required_capabilities if capability not in bound_capabilities)
+                    if missing:
+                        diagnostics.append(
+                            Diagnostic(
+                                "ORIN-E037",
+                                f"workflow actor is not bound to required capabilities: {', '.join(missing)}",
+                                obj.get("id"),
+                            )
                         )
-                    )
 
     def compilation_status(self) -> str:
         diagnostics = self.diagnostics()
