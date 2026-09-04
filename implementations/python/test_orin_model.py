@@ -9,7 +9,7 @@ from password_reset import AccountStore, CapabilityDenied, EmailProvider, Passwo
 from orin_parser import OrinParser, analyze
 from orin_structured_frontend import StructuredOrinFrontend
 from lowering import lower
-from password_reset_proof import run_password_reset_proof
+from password_reset_proof import run_derivation_proof
 from conformance_runner import execute_case, expected_case_result, load_cases
 
 
@@ -326,7 +326,7 @@ class GeneratedConformanceTests(unittest.TestCase):
 
 class PasswordResetProofRunTests(unittest.TestCase):
     def test_password_reset_end_to_end_derivation_proof(self):
-        proof = run_password_reset_proof()
+        proof = run_derivation_proof()
 
         self.assertEqual(proof["blockedCompilation"], "blocked")
         self.assertEqual(proof["resolvedCompilation"], "eligible")

@@ -87,6 +87,8 @@ def run_derivation_proof() -> dict[str, Any]:
     if len({json.dumps(item["derived"], sort_keys=True) for item in variant_outputs}) < 2:
         raise AssertionError("derived artifacts should differ across policy variants")
     first_behavior = variant_outputs[0]["behavior"]
+    if not first_behavior:
+        raise AssertionError("cases fixture must include at least one non-compile behavior case")
     if any(item["behavior"] != first_behavior for item in variant_outputs[1:]):
         raise AssertionError("observable behavior should remain equal across policy variants")
     canonical_stable = all(item["canonical"] == variant_outputs[0]["canonical"] for item in variant_outputs[1:])
@@ -105,11 +107,6 @@ def run_derivation_proof() -> dict[str, Any]:
 def main() -> int:
     print(json.dumps(run_derivation_proof(), indent=2))
     return 0
-
-
-def run_password_reset_proof() -> dict[str, Any]:
-    """Backward-compatible wrapper for existing tests/imports."""
-    return run_derivation_proof()
 
 
 if __name__ == "__main__":
