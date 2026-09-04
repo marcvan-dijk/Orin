@@ -1,5 +1,6 @@
 module shared-tasks {
   purpose "People can share and complete tasks with controlled access."
+  import persistent-entity-store
 
   type person-id
   type list-name
@@ -29,12 +30,22 @@ module shared-tasks {
   state open
   state completed
   capability complete-task
+  capability write-task-state
+
+  effect persistent-entity-store.write.task-state {
+    requires write-task-state
+    durability strong
+  }
 
   workflow complete-task {
     input actor person
     input task task
     output task task
+    actor actor
     requires complete-task
+    uses persistent-entity-store.write.task-state
+    bind actor complete-task
+    bind actor write-task-state
     transition open -> completed
   }
 }

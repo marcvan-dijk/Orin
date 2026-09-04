@@ -32,6 +32,12 @@ Human tries to understand and maintain it
 
 If AI can increasingly handle implementation, asking humans to understand every implementation detail may eventually become the wrong abstraction.
 
+Optional host-language derivation proof run (Python reference only):
+
+```bash
+python implementations/python/password_reset_proof.py
+```
+
 Orin explores a different model:
 
 ```text

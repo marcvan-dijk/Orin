@@ -38,6 +38,9 @@ class SemanticModel:
     def canonical(self) -> dict[str, Any]:
         canonical = deepcopy(self.document)
         canonical.pop("implementationPolicies", None)
+        module = canonical.get("module")
+        if isinstance(module, dict):
+            module.pop("implementationPolicies", None)
         self._remove_metadata(canonical)
         objects = canonical.get("objects", [])
         for obj in objects:
@@ -98,6 +101,7 @@ class SemanticModel:
                         diagnostics.append(Diagnostic("ORIN-E007", f"unknown reference: {target_id}", source_id))
 
         kinds = {obj.get("id"): obj.get("kind") for obj in objects if isinstance(obj, dict)}
+        objects_by_id = {obj.get("id"): obj for obj in objects if isinstance(obj, dict)}
         for obj in objects:
             if not isinstance(obj, dict):
                 continue
@@ -109,8 +113,10 @@ class SemanticModel:
                 self._validate_entity(obj, kinds, diagnostics)
             elif kind == "relation":
                 self._validate_relation(obj, kinds, diagnostics)
+            elif kind == "effect":
+                self._validate_effect(obj, kinds, diagnostics)
             elif kind == "workflow":
-                self._validate_workflow(obj, kinds, diagnostics)
+                self._validate_workflow(obj, kinds, objects_by_id, diagnostics)
 
         for obj in objects:
             if (
@@ -162,7 +168,25 @@ class SemanticModel:
             diagnostics.append(Diagnostic("ORIN-E027", f"invalid relation cardinality: {obj.get('cardinality')}", obj.get("id")))
 
     @staticmethod
-    def _validate_workflow(obj: dict[str, Any], kinds: dict[str, str], diagnostics: list[Diagnostic]) -> None:
+    def _validate_effect(obj: dict[str, Any], kinds: dict[str, str], diagnostics: list[Diagnostic]) -> None:
+        for capability in obj.get("requires", []):
+            if kinds.get(capability) != "capability":
+                diagnostics.append(Diagnostic("ORIN-E035", f"effect capability must reference a capability: {capability}", obj.get("id")))
+        effect_name = obj.get("name", "")
+        if isinstance(effect_name, str) and effect_name.startswith("persistent-entity-store."):
+            durability = obj.get("durability")
+            if durability is None:
+                diagnostics.append(Diagnostic("ORIN-E039", "persistence effect requires durability contract", obj.get("id")))
+            elif durability not in {"strong", "eventual"}:
+                diagnostics.append(Diagnostic("ORIN-E040", f"invalid durability contract: {durability}", obj.get("id")))
+
+    @staticmethod
+    def _validate_workflow(
+        obj: dict[str, Any],
+        kinds: dict[str, str],
+        objects_by_id: dict[str, dict[str, Any]],
+        diagnostics: list[Diagnostic],
+    ) -> None:
         for field_name in ("inputs", "outputs"):
             values = obj.get(field_name)
             if values is None:
@@ -190,6 +214,98 @@ class SemanticModel:
         for capability in obj.get("requires", []):
             if kinds.get(capability) != "capability":
                 diagnostics.append(Diagnostic("ORIN-E035", f"workflow capability must reference a capability: {capability}", obj.get("id")))
+        used_effects: list[str] = []
+        for effect in obj.get("uses", []):
+            if kinds.get(effect) != "effect":
+                diagnostics.append(Diagnostic("ORIN-E036", f"workflow uses must reference an effect: {effect}", obj.get("id")))
+            else:
+                used_effects.append(effect)
+        required_capabilities = set(obj.get("requires", []))
+        for effect in used_effects:
+            effect_obj = objects_by_id.get(effect, {})
+            if isinstance(effect_obj, dict):
+                for capability in effect_obj.get("requires", []):
+                    required_capabilities.add(capability)
+        actor = obj.get("actor")
+        has_actor_capabilities = "actorCapabilities" in obj
+        raw_bindings = obj.get("actorCapabilities", [])
+        if not isinstance(raw_bindings, list):
+            diagnostics.append(Diagnostic("ORIN-E038", "workflow actorCapabilities must be a list", obj.get("id")))
+            bindings: list[Any] = []
+        else:
+            bindings = raw_bindings
+        valid_bindings: list[dict[str, str]] = []
+        for binding in bindings:
+            if not isinstance(binding, dict):
+                diagnostics.append(Diagnostic("ORIN-E038", "workflow actorCapabilities entries must be objects", obj.get("id")))
+                continue
+            actor_name = binding.get("actor")
+            capability_name = binding.get("capability")
+            if not isinstance(actor_name, str) or not isinstance(capability_name, str):
+                diagnostics.append(Diagnostic("ORIN-E038", "workflow actorCapabilities entries require actor and capability strings", obj.get("id")))
+                continue
+            if kinds.get(capability_name) != "capability":
+                diagnostics.append(Diagnostic("ORIN-E035", f"workflow actor capability must reference a capability: {capability_name}", obj.get("id")))
+                continue
+            valid_bindings.append({"actor": actor_name, "capability": capability_name})
+        if actor is None:
+            if has_actor_capabilities:
+                diagnostics.append(Diagnostic("ORIN-E038", "workflow actorCapabilities require actor declaration", obj.get("id")))
+        elif not isinstance(actor, str):
+            diagnostics.append(Diagnostic("ORIN-E038", "workflow actor must be a string input name", obj.get("id")))
+            if required_capabilities and not has_actor_capabilities:
+                diagnostics.append(
+                    Diagnostic(
+                        "ORIN-E038",
+                        "workflow actor requires actorCapabilities contract for required capabilities/effects",
+                        obj.get("id"),
+                    )
+                )
+        else:
+            if required_capabilities and not has_actor_capabilities:
+                diagnostics.append(
+                    Diagnostic(
+                        "ORIN-E038",
+                        "workflow actor requires actorCapabilities contract for required capabilities/effects",
+                        obj.get("id"),
+                    )
+                )
+            inputs = obj.get("inputs", [])
+            actor_inputs = [value for value in inputs if isinstance(value, dict) and value.get("name") == actor]
+            actor_input_valid = True
+            if not actor_inputs:
+                diagnostics.append(Diagnostic("ORIN-E038", f"workflow actor must reference a declared input: {actor}", obj.get("id")))
+                actor_input_valid = False
+            elif kinds.get(actor_inputs[0].get("type")) != "entity-type":
+                diagnostics.append(Diagnostic("ORIN-E038", f"workflow actor input must reference an entity-type: {actor}", obj.get("id")))
+                actor_input_valid = False
+            if actor_input_valid:
+                actor_bindings: list[dict[str, str]] = []
+                for binding in valid_bindings:
+                    if binding["actor"] != actor:
+                        diagnostics.append(
+                            Diagnostic(
+                                "ORIN-E038",
+                                f"workflow actorCapabilities actor must match workflow actor: {binding['actor']}",
+                                obj.get("id"),
+                            )
+                        )
+                        continue
+                    actor_bindings.append(binding)
+                if has_actor_capabilities:
+                    bound_capabilities = {
+                        binding["capability"]
+                        for binding in actor_bindings
+                    }
+                    missing = sorted(capability for capability in required_capabilities if capability not in bound_capabilities)
+                    if missing:
+                        diagnostics.append(
+                            Diagnostic(
+                                "ORIN-E037",
+                                f"workflow actor is not bound to required capabilities: {', '.join(missing)}",
+                                obj.get("id"),
+                            )
+                        )
 
     def compilation_status(self) -> str:
         diagnostics = self.diagnostics()

@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 
 from shared_tasks import SharedTasksRuntime
-from shared_tasks_conformance import run_fixture
+from shared_tasks_conformance import run_fixture, run_validation_fixture
 
 
 class SharedTasksRuntimeTests(unittest.TestCase):
@@ -58,6 +58,14 @@ class SharedTasksConformanceTests(unittest.TestCase):
         for case_id, actual, expected in run_fixture(fixture):
             with self.subTest(case=case_id):
                 self.assertEqual(actual, expected)
+
+    def test_language_neutral_validation_cases_drive_semantic_diagnostics(self):
+        fixture = Path(__file__).parents[2] / "tests" / "conformance" / "shared-tasks.validation-cases.json"
+
+        for case_id, actual, expected in run_validation_fixture(fixture):
+            with self.subTest(case=case_id):
+                self.assertEqual(actual["compilation"], expected["compilation"])
+                self.assertEqual(sorted(actual["diagnostics"]), sorted(expected["diagnostics"]))
 
 
 if __name__ == "__main__":

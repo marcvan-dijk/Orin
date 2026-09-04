@@ -6,7 +6,8 @@ from orin_model import SemanticModel
 
 
 def lower(model: SemanticModel) -> dict[str, Any]:
-    policies = model.document.get("implementationPolicies", {})
+    module = model.document.get("module", {})
+    policies = module.get("implementationPolicies", model.document.get("implementationPolicies", {}))
     return {
         "behavior": model.canonical(),
         "artifact": {
