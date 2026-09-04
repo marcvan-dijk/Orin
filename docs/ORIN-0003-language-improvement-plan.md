@@ -544,7 +544,7 @@ capture important decisions and which parts add unnecessary friction.
     variants preserve identical required observable behavior from the shared
     conformance cases while canonical meaning stays unchanged.
 16. [done] Add the first VS Code extension slice under
-    `implementations/typescript/vscode-extension/`: `.orin` language
+    `tooling/vscode-extension/`: `.orin` language
     registration, syntax highlighting, and an analyzer command backed by the
     optional reference checker. Keep future editor features focused on
     progressive formalization and reviewable semantic changes.
@@ -577,10 +577,12 @@ capture important decisions and which parts add unnecessary friction.
     authorization and durability failures. Added
     `shared-tasks.validation-cases.json` with unauthorized actor and
     missing/invalid durability model checks.
-26. [next] Add a single language-neutral proof evidence record for the
-    password-reset derivation run (claim IDs, inputs, outputs, and blocking
-    status transitions) so external reviewers can inspect the result without
-    reading host-language code.
+26. [done] Separate tooling from implementations by moving the VS Code
+    extension from `implementations/typescript/vscode-extension/` to
+    `tooling/vscode-extension/` and updating dependent paths.
+27. [next] Keep reviewing repository structure so authoring/analysis tools stay
+    under `tooling/` while execution backends remain under
+    `implementations/<language>/`.
 
 ## Test strategy
 

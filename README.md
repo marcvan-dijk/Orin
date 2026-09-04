@@ -327,6 +327,21 @@ Expect breaking changes and incomplete functionality.
 
 ---
 
+# Repository structure
+
+Orin keeps **execution implementations** and **authoring/analysis tooling**
+separate:
+
+- `implementations/` contains host-language backends that execute or generate
+  artifacts from the same Orin semantic meaning.
+- `tooling/` contains authoring, inspection, and analysis tools that operate on
+  that same meaning.
+
+This means multiple tools can help author and review one Orin program, while
+multiple implementations can execute that same program meaning.
+
+---
+
 # Contributing
 
 Orin is still in an exploratory stage.
