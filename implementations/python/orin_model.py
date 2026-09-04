@@ -253,10 +253,21 @@ class SemanticModel:
                 diagnostics.append(Diagnostic("ORIN-E038", f"workflow actor input must reference an entity-type: {actor}", obj.get("id")))
                 actor_input_valid = False
             if actor_input_valid:
+                actor_bindings: list[dict[str, str]] = []
+                for binding in valid_bindings:
+                    if binding["actor"] != actor:
+                        diagnostics.append(
+                            Diagnostic(
+                                "ORIN-E038",
+                                f"workflow actorCapabilities actor must match workflow actor: {binding['actor']}",
+                                obj.get("id"),
+                            )
+                        )
+                        continue
+                    actor_bindings.append(binding)
                 bound_capabilities = {
                     binding["capability"]
-                    for binding in valid_bindings
-                    if binding["actor"] == actor
+                    for binding in actor_bindings
                 }
                 required_capabilities = set(obj.get("requires", []))
                 for effect in used_effects:

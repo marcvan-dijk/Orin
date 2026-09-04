@@ -24,6 +24,14 @@
         "compilation": "fail",
         "diagnostics": ["ORIN-E040"]
       }
+    },
+    {
+      "id": "shared-tasks/validation/invalid-actor-binding-reference",
+      "model": "shared-tasks.invalid-binding-actor.model.json",
+      "then": {
+        "compilation": "fail",
+        "diagnostics": ["ORIN-E038"]
+      }
     }
   ]
 }
