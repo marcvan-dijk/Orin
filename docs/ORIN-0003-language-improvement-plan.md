@@ -533,7 +533,7 @@ capture important decisions and which parts add unnecessary friction.
 14. [next] Add the structured frontend and model-equivalence tests.
 15. Add the second backend.
 16. [done] Add the first VS Code extension slice under
-    `implementations/typescript/vscode-extension/`: `.orin` language
+    `tooling/vscode-extension/`: `.orin` language
     registration, syntax highlighting, and an analyzer command backed by the
     optional reference checker. Keep future editor features focused on
     progressive formalization and reviewable semantic changes.
@@ -563,6 +563,12 @@ capture important decisions and which parts add unnecessary friction.
 25. [next] Implement item 23 by binding parsed capabilities and persistence
     effects to actor-scoped workflows, then extend conformance diagnostics for
     authorization and durability failures.
+26. [done] Separate tooling from implementations by moving the VS Code
+    extension from `implementations/typescript/vscode-extension/` to
+    `tooling/vscode-extension/` and updating dependent paths.
+27. [next] Keep reviewing repository structure so authoring/analysis tools stay
+    under `tooling/` while execution backends remain under
+    `implementations/<language>/`.
 
 ## Test strategy
 
