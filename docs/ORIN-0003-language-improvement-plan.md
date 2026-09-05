@@ -643,15 +643,20 @@ capture important decisions and which parts add unnecessary friction.
     object identity and message ordering are validated without the shared-task
     conformance harness. Added direct `ORIN-E046` diagnostic-entry assertions
     using `shared-tasks.rule-contradiction-multi.model.json`.
-39. [post-mvp-next] Add a dedicated TypeScript semantic-model unit test module
-    for multi-contradiction `ORIN-E046` diagnostic-entry assertions
-    independent of the shared-task fixture harness.
+39. [done] Add a dedicated TypeScript semantic-model unit test module for
+    multi-contradiction `ORIN-E046` diagnostic-entry assertions independent of
+    the shared-task fixture harness. Added
+    `implementations/typescript/src/orin_model_rule_contradiction.test.ts`
+    with direct `SemanticModel` assertions for deterministic diagnostic-entry
+    ordering and full entry identity (`code`, `objectId`, `message`).
 
 ### Current status after reevaluation
 
 - **Current project scope (password-reset MVP):** complete.
 - **Remaining tasks in current project scope:** `0`.
-- **Open post-MVP backlog tasks in this sequence:** `1` (item 39).
+- **Open post-MVP backlog tasks in this sequence:** `0`.
+- **Exact next step:** define the next ORIN-0003 post-MVP backlog task before
+  starting additional implementation increments.
 
 ## Test strategy
 
