@@ -25,6 +25,28 @@ function resolveRateLimit(model: SemanticModel): SemanticModel {
   return new SemanticModel(next);
 }
 
+function deepEqual(left: unknown, right: unknown): boolean {
+  if (left === right) {
+    return true;
+  }
+  if (typeof left !== "object" || left === null || typeof right !== "object" || right === null) {
+    return false;
+  }
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) {
+      return false;
+    }
+    return left.every((item, index) => deepEqual(item, right[index]));
+  }
+  const leftEntries = Object.entries(left as Record<string, unknown>);
+  const rightEntries = Object.entries(right as Record<string, unknown>);
+  if (leftEntries.length !== rightEntries.length) {
+    return false;
+  }
+  const rightMap = new Map<string, unknown>(rightEntries);
+  return leftEntries.every(([key, value]) => rightMap.has(key) && deepEqual(value, rightMap.get(key)));
+}
+
 function behaviorResults(model: SemanticModel, casesFixture: Record<string, any>): Array<Record<string, any>> {
   const results: Array<Record<string, any>> = [];
   for (const conformanceCase of casesFixture.cases || []) {
@@ -33,7 +55,7 @@ function behaviorResults(model: SemanticModel, casesFixture: Record<string, any>
     }
     const actual = executeCase(model, conformanceCase);
     for (const [key, expected] of Object.entries(conformanceCase.then || {})) {
-      if (JSON.stringify(actual[key]) !== JSON.stringify(expected)) {
+      if (!deepEqual(actual[key], expected)) {
         throw new Error(`case ${conformanceCase.id} mismatch for '${key}'`);
       }
     }
