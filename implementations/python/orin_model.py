@@ -4,6 +4,7 @@ from copy import deepcopy
 from dataclasses import dataclass
 import json
 from pathlib import Path
+import re
 from typing import Any
 
 
@@ -329,7 +330,9 @@ class SemanticModel:
 
     @staticmethod
     def _normalize_claim_text(text: str) -> str:
-        return " ".join(text.strip().split())
+        normalized = " ".join(text.strip().split())
+        normalized = re.sub(r"[.,;:!?]+$", "", normalized)
+        return " ".join(normalized.strip().split())
 
     @staticmethod
     def _claim_signature(claim: Any) -> tuple[str, bool] | None:
