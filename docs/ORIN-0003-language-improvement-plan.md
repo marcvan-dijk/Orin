@@ -141,7 +141,7 @@ just editor presentation.
 
 ### Workstream B: Minimal executable kernel
 
-Implement only the concepts needed for the first complete workflow:
+Implement only the concepts needed for password-reset (the MVP proof's first complete workflow):
 
 1. `module`
 2. `purpose`
