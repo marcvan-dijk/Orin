@@ -501,9 +501,12 @@ capture important decisions and which parts add unnecessary friction.
 3. [done] Add language-level fixtures under `tests/conformance/`; keep any future
    host-language runners separate from the fixtures.
 4. [in progress] Implement the semantic validator; entity field/identity
-   schemas, relation endpoints/cardinality, typed workflow values, and state
-   transition checks now cover the shared-task model. Add capability binding,
-   persistence contracts, and readiness diagnostics.
+   schemas, relation endpoints/cardinality, typed workflow values, state
+   transition checks, actor capability binding, persistence contracts, and an
+   initial readiness diagnostic for orphaned effect declarations now cover the
+   shared-task model. Next step: extend readiness diagnostics to additional
+   declaration kinds (for example orphaned capabilities and states) with stable
+   fixture-driven assertions.
 5. [done] Make unresolved `rate-limit` block compilation.
 6. [done] Implement the minimal `.orin` parser and analyzer in the separate
    `implementations/python/` host-language folder. It parses the password-reset
@@ -595,9 +598,15 @@ capture important decisions and which parts add unnecessary friction.
     `REFOCUS-ASSESSMENT.md` is the first guideline, `ORIN-0003` is the single
     done/next execution tracker, and roadmap/MVP docs remain supporting
     references.
-30. [next] Keep the TypeScript proof runner executable directly with
+30. [done] Keep the TypeScript proof runner executable directly with
     `node --experimental-strip-types` and add fixture-driven diagnostics
-    assertions for parity with Python when semantic validation coverage expands.
+    assertions for parity with Python semantic validation. Added
+    `implementations/typescript/src/shared_tasks_validation.test.ts`,
+    expanded `implementations/typescript/src/orin_model.ts` diagnostics parity
+    checks, and added direct-execution proof runner coverage.
+31. [next] Extend readiness diagnostics beyond orphaned effects to additional
+    declaration kinds with stable fixture-driven assertions shared across
+    Python and TypeScript validation runners.
 
 ## Test strategy
 

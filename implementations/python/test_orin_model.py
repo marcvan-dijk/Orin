@@ -180,6 +180,21 @@ class SemanticModelTests(unittest.TestCase):
 
         self.assertIn("workflow actor must be a string input name", messages)
 
+    def test_orphaned_effect_is_reported_by_readiness_diagnostics(self):
+        document = json.loads(TASKS_FIXTURE.read_text(encoding="utf-8"))
+        document["objects"].append({
+            "id": "shared-tasks/effect/persistent-entity-store.write.audit-log",
+            "kind": "effect",
+            "name": "persistent-entity-store.write.audit-log",
+            "status": "accepted",
+            "requires": ["shared-tasks/capability/write-task-state"],
+            "durability": "strong",
+        })
+
+        model = SemanticModel(document)
+        self.assertIn("ORIN-E042", [item.code for item in model.diagnostics()])
+        self.assertEqual(model.compilation_status(), "fail")
+
     def test_shared_tasks_source_maps_to_valid_semantic_model(self):
         source = Path(__file__).parents[2] / "examples" / "shared-tasks.orin"
         model = OrinParser().parse_file(source)

@@ -12,6 +12,7 @@ DECLARATION_KINDS = {
     "value-type", "entity-type", "relation", "state", "capability", "effect",
     "rule", "workflow", "example", "uncertainty", "target", "evidence",
 }
+READINESS_DRIVER_KINDS = {"workflow", "rule", "example"}
 
 
 @dataclass(frozen=True)
@@ -132,7 +133,32 @@ class SemanticModel:
                         obj.get("id"),
                     )
                 )
+        readiness_references = self._collect_readiness_references(objects)
+        for obj in objects:
+            if not isinstance(obj, dict) or obj.get("kind") != "effect":
+                continue
+            object_id = obj.get("id")
+            if isinstance(object_id, str) and object_id not in readiness_references:
+                diagnostics.append(
+                    Diagnostic(
+                        "ORIN-E042",
+                        "effect declaration is not referenced by any workflow/rule/example",
+                        object_id,
+                    )
+                )
         return diagnostics
+
+    @staticmethod
+    def _collect_readiness_references(objects: list[Any]) -> set[str]:
+        references: set[str] = set()
+        for obj in objects:
+            if not isinstance(obj, dict) or obj.get("kind") not in READINESS_DRIVER_KINDS:
+                continue
+            for field in REFERENCE_FIELDS:
+                values = obj.get(field, [])
+                if isinstance(values, list):
+                    references.update(value for value in values if isinstance(value, str))
+        return references
 
     @staticmethod
     def _validate_entity(obj: dict[str, Any], kinds: dict[str, str], diagnostics: list[Diagnostic]) -> None:

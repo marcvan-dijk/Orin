@@ -1,5 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import { spawnSync } from "node:child_process";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
@@ -11,6 +12,7 @@ import { runDerivationProof } from "./password_reset_proof.ts";
 const ROOT = resolve(fileURLToPath(new URL("../../..", import.meta.url)));
 const MODEL_FIXTURE = resolve(ROOT, "tests/conformance/password-reset.model.json");
 const CASES_FIXTURE = resolve(ROOT, "tests/conformance/password-reset.cases.json");
+const PROOF_RUNNER = resolve(ROOT, "implementations/typescript/src/password_reset_proof.ts");
 
 function loadJson(path: string): Record<string, any> {
   return JSON.parse(readFileSync(path, "utf-8"));
@@ -55,4 +57,12 @@ test("resolved model executes every non-compile conformance assertion", () => {
       assert.deepEqual(actual[key], expected, `case ${conformanceCase.id} mismatch for '${key}'`);
     }
   }
+});
+
+test("proof runner is directly executable with node --experimental-strip-types", () => {
+  const result = spawnSync(process.execPath, ["--experimental-strip-types", PROOF_RUNNER], { encoding: "utf-8" });
+  assert.equal(result.status, 0, result.stderr);
+  const proof = JSON.parse(result.stdout);
+  assert.equal(proof.blockedCompilation, "blocked");
+  assert.equal(proof.resolvedCompilation, "eligible");
 });

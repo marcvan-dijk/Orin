@@ -40,6 +40,14 @@
         "compilation": "fail",
         "diagnostics": ["ORIN-E038"]
       }
+    },
+    {
+      "id": "shared-tasks/validation/orphaned-effect",
+      "model": "shared-tasks.orphaned-effect.model.json",
+      "then": {
+        "compilation": "fail",
+        "diagnostics": ["ORIN-E042"]
+      }
     }
   ]
 }

@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { fileURLToPath } from "node:url";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
 import { executeCase } from "./conformance_runner.ts";
 import { lower } from "./lowering.ts";
@@ -128,4 +128,13 @@ export function runDerivationProof(): Record<string, any> {
     })),
     behaviorCases: variantOutputs[0].behavior.map((item) => item.id),
   };
+}
+
+function isDirectExecution(): boolean {
+  const entry = process.argv[1];
+  return !!entry && import.meta.url === pathToFileURL(resolve(entry)).href;
+}
+
+if (isDirectExecution()) {
+  console.log(JSON.stringify(runDerivationProof(), null, 2));
 }

@@ -4,6 +4,9 @@ export type Diagnostic = {
   objectId?: string;
 };
 
+const READINESS_DRIVER_KINDS = new Set(["workflow", "rule", "example"]);
+const REFERENCE_FIELDS = ["affects", "constrainedBy", "demonstrates", "requires", "uses", "verifies"];
+
 export class SemanticModel {
   document: Record<string, any>;
 
@@ -28,9 +31,35 @@ export class SemanticModel {
 
   diagnostics(): Diagnostic[] {
     const diagnostics: Diagnostic[] = [];
-    for (const obj of this.document.objects || []) {
+    const objects = Array.isArray(this.document.objects) ? this.document.objects : [];
+    const kinds = new Map<string, string>();
+    const objectsById = new Map<string, Record<string, any>>();
+    const readinessReferences = new Set<string>();
+
+    for (const obj of objects) {
+      if (obj && typeof obj.id === "string" && typeof obj.kind === "string") {
+        kinds.set(obj.id, obj.kind);
+        objectsById.set(obj.id, obj);
+      }
+      if (obj && typeof obj === "object" && READINESS_DRIVER_KINDS.has(obj.kind)) {
+        for (const field of REFERENCE_FIELDS) {
+          const values = obj[field];
+          if (Array.isArray(values)) {
+            for (const value of values) {
+              if (typeof value === "string") {
+                readinessReferences.add(value);
+              }
+            }
+          }
+        }
+      }
+    }
+
+    for (const obj of objects) {
+      if (!obj || typeof obj !== "object") {
+        continue;
+      }
       if (
-        obj &&
         obj.kind === "uncertainty" &&
         obj.consequential === true &&
         obj.status === "unresolved"
@@ -41,12 +70,177 @@ export class SemanticModel {
           objectId: obj.id,
         });
       }
+      if (obj.kind === "effect") {
+        const effectName = typeof obj.name === "string" ? obj.name : "";
+        if (effectName.startsWith("persistent-entity-store.")) {
+          const durability = obj.durability;
+          if (durability === undefined || durability === null) {
+            diagnostics.push({
+              code: "ORIN-E039",
+              message: "persistence effect requires durability contract",
+              objectId: obj.id,
+            });
+          } else if (durability !== "strong" && durability !== "eventual") {
+            diagnostics.push({
+              code: "ORIN-E040",
+              message: `invalid durability contract: ${durability}`,
+              objectId: obj.id,
+            });
+          }
+        }
+      }
+      if (obj.kind === "workflow") {
+        this.validateWorkflow(obj, kinds, objectsById, diagnostics);
+      }
+    }
+    for (const obj of objects) {
+      if (!obj || typeof obj !== "object" || obj.kind !== "effect") {
+        continue;
+      }
+      if (typeof obj.id === "string" && !readinessReferences.has(obj.id)) {
+        diagnostics.push({
+          code: "ORIN-E042",
+          message: "effect declaration is not referenced by any workflow/rule/example",
+          objectId: obj.id,
+        });
+      }
     }
     return diagnostics;
   }
 
-  compilationStatus(): "blocked" | "eligible" {
-    return this.diagnostics().some((item) => item.code === "ORIN-E041") ? "blocked" : "eligible";
+  compilationStatus(): "blocked" | "fail" | "eligible" {
+    const diagnostics = this.diagnostics();
+    if (diagnostics.some((item) => item.code === "ORIN-E041")) {
+      return "blocked";
+    }
+    return diagnostics.length > 0 ? "fail" : "eligible";
+  }
+
+  private validateWorkflow(
+    workflow: Record<string, any>,
+    kinds: Map<string, string>,
+    objectsById: Map<string, Record<string, any>>,
+    diagnostics: Diagnostic[],
+  ): void {
+    const requiredCapabilities = new Set<string>(
+      Array.isArray(workflow.requires) ? workflow.requires.filter((item: unknown) => typeof item === "string") : [],
+    );
+    const usedEffects = Array.isArray(workflow.uses) ? workflow.uses.filter((item: unknown) => typeof item === "string") : [];
+    for (const effectId of usedEffects) {
+      const effect = objectsById.get(effectId);
+      if (effect && Array.isArray(effect.requires)) {
+        for (const capability of effect.requires) {
+          if (typeof capability === "string") {
+            requiredCapabilities.add(capability);
+          }
+        }
+      }
+    }
+
+    const actor = workflow.actor;
+    const hasActorCapabilities = Object.prototype.hasOwnProperty.call(workflow, "actorCapabilities");
+    const rawBindings = workflow.actorCapabilities ?? [];
+    const bindings = Array.isArray(rawBindings) ? rawBindings : [];
+    if (!Array.isArray(rawBindings)) {
+      diagnostics.push({
+        code: "ORIN-E038",
+        message: "workflow actorCapabilities must be a list",
+        objectId: workflow.id,
+      });
+    }
+
+    const validBindings: Array<{ actor: string; capability: string }> = [];
+    for (const binding of bindings) {
+      if (!binding || typeof binding !== "object") {
+        diagnostics.push({
+          code: "ORIN-E038",
+          message: "workflow actorCapabilities entries must be objects",
+          objectId: workflow.id,
+        });
+        continue;
+      }
+      const bindingActor = binding.actor;
+      const bindingCapability = binding.capability;
+      if (typeof bindingActor !== "string" || typeof bindingCapability !== "string") {
+        diagnostics.push({
+          code: "ORIN-E038",
+          message: "workflow actorCapabilities entries require actor and capability strings",
+          objectId: workflow.id,
+        });
+        continue;
+      }
+      validBindings.push({ actor: bindingActor, capability: bindingCapability });
+    }
+
+    if (actor === undefined || actor === null) {
+      if (hasActorCapabilities) {
+        diagnostics.push({
+          code: "ORIN-E038",
+          message: "workflow actorCapabilities require actor declaration",
+          objectId: workflow.id,
+        });
+      }
+      return;
+    }
+    if (typeof actor !== "string") {
+      diagnostics.push({
+        code: "ORIN-E038",
+        message: "workflow actor must be a string input name",
+        objectId: workflow.id,
+      });
+      return;
+    }
+    if (requiredCapabilities.size > 0 && !hasActorCapabilities) {
+      diagnostics.push({
+        code: "ORIN-E038",
+        message: "workflow actor requires actorCapabilities contract for required capabilities/effects",
+        objectId: workflow.id,
+      });
+    }
+
+    const inputs = Array.isArray(workflow.inputs) ? workflow.inputs : [];
+    const actorInput = inputs.find((value) => value && typeof value === "object" && value.name === actor);
+    if (!actorInput) {
+      diagnostics.push({
+        code: "ORIN-E038",
+        message: `workflow actor must reference a declared input: ${actor}`,
+        objectId: workflow.id,
+      });
+      return;
+    }
+    if (kinds.get(actorInput.type) !== "entity-type") {
+      diagnostics.push({
+        code: "ORIN-E038",
+        message: `workflow actor input must reference an entity-type: ${actor}`,
+        objectId: workflow.id,
+      });
+      return;
+    }
+
+    const actorBindings: Array<{ actor: string; capability: string }> = [];
+    for (const binding of validBindings) {
+      if (binding.actor !== actor) {
+        diagnostics.push({
+          code: "ORIN-E038",
+          message: `workflow actorCapabilities actor must match workflow actor: ${binding.actor}`,
+          objectId: workflow.id,
+        });
+        continue;
+      }
+      actorBindings.push(binding);
+    }
+    if (!hasActorCapabilities) {
+      return;
+    }
+    const boundCapabilities = new Set(actorBindings.map((binding) => binding.capability));
+    const missing = [...requiredCapabilities].filter((capability) => !boundCapabilities.has(capability)).sort();
+    if (missing.length > 0) {
+      diagnostics.push({
+        code: "ORIN-E037",
+        message: `workflow actor is not bound to required capabilities: ${missing.join(", ")}`,
+        objectId: workflow.id,
+      });
+    }
   }
 
   private removeMetadata(value: any): void {
