@@ -50,6 +50,7 @@ export class SemanticModel {
       }
     }
     const readinessReferences = this.collectReadinessReferences(objects, kinds, objectsById);
+    const relationReferences = this.collectReadinessRelationReferences(objects, kinds);
 
     for (const obj of objects) {
       if (!obj || typeof obj !== "object") {
@@ -122,6 +123,20 @@ export class SemanticModel {
           diagnostics.push({
             code: "ORIN-E044",
             message: "state declaration is not referenced by any workflow/rule/example",
+            objectId: obj.id,
+          });
+        }
+      }
+    }
+    if (relationReferences.size > 0) {
+      for (const obj of objects) {
+        if (!obj || typeof obj !== "object" || obj.kind !== "relation") {
+          continue;
+        }
+        if (typeof obj.id === "string" && !relationReferences.has(obj.id)) {
+          diagnostics.push({
+            code: "ORIN-E045",
+            message: "relation declaration is not referenced by any workflow/rule/example",
             objectId: obj.id,
           });
         }
@@ -325,6 +340,30 @@ export class SemanticModel {
       }
     }
     return readinessReferences;
+  }
+
+  private collectReadinessRelationReferences(
+    objects: Array<Record<string, any>>,
+    kinds: Map<string, string>,
+  ): Set<string> {
+    const relationReferences = new Set<string>();
+    for (const obj of objects) {
+      if (!obj || typeof obj !== "object" || !READINESS_DRIVER_KINDS.has(obj.kind)) {
+        continue;
+      }
+      for (const field of REFERENCE_FIELDS) {
+        const values = obj[field];
+        if (!Array.isArray(values)) {
+          continue;
+        }
+        for (const value of values) {
+          if (typeof value === "string" && kinds.get(value) === "relation") {
+            relationReferences.add(value);
+          }
+        }
+      }
+    }
+    return relationReferences;
   }
 
   private removeMetadata(value: any): void {

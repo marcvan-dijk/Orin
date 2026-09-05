@@ -221,6 +221,43 @@ class SemanticModelTests(unittest.TestCase):
         self.assertIn("ORIN-E044", [item.code for item in model.diagnostics()])
         self.assertEqual(model.compilation_status(), "fail")
 
+    def test_orphaned_relation_is_gated_without_relation_readiness_references(self):
+        document = json.loads(TASKS_FIXTURE.read_text(encoding="utf-8"))
+        document["objects"].append({
+            "id": "shared-tasks/relation/assigned-to",
+            "kind": "relation",
+            "name": "assigned-to",
+            "status": "accepted",
+            "endpoints": [
+                {"type": "shared-tasks/entity-type/task"},
+                {"type": "shared-tasks/entity-type/person"},
+            ],
+            "cardinality": "many-to-one",
+        })
+
+        model = SemanticModel(document)
+        self.assertNotIn("ORIN-E045", [item.code for item in model.diagnostics()])
+
+    def test_orphaned_relation_is_reported_by_readiness_diagnostics(self):
+        document = json.loads(TASKS_FIXTURE.read_text(encoding="utf-8"))
+        workflow = next(item for item in document["objects"] if item["id"] == "shared-tasks/workflow/complete-task")
+        workflow["affects"] = ["shared-tasks/relation/member-of"]
+        document["objects"].append({
+            "id": "shared-tasks/relation/assigned-to",
+            "kind": "relation",
+            "name": "assigned-to",
+            "status": "accepted",
+            "endpoints": [
+                {"type": "shared-tasks/entity-type/task"},
+                {"type": "shared-tasks/entity-type/person"},
+            ],
+            "cardinality": "many-to-one",
+        })
+
+        model = SemanticModel(document)
+        self.assertIn("ORIN-E045", [item.code for item in model.diagnostics()])
+        self.assertEqual(model.compilation_status(), "fail")
+
     def test_shared_tasks_source_maps_to_valid_semantic_model(self):
         source = Path(__file__).parents[2] / "examples" / "shared-tasks.orin"
         model = OrinParser().parse_file(source)

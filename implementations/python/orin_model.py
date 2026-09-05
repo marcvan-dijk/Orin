@@ -136,6 +136,7 @@ class SemanticModel:
         readiness_references = self._collect_readiness_references(objects, kinds, objects_by_id)
         state_references = self._collect_readiness_state_references(objects)
         capability_readiness_enabled = self._capability_readiness_enabled(objects, kinds)
+        relation_readiness_enabled = self._relation_readiness_enabled(objects, kinds)
         for obj in objects:
             if not isinstance(obj, dict) or obj.get("kind") != "effect":
                 continue
@@ -157,6 +158,18 @@ class SemanticModel:
                     Diagnostic(
                         "ORIN-E043",
                         "capability declaration is not referenced by any workflow/rule/example",
+                        object_id,
+                    )
+                )
+        for obj in objects:
+            if not isinstance(obj, dict) or obj.get("kind") != "relation":
+                continue
+            object_id = obj.get("id")
+            if relation_readiness_enabled and isinstance(object_id, str) and object_id not in readiness_references:
+                diagnostics.append(
+                    Diagnostic(
+                        "ORIN-E045",
+                        "relation declaration is not referenced by any workflow/rule/example",
                         object_id,
                     )
                 )
@@ -251,6 +264,20 @@ class SemanticModel:
                 if isinstance(to_state, str):
                     references.add(to_state)
         return references
+
+    @staticmethod
+    def _relation_readiness_enabled(objects: list[Any], kinds: dict[str, str]) -> bool:
+        for obj in objects:
+            if not isinstance(obj, dict) or obj.get("kind") not in READINESS_DRIVER_KINDS:
+                continue
+            for field in REFERENCE_FIELDS:
+                values = obj.get(field, [])
+                if isinstance(values, list) and any(
+                    isinstance(value, str) and kinds.get(value) == "relation"
+                    for value in values
+                ):
+                    return True
+        return False
 
     @staticmethod
     def _validate_entity(obj: dict[str, Any], kinds: dict[str, str], diagnostics: list[Diagnostic]) -> None:

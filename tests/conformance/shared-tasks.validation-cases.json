@@ -64,6 +64,14 @@
         "compilation": "fail",
         "diagnostics": ["ORIN-E044"]
       }
+    },
+    {
+      "id": "shared-tasks/validation/orphaned-relation",
+      "model": "shared-tasks.orphaned-relation.model.json",
+      "then": {
+        "compilation": "fail",
+        "diagnostics": ["ORIN-E045"]
+      }
     }
   ]
 }

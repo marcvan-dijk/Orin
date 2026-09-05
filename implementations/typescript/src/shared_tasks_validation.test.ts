@@ -33,3 +33,34 @@ test("shared-tasks validation fixtures assert diagnostics parity", async (t) => 
     });
   }
 });
+
+test("orphaned relation readiness diagnostic mirrors Python semantics", () => {
+  const document = loadJson(resolve(ROOT, "tests/conformance/shared-tasks.model.json"));
+  document.objects.push(
+    {
+      id: "shared-tasks/relation/participates-in",
+      kind: "relation",
+      name: "participates-in",
+      status: "accepted",
+      endpoints: [
+        { type: "shared-tasks/entity-type/person" },
+        { type: "shared-tasks/entity-type/task" },
+      ],
+      cardinality: "many-to-many",
+    },
+    {
+      id: "shared-tasks/rule/task-list-membership-governance",
+      kind: "rule",
+      name: "task-list-membership-governance",
+      status: "accepted",
+      requires: ["shared-tasks/relation/member-of"],
+    },
+  );
+
+  const model = new SemanticModel(document);
+  assert.deepEqual(
+    model.diagnostics().filter((diagnostic) => diagnostic.code === "ORIN-E045").map((diagnostic) => diagnostic.objectId),
+    ["shared-tasks/relation/participates-in"],
+  );
+  assert.equal(model.compilationStatus(), "fail");
+});

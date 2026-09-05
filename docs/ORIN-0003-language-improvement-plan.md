@@ -500,12 +500,11 @@ capture important decisions and which parts add unnecessary friction.
    in `implementations/python/password_reset.py`.
 3. [done] Add language-level fixtures under `tests/conformance/`; keep any future
    host-language runners separate from the fixtures.
-4. [in progress] Implement the semantic validator; entity field/identity
-   schemas, relation endpoints/cardinality, typed workflow values, state
-   transition checks, actor capability binding, persistence contracts, and an
-   readiness diagnostic set for orphaned effect/capability/state declarations
-   now cover the shared-task model. Next step: carry the same readiness
-   diagnostics parity into the TypeScript validator implementation.
+4. [done] Implement the semantic validator; entity field/identity schemas,
+   relation endpoints/cardinality, typed workflow values, state transition
+   checks, actor capability binding, persistence contracts, and readiness
+   diagnostics for orphaned effect/capability/state/relation declarations now
+   cover the shared-task model in both Python and TypeScript validators.
 5. [done] Make unresolved `rate-limit` block compilation.
 6. [done] Implement the minimal `.orin` parser and analyzer in the separate
    `implementations/python/` host-language folder. It parses the password-reset
@@ -606,8 +605,13 @@ capture important decisions and which parts add unnecessary friction.
 31. [done] Extend readiness diagnostics beyond orphaned effects to orphaned
     capability/state declarations with stable `ORIN-E043`/`ORIN-E044`
     fixture-driven assertions in the shared conformance suite.
-32. [next] Keep Python and TypeScript readiness-diagnostic behavior in lockstep
+32. [done] Keep Python and TypeScript readiness-diagnostic behavior in lockstep
     as new declaration kinds are introduced so fixture parity remains stable.
+    Added orphaned relation readiness coverage with stable `ORIN-E045`
+    fixture-driven assertions in the shared conformance suite.
+33. [next] Add rule contradiction diagnostics to semantic validation with
+    language-neutral fixture coverage and parity checks in both Python and
+    TypeScript implementations.
 
 ## Test strategy
 
