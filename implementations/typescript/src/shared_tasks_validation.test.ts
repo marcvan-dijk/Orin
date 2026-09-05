@@ -76,3 +76,44 @@ test("rule contradiction diagnostic mirrors Python semantics for structured nega
   assert.deepEqual(model.diagnostics().map((diagnostic) => diagnostic.code), ["ORIN-E046"]);
   assert.equal(model.compilationStatus(), "fail");
 });
+
+test("rule contradiction diagnostics stay deterministic for multi-claim contradictions", () => {
+  const model = new SemanticModel({
+    modelVersion: "0.1.0",
+    module: { id: "shared-tasks/module", kind: "module", name: "shared-tasks", status: "accepted" },
+    objects: [
+      {
+        id: "shared-tasks/rule/member-completion",
+        kind: "rule",
+        name: "member-completion",
+        status: "accepted",
+        claims: [
+          "Task title must be non-empty.",
+          "not Task title must be non-empty.",
+          { text: "Assignee must be a list member.", negated: false },
+          { text: "Assignee must be a list member.", negated: true },
+        ],
+      },
+    ],
+  });
+
+  const contradictions = model
+    .diagnostics()
+    .filter((diagnostic) => diagnostic.code === "ORIN-E046")
+    .map((diagnostic) => ({
+      objectId: diagnostic.objectId,
+      message: diagnostic.message,
+    }));
+
+  assert.deepEqual(contradictions, [
+    {
+      objectId: "shared-tasks/rule/member-completion",
+      message: "rule contains contradictory claims: assignee must be a list member",
+    },
+    {
+      objectId: "shared-tasks/rule/member-completion",
+      message: "rule contains contradictory claims: task title must be non-empty",
+    },
+  ]);
+  assert.equal(model.compilationStatus(), "fail");
+});

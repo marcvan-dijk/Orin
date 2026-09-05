@@ -626,9 +626,14 @@ capture important decisions and which parts add unnecessary friction.
     shared-tasks text authoring path, and reclassifying ORIN-0005 plus
     conformance/docs references so shared-tasks remains retained post-MVP
     validation material instead of a co-equal proof domain.
-36. [next] Extend TypeScript semantic diagnostics assertions to verify
+36. [done] Extend TypeScript semantic diagnostics assertions to verify
     deterministic `ORIN-E046` diagnostic ordering/object identity when multiple
-    contradictory propositions appear in one model.
+    contradictory propositions appear in one model. Added
+    `implementations/typescript/src/shared_tasks_validation.test.ts` coverage
+    asserting stable multi-contradiction ordering and object identity.
+37. [next] Extend language-neutral shared-task validation fixtures and both
+    runners to assert full diagnostic entries (code, object identity, and
+    deterministic ordering) for multi-contradiction `ORIN-E046` cases.
 
 ## Test strategy
 
