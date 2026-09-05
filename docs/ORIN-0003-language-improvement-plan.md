@@ -649,6 +649,13 @@ capture important decisions and which parts add unnecessary friction.
     `implementations/typescript/src/orin_model_rule_contradiction.test.ts`
     with direct `SemanticModel` assertions for deterministic diagnostic-entry
     ordering and full entry identity (`code`, `objectId`, `message`).
+40. [done] Clarify post-MVP scope governance in docs so `ORIN-0003` remains the
+    active execution tracker, `ORIN-0004` stays a long-term foundational spec,
+    and `ORIN-0005` stays deferred roadmap work after the password-reset MVP.
+    Updated `docs/README.md`, `docs/IMPLEMENTATION-ROADMAP.md`,
+    `docs/ORIN-0004-semantic-model.md`, and
+    `docs/ORIN-0005-first-complete-application.md` without changing
+    implementation/runtime behavior.
 
 ### Current status after reevaluation
 

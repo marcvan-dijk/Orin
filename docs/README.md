@@ -6,12 +6,12 @@ This folder now has one clear flow:
 2. Track execution in [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md) (source of truth for done/next).
 3. Use [`IMPLEMENTATION-ROADMAP.md`](./IMPLEMENTATION-ROADMAP.md) and [`MVP-PLAN.md`](./MVP-PLAN.md) for short strategic framing.
 
-## What has been done (current snapshot)
+## Status snapshot
 
-- Repository was refocused to a strict password-reset MVP center.
-- Shared-task semantic/runtime coverage was implemented as advanced follow-up coverage.
-- Tooling and execution backends were separated (`tooling/` vs `implementations/<language>/`).
-- TypeScript host-language reference slice was added under `implementations/typescript/src/`.
+- **Password-reset MVP:** complete.
+- **Active execution tracker:** [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md).
+- **ORIN-0004:** long-term foundational semantic-model specification, not current execution work.
+- **ORIN-0005:** deferred post-MVP application roadmap, not current execution work.
 
 Authoritative completion log: see the `[done]` items in
 [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md).
@@ -20,7 +20,8 @@ Authoritative completion log: see the `[done]` items in
 
 - **Current project scope (password-reset MVP): complete**
 - **Remaining tasks in current project scope: 0**
-- **Open post-MVP backlog tasks: 1**
+- **Open post-MVP backlog tasks: 0**
+- **Exact next step: define the next ORIN-0003 post-MVP backlog task before starting additional implementation increments**
 
 Authoritative status and task markers are maintained in
 [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md).
@@ -30,5 +31,7 @@ Authoritative status and task markers are maintained in
 - **Primary guidance:** `REFOCUS-ASSESSMENT.md`
 - **Primary execution tracker:** `ORIN-0003-language-improvement-plan.md`
 - **Supporting strategy docs:** `IMPLEMENTATION-ROADMAP.md`, `MVP-PLAN.md`
-- **Background/reference specs:** `ORIN-0001`, `ORIN-0002`, `ORIN-0004`, `ORIN-0005`, gap/integration analyses
-- **Post-MVP task queue marker:** `ORIN-0003` item tagged `[post-mvp-next]`
+- **Long-term foundational spec:** `ORIN-0004` (architectural/spec direction, not an active task list)
+- **Deferred post-MVP roadmap spec:** `ORIN-0005` (future application slice, not an active task list)
+- **Background/reference specs:** `ORIN-0001`, `ORIN-0002`, gap/integration analyses
+- **Future post-MVP task queue marker:** `ORIN-0003` item tagged `[post-mvp-next]` when backlog execution resumes
