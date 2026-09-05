@@ -265,6 +265,39 @@ The goal is to discover the smallest useful foundation needed to prove the idea.
 
 ---
 
+# A readable Orin syntax
+
+Orin currently uses a readable outline style for authoring.
+
+See the full guide here:
+
+[`docs/ORIN-SYNTAX-GUIDE.md`](docs/ORIN-SYNTAX-GUIDE.md)
+
+Short version:
+
+```text
+module: password-reset
+
+purpose:
+  Reset passwords safely.
+
+rules:
+  - Do not reveal whether an email exists.
+  - Reset links expire after 15 minutes.
+  - Reset links can only be used once.
+
+workflow: request-reset
+  input:
+    email
+  steps:
+    check account
+    create token if allowed
+    send reset message if allowed
+    return same response
+```
+
+---
+
 # Design principles
 
 ## Meaning before implementation
@@ -309,7 +342,7 @@ It is an experiment based on a question:
 
 > **If AI increasingly writes the implementation, what should humans program?**
 
-My hypothesis is that humans will increasingly need a higher-level representation of software — one that allows them to define, understand and evolve what a program does without requiring the implementation itself to remain the primary source of understanding.
+My hypothesis is that humans will increasingly need a higher-level representation of software — one that allows them to define, understand and evolve what a program does without requiring the implementation itself to be the primary thing they read and maintain.
 
 Orin is an attempt to explore that hypothesis.
 
@@ -329,16 +362,12 @@ Expect breaking changes and incomplete functionality.
 
 # Repository structure
 
-Orin keeps **execution implementations** and **authoring/analysis tooling**
-separate:
+Orin keeps **execution implementations** and **authoring/analysis tooling** separate:
 
-- `implementations/` contains host-language backends that execute or generate
-  artifacts from the same Orin semantic meaning.
-- `tooling/` contains authoring, inspection, and analysis tools that operate on
-  that same meaning.
+- `implementations/` contains host-language backends that execute or generate artifacts from the same Orin semantic meaning.
+- `tooling/` contains authoring, inspection, and analysis tools that operate on that same meaning.
 
-This means multiple tools can help author and review one Orin program, while
-multiple implementations can execute that same program meaning.
+This means multiple tools can help author and review one Orin program, while multiple implementations can execute that same program meaning.
 
 ---
 
