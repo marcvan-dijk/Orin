@@ -4,6 +4,10 @@
 **Version:** 0.1.0  
 **Related specifications:** [ORIN-0001: Pairing Protocol](ORIN-0001-intent-spec.md), [ORIN-0002: Language Kernel](ORIN-0002-language-kernel.md), [ORIN-0003: Language Improvement Plan](ORIN-0003-language-improvement-plan.md)
 
+**Execution note:** ORIN-0004 is a long-term foundational specification. It is
+not current execution work; active implementation increments should be tracked
+in `ORIN-0003`.
+
 ## Purpose
 
 ORIN-0004 defines the language-independent semantic model for Orin. It is the

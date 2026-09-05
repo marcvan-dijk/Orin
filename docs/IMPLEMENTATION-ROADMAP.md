@@ -44,6 +44,7 @@ The MVP is complete when password-reset demonstrates deterministic meaning, ambi
 ## Execution tracking
 
 - Current-project execution (password-reset MVP) is complete.
-- Open work is now tracked as post-MVP backlog in
+- No post-MVP backlog task is currently active.
+- When post-MVP execution resumes, activate and track it in
   [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md)
   using the `[post-mvp-next]` marker.

@@ -1,8 +1,12 @@
 # ORIN-0005: Post-MVP Stress-Test Application
 
-**Status:** Deferred until the password-reset MVP proof is complete  
+**Status:** Deferred post-MVP roadmap work
 **Version:** 0.1.0  
 **Scope:** One broader application slice after the password-reset MVP proves the core thesis
+
+**Execution note:** ORIN-0005 remains deferred roadmap work after MVP
+completion. It is not current execution work; any future implementation tasks
+for this application should first be activated and tracked in `ORIN-0003`.
 
 ## Decision
 
