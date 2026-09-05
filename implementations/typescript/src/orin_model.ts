@@ -663,10 +663,12 @@ export class SemanticModel {
 
   private collectAffectedObjectPaths(seedIds: Set<string>, reverseReferences: Map<string, Set<string>>): string[] {
     const queue = [...seedIds].sort();
+    let index = 0;
     const seen = new Set<string>();
     const paths: string[] = [];
-    while (queue.length > 0) {
-      const current = queue.shift()!;
+    while (index < queue.length) {
+      const current = queue[index]!;
+      index += 1;
       if (seen.has(current)) {
         continue;
       }

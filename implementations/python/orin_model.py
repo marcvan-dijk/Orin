@@ -1,6 +1,7 @@
 """Python reference implementation of the Orin semantic-model slice."""
 
 from copy import deepcopy
+from collections import deque
 from dataclasses import dataclass
 import json
 from pathlib import Path
@@ -796,9 +797,9 @@ class SemanticModel:
     ) -> tuple[str, ...]:
         ordered_paths: list[str] = []
         seen: set[str] = set()
-        queue = sorted(seed_ids)
+        queue = deque(sorted(seed_ids))
         while queue:
-            current = queue.pop(0)
+            current = queue.popleft()
             if current in seen:
                 continue
             seen.add(current)
