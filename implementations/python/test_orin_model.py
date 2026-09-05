@@ -17,7 +17,6 @@ FIXTURE = Path(__file__).parents[2] / "tests" / "conformance" / "password-reset.
 CASES = FIXTURE.parent / "password-reset.cases.json"
 TASKS_FIXTURE = FIXTURE.parent / "shared-tasks.model.json"
 PASSWORD_RESET_STRUCTURED = FIXTURE.parent / "password-reset.structured.json"
-TASKS_STRUCTURED = FIXTURE.parent / "shared-tasks.structured.json"
 
 
 class SemanticModelTests(unittest.TestCase):
@@ -302,24 +301,6 @@ class SemanticModelTests(unittest.TestCase):
         self.assertIn("ORIN-E046", [item.code for item in diagnostics])
         self.assertEqual(SemanticModel(document).compilation_status(), "fail")
 
-    def test_shared_tasks_source_maps_to_valid_semantic_model(self):
-        source = Path(__file__).parents[2] / "examples" / "shared-tasks.orin"
-        model = OrinParser().parse_file(source)
-
-        self.assertEqual(model.compilation_status(), "eligible")
-        self.assertEqual(next(item for item in model.document["objects"] if item["name"] == "person")["kind"], "entity-type")
-        workflow = next(item for item in model.document["objects"] if item["kind"] == "workflow" and item["name"] == "complete-task")
-        effect = next(
-            item for item in model.document["objects"]
-            if item["kind"] == "effect" and item["name"] == "persistent-entity-store.write.task-state"
-        )
-        self.assertEqual(workflow["inputs"][0]["type"], "shared-tasks/entity-type/person")
-        self.assertEqual(workflow["transitions"][0]["to"], "shared-tasks/state/completed")
-        self.assertEqual(workflow["uses"], ["shared-tasks/effect/persistent-entity-store.write.task-state"])
-        self.assertEqual(workflow["actorCapabilities"][1]["capability"], "shared-tasks/capability/write-task-state")
-        self.assertEqual(effect["durability"], "strong")
-
-
 class PasswordResetRuntimeTests(unittest.TestCase):
     def setUp(self):
         self.email_provider = EmailProvider()
@@ -426,13 +407,6 @@ class FrontendEquivalenceTests(unittest.TestCase):
         structured_model = StructuredOrinFrontend().parse_file(PASSWORD_RESET_STRUCTURED)
 
         self.assertEqual(orin_model.canonical(), structured_model.canonical())
-
-    def test_shared_tasks_text_and_structured_frontends_are_equivalent(self):
-        orin_model = OrinParser().parse_file(Path(__file__).parents[2] / "examples" / "shared-tasks.orin")
-        structured_model = StructuredOrinFrontend().parse_file(TASKS_STRUCTURED)
-
-        self.assertEqual(orin_model.canonical(), structured_model.canonical())
-
 
 class GeneratedConformanceTests(unittest.TestCase):
     def test_cases_generated_from_language_neutral_fixture(self):

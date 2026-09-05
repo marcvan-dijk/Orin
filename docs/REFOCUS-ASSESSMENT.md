@@ -2,7 +2,7 @@
 
 ## What Orin currently is
 
-Orin is a language-neutral semantic-kernel prototype with a strong password-reset proof slice, a growing shared-tasks slice, and substantial internal planning/spec material. The repository already shows deterministic model handling, consequential-uncertainty blocking, and host-language reference runtimes under `implementations/`.
+Orin is a language-neutral semantic-kernel prototype with a strong password-reset proof slice, retained shared-tasks validation material, and substantial internal planning/spec material. The repository already shows deterministic model handling, consequential-uncertainty blocking, and host-language reference runtimes under `implementations/`.
 
 ## What Orin should become
 
