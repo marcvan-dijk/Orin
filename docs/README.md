@@ -16,13 +16,13 @@ This folder now has one clear flow:
 Authoritative completion log: see the `[done]` items in
 [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md).
 
-## What to do next (single execution pointer)
+## Current execution status
 
-Current exact next step:
+- **Current project scope (password-reset MVP): complete**
+- **Remaining tasks in current project scope: 0**
+- **Open post-MVP backlog tasks: 1**
 
-- Add focused TypeScript validation coverage for the password-reset derivation proof flow so the TypeScript reference slice stays behaviorally aligned with language-neutral conformance fixtures.
-
-Authoritative next-step marker: the single `[next]` item in
+Authoritative status and task markers are maintained in
 [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md).
 
 ## Document roles
@@ -31,3 +31,4 @@ Authoritative next-step marker: the single `[next]` item in
 - **Primary execution tracker:** `ORIN-0003-language-improvement-plan.md`
 - **Supporting strategy docs:** `IMPLEMENTATION-ROADMAP.md`, `MVP-PLAN.md`
 - **Background/reference specs:** `ORIN-0001`, `ORIN-0002`, `ORIN-0004`, `ORIN-0005`, gap/integration analyses
+- **Post-MVP task queue marker:** `ORIN-0003` item tagged `[post-mvp-next]`

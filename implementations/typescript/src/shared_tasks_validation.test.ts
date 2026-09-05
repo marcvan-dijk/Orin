@@ -20,9 +20,15 @@ test("shared-tasks validation fixtures assert diagnostics parity", async (t) => 
     await t.test(validationCase.id, () => {
       const modelPath = resolve(ROOT, "tests/conformance", validationCase.model);
       const model = new SemanticModel(loadJson(modelPath));
+      const diagnostics = model.diagnostics();
       const actual = {
         compilation: model.compilationStatus(),
-        diagnostics: model.diagnostics().map((diagnostic) => diagnostic.code).sort(),
+        diagnostics: diagnostics.map((diagnostic) => diagnostic.code).sort(),
+        diagnosticEntries: diagnostics.map((diagnostic) => ({
+          code: diagnostic.code,
+          objectId: diagnostic.objectId ?? null,
+          message: diagnostic.message,
+        })),
       };
       const expectedDiagnostics = [...(validationCase.then?.diagnostics || [])].sort();
       for (const code of [...expectedDiagnostics, ...actual.diagnostics]) {
@@ -30,6 +36,9 @@ test("shared-tasks validation fixtures assert diagnostics parity", async (t) => 
       }
       assert.equal(actual.compilation, validationCase.then?.compilation);
       assert.deepEqual(actual.diagnostics, expectedDiagnostics);
+      if (validationCase.then?.diagnosticEntries) {
+        assert.deepEqual(actual.diagnosticEntries, validationCase.then.diagnosticEntries);
+      }
     });
   }
 });
@@ -74,5 +83,46 @@ test("rule contradiction diagnostic mirrors Python semantics for not-prefix clai
 test("rule contradiction diagnostic mirrors Python semantics for structured negation flags", () => {
   const model = new SemanticModel(loadJson(resolve(ROOT, "tests/conformance/shared-tasks.rule-contradiction-not-prefix.model.json")));
   assert.deepEqual(model.diagnostics().map((diagnostic) => diagnostic.code), ["ORIN-E046"]);
+  assert.equal(model.compilationStatus(), "fail");
+});
+
+test("rule contradiction diagnostics stay deterministic for multi-claim contradictions", () => {
+  const model = new SemanticModel({
+    modelVersion: "0.1.0",
+    module: { id: "shared-tasks/module", kind: "module", name: "shared-tasks", status: "accepted" },
+    objects: [
+      {
+        id: "shared-tasks/rule/member-completion",
+        kind: "rule",
+        name: "member-completion",
+        status: "accepted",
+        claims: [
+          "Task title must be non-empty.",
+          "not Task title must be non-empty.",
+          { text: "Assignee must be a list member.", negated: false },
+          { text: "Assignee must be a list member.", negated: true },
+        ],
+      },
+    ],
+  });
+
+  const contradictions = model
+    .diagnostics()
+    .filter((diagnostic) => diagnostic.code === "ORIN-E046")
+    .map((diagnostic) => ({
+      objectId: diagnostic.objectId,
+      message: diagnostic.message,
+    }));
+
+  assert.deepEqual(contradictions, [
+    {
+      objectId: "shared-tasks/rule/member-completion",
+      message: "rule contains contradictory claims: assignee must be a list member",
+    },
+    {
+      objectId: "shared-tasks/rule/member-completion",
+      message: "rule contains contradictory claims: task title must be non-empty",
+    },
+  ]);
   assert.equal(model.compilationStatus(), "fail");
 });

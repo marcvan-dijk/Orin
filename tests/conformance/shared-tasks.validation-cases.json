@@ -88,6 +88,26 @@
         "compilation": "fail",
         "diagnostics": ["ORIN-E046"]
       }
+    },
+    {
+      "id": "shared-tasks/validation/rule-contradiction-multi",
+      "model": "shared-tasks.rule-contradiction-multi.model.json",
+      "then": {
+        "compilation": "fail",
+        "diagnostics": ["ORIN-E046", "ORIN-E046"],
+        "diagnosticEntries": [
+          {
+            "code": "ORIN-E046",
+            "objectId": "shared-tasks/rule/member-completion",
+            "message": "rule contains contradictory claims: assignee must be a list member"
+          },
+          {
+            "code": "ORIN-E046",
+            "objectId": "shared-tasks/rule/member-completion",
+            "message": "rule contains contradictory claims: task title must be non-empty"
+          }
+        ]
+      }
     }
   ]
 }

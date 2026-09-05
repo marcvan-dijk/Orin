@@ -16,6 +16,7 @@ from conformance_runner import execute_case, expected_case_result, load_cases
 FIXTURE = Path(__file__).parents[2] / "tests" / "conformance" / "password-reset.model.json"
 CASES = FIXTURE.parent / "password-reset.cases.json"
 TASKS_FIXTURE = FIXTURE.parent / "shared-tasks.model.json"
+TASKS_RULE_CONTRADICTION_MULTI_FIXTURE = FIXTURE.parent / "shared-tasks.rule-contradiction-multi.model.json"
 PASSWORD_RESET_STRUCTURED = FIXTURE.parent / "password-reset.structured.json"
 
 
@@ -300,6 +301,30 @@ class SemanticModelTests(unittest.TestCase):
         diagnostics = SemanticModel(document).diagnostics()
         self.assertIn("ORIN-E046", [item.code for item in diagnostics])
         self.assertEqual(SemanticModel(document).compilation_status(), "fail")
+
+    def test_multi_rule_contradiction_diagnostic_entries_are_deterministic(self):
+        diagnostics = SemanticModel.from_json_file(TASKS_RULE_CONTRADICTION_MULTI_FIXTURE).diagnostics()
+        contradiction_entries = [
+            {"code": item.code, "objectId": item.object_id, "message": item.message}
+            for item in diagnostics
+            if item.code == "ORIN-E046"
+        ]
+        self.assertEqual(
+            contradiction_entries,
+            [
+                {
+                    "code": "ORIN-E046",
+                    "objectId": "shared-tasks/rule/member-completion",
+                    "message": "rule contains contradictory claims: assignee must be a list member",
+                },
+                {
+                    "code": "ORIN-E046",
+                    "objectId": "shared-tasks/rule/member-completion",
+                    "message": "rule contains contradictory claims: task title must be non-empty",
+                },
+            ],
+        )
+        self.assertEqual(SemanticModel.from_json_file(TASKS_RULE_CONTRADICTION_MULTI_FIXTURE).compilation_status(), "fail")
 
 class PasswordResetRuntimeTests(unittest.TestCase):
     def setUp(self):

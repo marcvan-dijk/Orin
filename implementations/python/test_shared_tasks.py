@@ -66,6 +66,8 @@ class SharedTasksConformanceTests(unittest.TestCase):
             with self.subTest(case=case_id):
                 self.assertEqual(actual["compilation"], expected["compilation"])
                 self.assertEqual(sorted(actual["diagnostics"]), sorted(expected["diagnostics"]))
+                if "diagnosticEntries" in expected:
+                    self.assertEqual(actual["diagnosticEntries"], expected["diagnosticEntries"])
 
 
 if __name__ == "__main__":
