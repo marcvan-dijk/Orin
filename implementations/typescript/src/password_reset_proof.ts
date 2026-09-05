@@ -1,11 +1,12 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 
-import { executeCase } from "./conformance_runner";
-import { lower } from "./lowering";
-import { SemanticModel } from "./orin_model";
+import { executeCase } from "./conformance_runner.ts";
+import { lower } from "./lowering.ts";
+import { SemanticModel } from "./orin_model.ts";
 
-const ROOT = resolve(__dirname, "..", "..", "..");
+const ROOT = resolve(fileURLToPath(new URL("../../..", import.meta.url)));
 const MODEL_FIXTURE = resolve(ROOT, "tests/conformance/password-reset.model.json");
 const CASES_FIXTURE = resolve(ROOT, "tests/conformance/password-reset.cases.json");
 const POLICIES_FIXTURE = resolve(ROOT, "tests/conformance/password-reset.policies.json");
@@ -32,7 +33,7 @@ function behaviorResults(model: SemanticModel, casesFixture: Record<string, any>
     }
     const actual = executeCase(model, conformanceCase);
     for (const [key, expected] of Object.entries(conformanceCase.then || {})) {
-      if (actual[key] !== expected) {
+      if (JSON.stringify(actual[key]) !== JSON.stringify(expected)) {
         throw new Error(`case ${conformanceCase.id} mismatch for '${key}'`);
       }
     }

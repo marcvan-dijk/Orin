@@ -13,3 +13,9 @@ Current files mirror the Python proof path at a small scope:
 
 This is optional host-language code. It does not change `.ori` semantics or
 `tests/conformance/` fixtures.
+
+Run focused proof-flow validation with:
+
+```bash
+node --test --experimental-strip-types implementations/typescript/src/password_reset_proof.test.ts
+```

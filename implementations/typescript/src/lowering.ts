@@ -1,4 +1,4 @@
-import { SemanticModel } from "./orin_model";
+import { SemanticModel } from "./orin_model.ts";
 
 export function lower(model: SemanticModel): Record<string, any> {
   const moduleSection = model.document.module || {};

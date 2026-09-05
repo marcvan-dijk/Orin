@@ -585,13 +585,19 @@ capture important decisions and which parts add unnecessary friction.
     `implementations/<language>/`. Added a TypeScript host-language reference
     implementation slice under `implementations/typescript/src/` and removed
     VS Code extension remainder references from that folder.
-28. [next] Add focused TypeScript validation coverage for the password-reset
+28. [done] Add focused TypeScript validation coverage for the password-reset
     derivation proof flow so the TypeScript reference slice stays behaviorally
-    aligned with the language-neutral conformance fixtures.
+    aligned with the language-neutral conformance fixtures. Added
+    `implementations/typescript/src/password_reset_proof.test.ts` to assert
+    proof invariants and execute all non-compile conformance fixture assertions
+    against the resolved model.
 29. [done] Add `docs/README.md` as the documentation entry point so
     `REFOCUS-ASSESSMENT.md` is the first guideline, `ORIN-0003` is the single
     done/next execution tracker, and roadmap/MVP docs remain supporting
     references.
+30. [next] Keep the TypeScript proof runner executable directly with
+    `node --experimental-strip-types` and add fixture-driven diagnostics
+    assertions for parity with Python when semantic validation coverage expands.
 
 ## Test strategy
 
