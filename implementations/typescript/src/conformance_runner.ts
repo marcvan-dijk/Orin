@@ -1,5 +1,5 @@
-import { AccountStore, EmailProvider, PasswordResetRuntime, TokenRejected } from "./password_reset";
-import { SemanticModel } from "./orin_model";
+import { AccountStore, EmailProvider, PasswordResetRuntime, TokenRejected } from "./password_reset.ts";
+import { SemanticModel } from "./orin_model.ts";
 
 export function executeCase(model: SemanticModel, conformanceCase: Record<string, any>): Record<string, any> {
   const given = conformanceCase.given || {};

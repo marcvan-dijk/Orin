@@ -1,11 +1,12 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
+import { fileURLToPath, pathToFileURL } from "node:url";
 
-import { executeCase } from "./conformance_runner";
-import { lower } from "./lowering";
-import { SemanticModel } from "./orin_model";
+import { executeCase } from "./conformance_runner.ts";
+import { lower } from "./lowering.ts";
+import { SemanticModel } from "./orin_model.ts";
 
-const ROOT = resolve(__dirname, "..", "..", "..");
+const ROOT = resolve(fileURLToPath(new URL("../../..", import.meta.url)));
 const MODEL_FIXTURE = resolve(ROOT, "tests/conformance/password-reset.model.json");
 const CASES_FIXTURE = resolve(ROOT, "tests/conformance/password-reset.cases.json");
 const POLICIES_FIXTURE = resolve(ROOT, "tests/conformance/password-reset.policies.json");
@@ -24,6 +25,28 @@ function resolveRateLimit(model: SemanticModel): SemanticModel {
   return new SemanticModel(next);
 }
 
+function deepEqual(left: unknown, right: unknown): boolean {
+  if (left === right) {
+    return true;
+  }
+  if (typeof left !== "object" || left === null || typeof right !== "object" || right === null) {
+    return false;
+  }
+  if (Array.isArray(left) || Array.isArray(right)) {
+    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) {
+      return false;
+    }
+    return left.every((item, index) => deepEqual(item, right[index]));
+  }
+  const leftEntries = Object.entries(left as Record<string, unknown>);
+  const rightEntries = Object.entries(right as Record<string, unknown>);
+  if (leftEntries.length !== rightEntries.length) {
+    return false;
+  }
+  const rightMap = new Map<string, unknown>(rightEntries);
+  return leftEntries.every(([key, value]) => rightMap.has(key) && deepEqual(value, rightMap.get(key)));
+}
+
 function behaviorResults(model: SemanticModel, casesFixture: Record<string, any>): Array<Record<string, any>> {
   const results: Array<Record<string, any>> = [];
   for (const conformanceCase of casesFixture.cases || []) {
@@ -32,7 +55,7 @@ function behaviorResults(model: SemanticModel, casesFixture: Record<string, any>
     }
     const actual = executeCase(model, conformanceCase);
     for (const [key, expected] of Object.entries(conformanceCase.then || {})) {
-      if (actual[key] !== expected) {
+      if (!deepEqual(actual[key], expected)) {
         throw new Error(`case ${conformanceCase.id} mismatch for '${key}'`);
       }
     }
@@ -105,4 +128,13 @@ export function runDerivationProof(): Record<string, any> {
     })),
     behaviorCases: variantOutputs[0].behavior.map((item) => item.id),
   };
+}
+
+function isDirectExecution(): boolean {
+  const entry = process.argv[1];
+  return !!entry && import.meta.url === pathToFileURL(resolve(entry)).href;
+}
+
+if (isDirectExecution()) {
+  console.log(JSON.stringify(runDerivationProof(), null, 2));
 }

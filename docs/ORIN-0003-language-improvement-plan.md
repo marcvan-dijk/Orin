@@ -500,10 +500,11 @@ capture important decisions and which parts add unnecessary friction.
    in `implementations/python/password_reset.py`.
 3. [done] Add language-level fixtures under `tests/conformance/`; keep any future
    host-language runners separate from the fixtures.
-4. [in progress] Implement the semantic validator; entity field/identity
-   schemas, relation endpoints/cardinality, typed workflow values, and state
-   transition checks now cover the shared-task model. Add capability binding,
-   persistence contracts, and readiness diagnostics.
+4. [done] Implement the semantic validator; entity field/identity schemas,
+   relation endpoints/cardinality, typed workflow values, state transition
+   checks, actor capability binding, persistence contracts, and readiness
+   diagnostics for orphaned effect/capability/state/relation declarations now
+   cover the shared-task model in both Python and TypeScript validators.
 5. [done] Make unresolved `rate-limit` block compilation.
 6. [done] Implement the minimal `.orin` parser and analyzer in the separate
    `implementations/python/` host-language folder. It parses the password-reset
@@ -585,13 +586,44 @@ capture important decisions and which parts add unnecessary friction.
     `implementations/<language>/`. Added a TypeScript host-language reference
     implementation slice under `implementations/typescript/src/` and removed
     VS Code extension remainder references from that folder.
-28. [next] Add focused TypeScript validation coverage for the password-reset
+28. [done] Add focused TypeScript validation coverage for the password-reset
     derivation proof flow so the TypeScript reference slice stays behaviorally
-    aligned with the language-neutral conformance fixtures.
+    aligned with the language-neutral conformance fixtures. Added
+    `implementations/typescript/src/password_reset_proof.test.ts` to assert
+    proof invariants and execute all non-compile conformance fixture assertions
+    against the resolved model.
 29. [done] Add `docs/README.md` as the documentation entry point so
     `REFOCUS-ASSESSMENT.md` is the first guideline, `ORIN-0003` is the single
     done/next execution tracker, and roadmap/MVP docs remain supporting
     references.
+30. [done] Keep the TypeScript proof runner executable directly with
+    `node --experimental-strip-types` and add fixture-driven diagnostics
+    assertions for parity with Python semantic validation. Added
+    `implementations/typescript/src/shared_tasks_validation.test.ts`,
+    expanded `implementations/typescript/src/orin_model.ts` diagnostics parity
+    checks, and added direct-execution proof runner coverage.
+31. [done] Extend readiness diagnostics beyond orphaned effects to orphaned
+    capability/state declarations with stable `ORIN-E043`/`ORIN-E044`
+    fixture-driven assertions in the shared conformance suite.
+32. [done] Keep Python and TypeScript readiness-diagnostic behavior in lockstep
+    as new declaration kinds are introduced so fixture parity remains stable.
+    Added orphaned relation readiness coverage with stable `ORIN-E045`
+    fixture-driven assertions in the shared conformance suite.
+33. [done] Add rule contradiction diagnostics to semantic validation with
+    language-neutral fixture coverage and parity checks in both Python and
+    TypeScript implementations. Added Python `ORIN-E046` rule-claim
+    contradiction detection for same-rule positive/negated claim pairs,
+    expanded `implementations/python/test_orin_model.py`, and added shared
+    conformance fixtures for both explicit negation and `not ...` claim pairs.
+34. [done] Port `ORIN-E046` rule contradiction diagnostics and new shared-task
+    fixture assertions to the TypeScript semantic validator to restore full
+    cross-implementation parity. Added contradiction detection in
+    `implementations/typescript/src/orin_model.ts` for `not ...` and structured
+    `{"text","negated"}` rule-claim forms, plus parity assertions in
+    `implementations/typescript/src/shared_tasks_validation.test.ts`.
+35. [next] Extend TypeScript semantic diagnostics assertions to verify
+    deterministic `ORIN-E046` diagnostic ordering/object identity when multiple
+    contradictory propositions appear in one model.
 
 ## Test strategy
 

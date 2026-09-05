@@ -2,7 +2,14 @@ export class TokenRejected extends Error {}
 export class CapabilityDenied extends Error {}
 
 export class AccountStore {
-  constructor(public accounts: Set<string>, public available = true) {}
+  accounts: Set<string>;
+  available: boolean;
+
+  constructor(accounts: Set<string>, available = true) {
+    this.accounts = accounts;
+    this.available = available;
+  }
+
   has(email: string): boolean {
     if (!this.available) {
       throw new Error("account-store.unavailable");
@@ -13,7 +20,12 @@ export class AccountStore {
 
 export class EmailProvider {
   sentMessages: string[] = [];
-  constructor(public available = true) {}
+  available: boolean;
+
+  constructor(available = true) {
+    this.available = available;
+  }
+
   send(email: string): void {
     if (!this.available) {
       throw new Error("email-provider.unavailable");
@@ -27,8 +39,13 @@ type TokenRecord = { email: string; expiresAt: number; used: boolean };
 export class PasswordResetRuntime {
   private counter = 0;
   private tokens = new Map<string, TokenRecord>();
+  accountStore: AccountStore;
+  emailProvider: EmailProvider;
 
-  constructor(public accountStore: AccountStore, public emailProvider: EmailProvider) {}
+  constructor(accountStore: AccountStore, emailProvider: EmailProvider) {
+    this.accountStore = accountStore;
+    this.emailProvider = emailProvider;
+  }
 
   requestReset(email: string, capabilities: Set<string>, now = 0): Record<string, any> {
     if (!capabilities.has("person.request-password-reset")) {

@@ -40,6 +40,54 @@
         "compilation": "fail",
         "diagnostics": ["ORIN-E038"]
       }
+    },
+    {
+      "id": "shared-tasks/validation/orphaned-effect",
+      "model": "shared-tasks.orphaned-effect.model.json",
+      "then": {
+        "compilation": "fail",
+        "diagnostics": ["ORIN-E042"]
+      }
+    },
+    {
+      "id": "shared-tasks/validation/orphaned-capability",
+      "model": "shared-tasks.orphaned-capability.model.json",
+      "then": {
+        "compilation": "fail",
+        "diagnostics": ["ORIN-E043"]
+      }
+    },
+    {
+      "id": "shared-tasks/validation/orphaned-state",
+      "model": "shared-tasks.orphaned-state.model.json",
+      "then": {
+        "compilation": "fail",
+        "diagnostics": ["ORIN-E044"]
+      }
+    },
+    {
+      "id": "shared-tasks/validation/orphaned-relation",
+      "model": "shared-tasks.orphaned-relation.model.json",
+      "then": {
+        "compilation": "fail",
+        "diagnostics": ["ORIN-E045"]
+      }
+    },
+    {
+      "id": "shared-tasks/validation/rule-contradiction-negated-claim",
+      "model": "shared-tasks.rule-contradiction-negated.model.json",
+      "then": {
+        "compilation": "fail",
+        "diagnostics": ["ORIN-E046"]
+      }
+    },
+    {
+      "id": "shared-tasks/validation/rule-contradiction-not-prefix",
+      "model": "shared-tasks.rule-contradiction-not-prefix.model.json",
+      "then": {
+        "compilation": "fail",
+        "diagnostics": ["ORIN-E046"]
+      }
     }
   ]
 }

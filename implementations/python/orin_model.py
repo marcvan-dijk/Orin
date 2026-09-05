@@ -12,6 +12,7 @@ DECLARATION_KINDS = {
     "value-type", "entity-type", "relation", "state", "capability", "effect",
     "rule", "workflow", "example", "uncertainty", "target", "evidence",
 }
+READINESS_DRIVER_KINDS = {"workflow", "rule", "example"}
 
 
 @dataclass(frozen=True)
@@ -115,6 +116,8 @@ class SemanticModel:
                 self._validate_relation(obj, kinds, diagnostics)
             elif kind == "effect":
                 self._validate_effect(obj, kinds, diagnostics)
+            elif kind == "rule":
+                self._validate_rule(obj, diagnostics)
             elif kind == "workflow":
                 self._validate_workflow(obj, kinds, objects_by_id, diagnostics)
 
@@ -132,7 +135,151 @@ class SemanticModel:
                         obj.get("id"),
                     )
                 )
+        readiness_references = self._collect_readiness_references(objects, kinds, objects_by_id)
+        state_references = self._collect_readiness_state_references(objects)
+        capability_readiness_enabled = self._capability_readiness_enabled(objects, kinds)
+        relation_readiness_enabled = self._relation_readiness_enabled(objects, kinds)
+        for obj in objects:
+            if not isinstance(obj, dict) or obj.get("kind") != "effect":
+                continue
+            object_id = obj.get("id")
+            if isinstance(object_id, str) and object_id not in readiness_references:
+                diagnostics.append(
+                    Diagnostic(
+                        "ORIN-E042",
+                        "effect declaration is not referenced by any workflow/rule/example",
+                        object_id,
+                    )
+                )
+        for obj in objects:
+            if not isinstance(obj, dict) or obj.get("kind") != "capability":
+                continue
+            object_id = obj.get("id")
+            if capability_readiness_enabled and isinstance(object_id, str) and object_id not in readiness_references:
+                diagnostics.append(
+                    Diagnostic(
+                        "ORIN-E043",
+                        "capability declaration is not referenced by any workflow/rule/example",
+                        object_id,
+                    )
+                )
+        for obj in objects:
+            if not isinstance(obj, dict) or obj.get("kind") != "relation":
+                continue
+            object_id = obj.get("id")
+            if relation_readiness_enabled and isinstance(object_id, str) and object_id not in readiness_references:
+                diagnostics.append(
+                    Diagnostic(
+                        "ORIN-E045",
+                        "relation declaration is not referenced by any workflow/rule/example",
+                        object_id,
+                    )
+                )
+        for obj in objects:
+            if not isinstance(obj, dict) or obj.get("kind") != "state":
+                continue
+            object_id = obj.get("id")
+            if state_references and isinstance(object_id, str) and object_id not in state_references:
+                diagnostics.append(
+                    Diagnostic(
+                        "ORIN-E044",
+                        "state declaration is not referenced by any workflow transition",
+                        object_id,
+                    )
+                )
         return diagnostics
+
+    @staticmethod
+    def _collect_readiness_references(
+        objects: list[Any],
+        kinds: dict[str, str],
+        objects_by_id: dict[str, dict[str, Any]],
+    ) -> set[str]:
+        references: set[str] = set()
+        readiness_effects: set[str] = set()
+        for obj in objects:
+            if not isinstance(obj, dict) or obj.get("kind") not in READINESS_DRIVER_KINDS:
+                continue
+            for field in REFERENCE_FIELDS:
+                values = obj.get(field, [])
+                if isinstance(values, list):
+                    for value in values:
+                        if isinstance(value, str):
+                            references.add(value)
+                            if kinds.get(value) == "effect":
+                                readiness_effects.add(value)
+            if obj.get("kind") == "workflow":
+                transitions = obj.get("transitions", [])
+                if isinstance(transitions, list):
+                    for transition in transitions:
+                        if not isinstance(transition, dict):
+                            continue
+                        from_state = transition.get("from")
+                        to_state = transition.get("to")
+                        if isinstance(from_state, str):
+                            references.add(from_state)
+                        if isinstance(to_state, str):
+                            references.add(to_state)
+                actor_capabilities = obj.get("actorCapabilities", [])
+                if isinstance(actor_capabilities, list):
+                    for binding in actor_capabilities:
+                        if isinstance(binding, dict) and isinstance(binding.get("capability"), str):
+                            references.add(binding["capability"])
+        for effect_id in readiness_effects:
+            effect = objects_by_id.get(effect_id, {})
+            if isinstance(effect, dict):
+                required_capabilities = effect.get("requires", [])
+                if isinstance(required_capabilities, list):
+                    for capability_id in required_capabilities:
+                        if isinstance(capability_id, str):
+                            references.add(capability_id)
+        return references
+
+    @staticmethod
+    def _capability_readiness_enabled(objects: list[Any], kinds: dict[str, str]) -> bool:
+        for obj in objects:
+            if not isinstance(obj, dict) or obj.get("kind") not in READINESS_DRIVER_KINDS:
+                continue
+            if obj.get("kind") == "workflow" and "actorCapabilities" in obj:
+                return True
+            uses = obj.get("uses", [])
+            if isinstance(uses, list) and any(isinstance(value, str) and kinds.get(value) == "effect" for value in uses):
+                return True
+        return False
+
+    @staticmethod
+    def _collect_readiness_state_references(objects: list[Any]) -> set[str]:
+        references: set[str] = set()
+        for obj in objects:
+            if not isinstance(obj, dict) or obj.get("kind") != "workflow":
+                continue
+            transitions = obj.get("transitions", [])
+            if not isinstance(transitions, list):
+                continue
+            for transition in transitions:
+                if not isinstance(transition, dict):
+                    continue
+                from_state = transition.get("from")
+                to_state = transition.get("to")
+                if isinstance(from_state, str):
+                    references.add(from_state)
+                if isinstance(to_state, str):
+                    references.add(to_state)
+        return references
+
+    @staticmethod
+    def _relation_readiness_enabled(objects: list[Any], kinds: dict[str, str]) -> bool:
+        for obj in objects:
+            if not isinstance(obj, dict) or obj.get("kind") not in READINESS_DRIVER_KINDS:
+                continue
+            for field in REFERENCE_FIELDS:
+                values = obj.get(field, [])
+                if isinstance(values, list) and any(
+                    isinstance(value, str) and kinds.get(value) == "relation"
+                    for value in values
+                ):
+                    return True
+        return False
 
     @staticmethod
     def _validate_entity(obj: dict[str, Any], kinds: dict[str, str], diagnostics: list[Diagnostic]) -> None:
@@ -179,6 +326,54 @@ class SemanticModel:
                 diagnostics.append(Diagnostic("ORIN-E039", "persistence effect requires durability contract", obj.get("id")))
             elif durability not in {"strong", "eventual"}:
                 diagnostics.append(Diagnostic("ORIN-E040", f"invalid durability contract: {durability}", obj.get("id")))
+
+    @staticmethod
+    def _normalize_claim_text(text: str) -> str:
+        return " ".join(text.strip().split())
+
+    @staticmethod
+    def _claim_signature(claim: Any) -> tuple[str, bool] | None:
+        negated = False
+        text: str | None = None
+        if isinstance(claim, str):
+            text = claim
+        elif isinstance(claim, dict) and isinstance(claim.get("text"), str):
+            text = claim["text"]
+            negated = claim.get("negated") is True
+        if text is None:
+            return None
+        normalized = SemanticModel._normalize_claim_text(text)
+        lower = normalized.lower()
+        if lower.startswith("not "):
+            normalized = SemanticModel._normalize_claim_text(normalized[4:])
+            negated = True
+        if not normalized:
+            return None
+        return normalized.lower(), negated
+
+    @staticmethod
+    def _validate_rule(obj: dict[str, Any], diagnostics: list[Diagnostic]) -> None:
+        claims = obj.get("claims", [])
+        if not isinstance(claims, list):
+            return
+        polarities_by_claim: dict[str, set[bool]] = {}
+        for claim in claims:
+            signature = SemanticModel._claim_signature(claim)
+            if signature is None:
+                continue
+            claim_text, negated = signature
+            polarities_by_claim.setdefault(claim_text, set()).add(negated)
+        contradictory = sorted(
+            claim_text for claim_text, polarities in polarities_by_claim.items() if len(polarities) > 1
+        )
+        for claim_text in contradictory:
+            diagnostics.append(
+                Diagnostic(
+                    "ORIN-E046",
+                    f"rule contains contradictory claims: {claim_text}",
+                    obj.get("id"),
+                )
+            )
 
     @staticmethod
     def _validate_workflow(

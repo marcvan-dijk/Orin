@@ -1,0 +1,22 @@
+{
+  "modelVersion": "0.1.0",
+  "module": {
+    "id": "shared-tasks/module",
+    "kind": "module",
+    "name": "shared-tasks",
+    "status": "accepted"
+  },
+  "objects": [
+    {
+      "id": "shared-tasks/rule/task-title-required",
+      "kind": "rule",
+      "name": "task-title-required",
+      "category": "invariant",
+      "status": "accepted",
+      "claims": [
+        "Task title must be non-empty.",
+        "not Task title must be non-empty."
+      ]
+    }
+  ]
+}
