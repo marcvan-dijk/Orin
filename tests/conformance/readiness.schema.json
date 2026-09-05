@@ -1,0 +1,9 @@
+{
+  "schemaVersion": "0.1.0",
+  "categories": [
+    "required-decision",
+    "optional-default",
+    "unresolved-assumption",
+    "implementation-preference"
+  ]
+}
