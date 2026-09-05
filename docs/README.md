@@ -21,7 +21,7 @@ Authoritative completion log: see the `[done]` items in
 - **Current project scope (password-reset MVP): complete**
 - **Remaining tasks in current project scope: 0**
 - **Open post-MVP backlog tasks: 1**
-- **Exact next step: execute ORIN-0003 item 42 as a docs-only post-MVP alignment follow-up before starting additional implementation increments**
+- **Exact next step: execute ORIN-0003 item 44 to widen completeness/readiness coverage across more ORIN-0004 semantic contracts**
 
 Authoritative status and task markers are maintained in
 [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md).

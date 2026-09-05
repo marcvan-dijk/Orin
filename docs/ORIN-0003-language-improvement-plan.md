@@ -662,17 +662,30 @@ capture important decisions and which parts add unnecessary friction.
     implementation choices before any new implementation increment is started.
     Added
     `docs/ORIN-0005-shared-tasks-to-ORIN-0004-alignment-brief.md`.
-42. [post-mvp-next] Review and approve the item 41 alignment brief as the
-    semantic baseline for any future shared-tasks execution activation, keeping
-    all follow-up work docs-only until explicitly promoted in `ORIN-0003`.
+42. [done] Review and accept the item 41 alignment brief as the semantic
+    baseline for the first post-MVP semantic completeness implementation
+    increment.
+43. [done] Add a versioned completeness/readiness analysis layer that reports
+    blocking required decisions, optional defaults, unresolved assumptions, and
+    implementation preferences with stable codes and affected-object paths.
+    Added readiness-report coverage in
+    `implementations/python/orin_model.py` and
+    `implementations/typescript/src/orin_model.ts`, plus focused fixture/tests
+    using `tests/conformance/shared-tasks.readiness-partial.model.json`.
+44. [post-mvp-next] Extend the completeness/readiness schema beyond the current
+    capability/effect/workflow slice so more ORIN-0004 contracts (for example
+    entity lifecycle, effect inputs/outputs, rule evidence links, and workflow
+    postconditions) are covered by language-neutral fixtures and deterministic
+    readiness diagnostics.
 
 ### Current status after reevaluation
 
 - **Current project scope (password-reset MVP):** complete.
 - **Remaining tasks in current project scope:** `0`.
 - **Open post-MVP backlog tasks in this sequence:** `1`.
-- **Exact next step:** execute item 42 as a docs-only ORIN-0003 roadmap
-  increment before starting additional implementation increments.
+- **Exact next step:** execute item 44 to widen the completeness/readiness
+  schema coverage across more ORIN-0004 contracts while keeping the work in the
+  semantic analysis layer.
 
 ## Test strategy
 

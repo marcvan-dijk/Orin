@@ -17,6 +17,7 @@ FIXTURE = Path(__file__).parents[2] / "tests" / "conformance" / "password-reset.
 CASES = FIXTURE.parent / "password-reset.cases.json"
 TASKS_FIXTURE = FIXTURE.parent / "shared-tasks.model.json"
 TASKS_RULE_CONTRADICTION_MULTI_FIXTURE = FIXTURE.parent / "shared-tasks.rule-contradiction-multi.model.json"
+TASKS_READINESS_PARTIAL_FIXTURE = FIXTURE.parent / "shared-tasks.readiness-partial.model.json"
 PASSWORD_RESET_STRUCTURED = FIXTURE.parent / "password-reset.structured.json"
 
 
@@ -325,6 +326,113 @@ class SemanticModelTests(unittest.TestCase):
             ],
         )
         self.assertEqual(SemanticModel.from_json_file(TASKS_RULE_CONTRADICTION_MULTI_FIXTURE).compilation_status(), "fail")
+
+    def test_readiness_report_is_deterministic_for_partially_complete_model(self):
+        report = SemanticModel.from_json_file(TASKS_READINESS_PARTIAL_FIXTURE).readiness_report().to_dict()
+
+        self.assertEqual(report["schemaVersion"], "0.1.0")
+        self.assertEqual(report["status"], "blocked")
+        self.assertEqual(report["validationStatus"], "eligible")
+        self.assertEqual(
+            [
+                (item["code"], item["category"], item["blocking"], item["path"])
+                for item in report["diagnostics"]
+            ],
+            [
+                (
+                    "ORIN-R001",
+                    "required-decision",
+                    True,
+                    "/objects/shared-tasks~1capability~1complete-task/owner",
+                ),
+                (
+                    "ORIN-R002",
+                    "required-decision",
+                    True,
+                    "/objects/shared-tasks~1capability~1complete-task/scope",
+                ),
+                (
+                    "ORIN-R010",
+                    "required-decision",
+                    True,
+                    "/objects/shared-tasks~1effect~1persistent-entity-store.write.task-state/failureModes",
+                ),
+                (
+                    "ORIN-R020",
+                    "required-decision",
+                    True,
+                    "/objects/shared-tasks~1workflow~1complete-task/failureBehavior",
+                ),
+                (
+                    "ORIN-R101",
+                    "optional-default",
+                    False,
+                    "/objects/shared-tasks~1relation~1assigned-to/deletionBehavior",
+                ),
+                (
+                    "ORIN-R102",
+                    "optional-default",
+                    False,
+                    "/objects/shared-tasks~1effect~1persistent-entity-store.write.task-state/retryPolicy",
+                ),
+                (
+                    "ORIN-R201",
+                    "unresolved-assumption",
+                    False,
+                    "/objects/shared-tasks~1uncertainty~1audit-retention",
+                ),
+                (
+                    "ORIN-R301",
+                    "implementation-preference",
+                    False,
+                    "/module/implementationPolicies/optimize-for",
+                ),
+            ],
+        )
+
+    def test_required_decision_readiness_diagnostics_preserve_affected_object_paths(self):
+        report = SemanticModel.from_json_file(TASKS_READINESS_PARTIAL_FIXTURE).readiness_report().to_dict()
+        owner_gap = next(item for item in report["diagnostics"] if item["code"] == "ORIN-R001")
+
+        self.assertEqual(owner_gap["objectId"], "shared-tasks/capability/complete-task")
+        self.assertEqual(
+            owner_gap["affectedObjectPaths"],
+            [
+                "/objects/shared-tasks~1capability~1complete-task",
+                "/objects/shared-tasks~1workflow~1complete-task",
+                "/objects/shared-tasks~1example~1successful-completion",
+                "/objects/shared-tasks~1target~1web-service",
+                "/objects/shared-tasks~1uncertainty~1audit-retention",
+            ],
+        )
+
+    def test_non_blocking_preferences_do_not_prevent_readiness_eligibility(self):
+        document = json.loads(TASKS_READINESS_PARTIAL_FIXTURE.read_text(encoding="utf-8"))
+        capability = next(item for item in document["objects"] if item["id"] == "shared-tasks/capability/complete-task")
+        effect = next(
+            item
+            for item in document["objects"]
+            if item["id"] == "shared-tasks/effect/persistent-entity-store.write.task-state"
+        )
+        workflow = next(item for item in document["objects"] if item["id"] == "shared-tasks/workflow/complete-task")
+        capability["owner"] = "task-list-owner"
+        capability["scope"] = "task-completion"
+        effect["failureModes"] = ["storage-unavailable"]
+        workflow["failureBehavior"] = ["report-storage-failure"]
+
+        report = SemanticModel(document).readiness_report().to_dict()
+
+        self.assertEqual(report["status"], "eligible")
+        self.assertEqual(
+            [item["category"] for item in report["diagnostics"]],
+            [
+                "optional-default",
+                "optional-default",
+                "unresolved-assumption",
+                "implementation-preference",
+            ],
+        )
+        self.assertTrue(all(item["blocking"] is False for item in report["diagnostics"]))
 
 class PasswordResetRuntimeTests(unittest.TestCase):
     def setUp(self):
