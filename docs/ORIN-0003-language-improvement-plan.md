@@ -609,9 +609,21 @@ capture important decisions and which parts add unnecessary friction.
     as new declaration kinds are introduced so fixture parity remains stable.
     Added orphaned relation readiness coverage with stable `ORIN-E045`
     fixture-driven assertions in the shared conformance suite.
-33. [next] Add rule contradiction diagnostics to semantic validation with
+33. [done] Add rule contradiction diagnostics to semantic validation with
     language-neutral fixture coverage and parity checks in both Python and
-    TypeScript implementations.
+    TypeScript implementations. Added Python `ORIN-E046` rule-claim
+    contradiction detection for same-rule positive/negated claim pairs,
+    expanded `implementations/python/test_orin_model.py`, and added shared
+    conformance fixtures for both explicit negation and `not ...` claim pairs.
+34. [done] Port `ORIN-E046` rule contradiction diagnostics and new shared-task
+    fixture assertions to the TypeScript semantic validator to restore full
+    cross-implementation parity. Added contradiction detection in
+    `implementations/typescript/src/orin_model.ts` for `not ...` and structured
+    `{"text","negated"}` rule-claim forms, plus parity assertions in
+    `implementations/typescript/src/shared_tasks_validation.test.ts`.
+35. [next] Extend TypeScript semantic diagnostics assertions to verify
+    deterministic `ORIN-E046` diagnostic ordering/object identity when multiple
+    contradictory propositions appear in one model.
 
 ## Test strategy
 

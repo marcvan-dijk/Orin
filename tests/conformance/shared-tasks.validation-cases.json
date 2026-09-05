@@ -72,6 +72,22 @@
         "compilation": "fail",
         "diagnostics": ["ORIN-E045"]
       }
+    },
+    {
+      "id": "shared-tasks/validation/rule-contradiction-negated-claim",
+      "model": "shared-tasks.rule-contradiction-negated.model.json",
+      "then": {
+        "compilation": "fail",
+        "diagnostics": ["ORIN-E046"]
+      }
+    },
+    {
+      "id": "shared-tasks/validation/rule-contradiction-not-prefix",
+      "model": "shared-tasks.rule-contradiction-not-prefix.model.json",
+      "then": {
+        "compilation": "fail",
+        "diagnostics": ["ORIN-E046"]
+      }
     }
   ]
 }

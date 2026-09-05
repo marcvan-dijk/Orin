@@ -64,3 +64,15 @@ test("orphaned relation readiness diagnostic mirrors Python semantics", () => {
   );
   assert.equal(model.compilationStatus(), "fail");
 });
+
+test("rule contradiction diagnostic mirrors Python semantics for not-prefix claims", () => {
+  const model = new SemanticModel(loadJson(resolve(ROOT, "tests/conformance/shared-tasks.rule-contradiction-negated.model.json")));
+  assert.deepEqual(model.diagnostics().map((diagnostic) => diagnostic.code), ["ORIN-E046"]);
+  assert.equal(model.compilationStatus(), "fail");
+});
+
+test("rule contradiction diagnostic mirrors Python semantics for structured negation flags", () => {
+  const model = new SemanticModel(loadJson(resolve(ROOT, "tests/conformance/shared-tasks.rule-contradiction-not-prefix.model.json")));
+  assert.deepEqual(model.diagnostics().map((diagnostic) => diagnostic.code), ["ORIN-E046"]);
+  assert.equal(model.compilationStatus(), "fail");
+});

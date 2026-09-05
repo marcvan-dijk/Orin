@@ -116,6 +116,8 @@ class SemanticModel:
                 self._validate_relation(obj, kinds, diagnostics)
             elif kind == "effect":
                 self._validate_effect(obj, kinds, diagnostics)
+            elif kind == "rule":
+                self._validate_rule(obj, diagnostics)
             elif kind == "workflow":
                 self._validate_workflow(obj, kinds, objects_by_id, diagnostics)
 
@@ -324,6 +326,54 @@ class SemanticModel:
                 diagnostics.append(Diagnostic("ORIN-E039", "persistence effect requires durability contract", obj.get("id")))
             elif durability not in {"strong", "eventual"}:
                 diagnostics.append(Diagnostic("ORIN-E040", f"invalid durability contract: {durability}", obj.get("id")))
+
+    @staticmethod
+    def _normalize_claim_text(text: str) -> str:
+        return " ".join(text.strip().split())
+
+    @staticmethod
+    def _claim_signature(claim: Any) -> tuple[str, bool] | None:
+        negated = False
+        text: str | None = None
+        if isinstance(claim, str):
+            text = claim
+        elif isinstance(claim, dict) and isinstance(claim.get("text"), str):
+            text = claim["text"]
+            negated = claim.get("negated") is True
+        if text is None:
+            return None
+        normalized = SemanticModel._normalize_claim_text(text)
+        lower = normalized.lower()
+        if lower.startswith("not "):
+            normalized = SemanticModel._normalize_claim_text(normalized[4:])
+            negated = True
+        if not normalized:
+            return None
+        return normalized.lower(), negated
+
+    @staticmethod
+    def _validate_rule(obj: dict[str, Any], diagnostics: list[Diagnostic]) -> None:
+        claims = obj.get("claims", [])
+        if not isinstance(claims, list):
+            return
+        polarities_by_claim: dict[str, set[bool]] = {}
+        for claim in claims:
+            signature = SemanticModel._claim_signature(claim)
+            if signature is None:
+                continue
+            claim_text, negated = signature
+            polarities_by_claim.setdefault(claim_text, set()).add(negated)
+        contradictory = sorted(
+            claim_text for claim_text, polarities in polarities_by_claim.items() if len(polarities) > 1
+        )
+        for claim_text in contradictory:
+            diagnostics.append(
+                Diagnostic(
+                    "ORIN-E046",
+                    f"rule contains contradictory claims: {claim_text}",
+                    obj.get("id"),
+                )
+            )
 
     @staticmethod
     def _validate_workflow(

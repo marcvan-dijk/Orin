@@ -258,6 +258,50 @@ class SemanticModelTests(unittest.TestCase):
         self.assertIn("ORIN-E045", [item.code for item in model.diagnostics()])
         self.assertEqual(model.compilation_status(), "fail")
 
+    def test_rule_claim_text_and_negated_flag_contradiction_is_rejected(self):
+        document = {
+            "modelVersion": "0.1.0",
+            "module": {"id": "shared-tasks/module", "kind": "module", "name": "shared-tasks", "status": "accepted"},
+            "objects": [
+                {
+                    "id": "shared-tasks/rule/member-completion",
+                    "kind": "rule",
+                    "name": "member-completion",
+                    "status": "accepted",
+                    "claims": [
+                        {"text": "Assignee must be a list member.", "negated": False},
+                        {"text": "Assignee must be a list member.", "negated": True},
+                    ],
+                }
+            ],
+        }
+
+        diagnostics = SemanticModel(document).diagnostics()
+        self.assertIn("ORIN-E046", [item.code for item in diagnostics])
+        self.assertEqual(SemanticModel(document).compilation_status(), "fail")
+
+    def test_rule_exact_positive_negative_claim_pair_is_rejected(self):
+        document = {
+            "modelVersion": "0.1.0",
+            "module": {"id": "shared-tasks/module", "kind": "module", "name": "shared-tasks", "status": "accepted"},
+            "objects": [
+                {
+                    "id": "shared-tasks/rule/task-title-required",
+                    "kind": "rule",
+                    "name": "task-title-required",
+                    "status": "accepted",
+                    "claims": [
+                        "Task title must be non-empty.",
+                        "not Task title must be non-empty.",
+                    ],
+                }
+            ],
+        }
+
+        diagnostics = SemanticModel(document).diagnostics()
+        self.assertIn("ORIN-E046", [item.code for item in diagnostics])
+        self.assertEqual(SemanticModel(document).compilation_status(), "fail")
+
     def test_shared_tasks_source_maps_to_valid_semantic_model(self):
         source = Path(__file__).parents[2] / "examples" / "shared-tasks.orin"
         model = OrinParser().parse_file(source)

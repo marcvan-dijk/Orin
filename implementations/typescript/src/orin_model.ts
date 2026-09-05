@@ -142,6 +142,7 @@ export class SemanticModel {
         }
       }
     }
+    diagnostics.push(...this.collectRuleContradictionDiagnostics(objects));
     return diagnostics;
   }
 
@@ -364,6 +365,69 @@ export class SemanticModel {
       }
     }
     return relationReferences;
+  }
+
+  private collectRuleContradictionDiagnostics(objects: Array<Record<string, any>>): Diagnostic[] {
+    const diagnostics: Diagnostic[] = [];
+    for (const obj of objects) {
+      if (!obj || typeof obj !== "object" || obj.kind !== "rule" || typeof obj.id !== "string") {
+        continue;
+      }
+      const claims = Array.isArray(obj.claims) ? obj.claims : [];
+      const claimPolarity = new Map<string, Set<boolean>>();
+      for (const claim of claims) {
+        const normalized = this.normalizeRuleClaim(claim);
+        if (!normalized) {
+          continue;
+        }
+        const polarities = claimPolarity.get(normalized.proposition) ?? new Set<boolean>();
+        polarities.add(normalized.negative);
+        claimPolarity.set(normalized.proposition, polarities);
+      }
+      const contradictory = [...claimPolarity.entries()]
+        .filter(([, polarities]) => polarities.size > 1)
+        .map(([proposition]) => proposition)
+        .sort();
+      for (const proposition of contradictory) {
+        diagnostics.push({
+          code: "ORIN-E046",
+          message: `rule contains contradictory claims: ${proposition}`,
+          objectId: obj.id,
+        });
+      }
+    }
+    return diagnostics;
+  }
+
+  private normalizeRuleClaim(claim: unknown): { negative: boolean; proposition: string } | null {
+    let text: string;
+    let negative = false;
+    if (typeof claim === "string") {
+      text = claim;
+    } else if (claim && typeof claim === "object") {
+      const claimText = (claim as Record<string, unknown>).text;
+      if (typeof claimText !== "string") {
+        return null;
+      }
+      text = claimText;
+      negative = (claim as Record<string, unknown>).negated === true;
+    } else {
+      return null;
+    }
+
+    let normalized = text.toLowerCase().trim();
+    if (!normalized) {
+      return null;
+    }
+    if (normalized.startsWith("not ")) {
+      negative = true;
+      normalized = normalized.slice(4).trim();
+    }
+    normalized = normalized.replace(/[.,;:!?]+$/g, "").replace(/\s+/g, " ").trim();
+    if (!normalized) {
+      return null;
+    }
+    return { negative, proposition: normalized };
   }
 
   private removeMetadata(value: any): void {
