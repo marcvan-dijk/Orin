@@ -25,6 +25,9 @@ test("shared-tasks validation fixtures assert diagnostics parity", async (t) => 
         diagnostics: model.diagnostics().map((diagnostic) => diagnostic.code).sort(),
       };
       const expectedDiagnostics = [...(validationCase.then?.diagnostics || [])].sort();
+      for (const code of [...expectedDiagnostics, ...actual.diagnostics]) {
+        assert.match(code, /^ORIN-E\d{3}$/);
+      }
       assert.equal(actual.compilation, validationCase.then?.compilation);
       assert.deepEqual(actual.diagnostics, expectedDiagnostics);
     });

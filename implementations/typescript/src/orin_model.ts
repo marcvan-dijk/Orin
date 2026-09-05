@@ -34,26 +34,22 @@ export class SemanticModel {
     const objects = Array.isArray(this.document.objects) ? this.document.objects : [];
     const kinds = new Map<string, string>();
     const objectsById = new Map<string, Record<string, any>>();
-    const readinessReferences = new Set<string>();
+    const hasStatefulWorkflow = objects.some(
+      (obj) =>
+        obj &&
+        typeof obj === "object" &&
+        obj.kind === "workflow" &&
+        Array.isArray(obj.transitions) &&
+        obj.transitions.length > 0,
+    );
 
     for (const obj of objects) {
       if (obj && typeof obj.id === "string" && typeof obj.kind === "string") {
         kinds.set(obj.id, obj.kind);
         objectsById.set(obj.id, obj);
       }
-      if (obj && typeof obj === "object" && READINESS_DRIVER_KINDS.has(obj.kind)) {
-        for (const field of REFERENCE_FIELDS) {
-          const values = obj[field];
-          if (Array.isArray(values)) {
-            for (const value of values) {
-              if (typeof value === "string") {
-                readinessReferences.add(value);
-              }
-            }
-          }
-        }
-      }
     }
+    const readinessReferences = this.collectReadinessReferences(objects, kinds, objectsById);
 
     for (const obj of objects) {
       if (!obj || typeof obj !== "object") {
@@ -103,6 +99,32 @@ export class SemanticModel {
           message: "effect declaration is not referenced by any workflow/rule/example",
           objectId: obj.id,
         });
+      }
+    }
+    for (const obj of objects) {
+      if (!obj || typeof obj !== "object" || obj.kind !== "capability") {
+        continue;
+      }
+      if (typeof obj.id === "string" && !readinessReferences.has(obj.id)) {
+        diagnostics.push({
+          code: "ORIN-E043",
+          message: "capability declaration is not referenced by any workflow/rule/example",
+          objectId: obj.id,
+        });
+      }
+    }
+    if (hasStatefulWorkflow) {
+      for (const obj of objects) {
+        if (!obj || typeof obj !== "object" || obj.kind !== "state") {
+          continue;
+        }
+        if (typeof obj.id === "string" && !readinessReferences.has(obj.id)) {
+          diagnostics.push({
+            code: "ORIN-E044",
+            message: "state declaration is not referenced by any workflow/rule/example",
+            objectId: obj.id,
+          });
+        }
       }
     }
     return diagnostics;
@@ -241,6 +263,68 @@ export class SemanticModel {
         objectId: workflow.id,
       });
     }
+  }
+
+  private collectReadinessReferences(
+    objects: Array<Record<string, any>>,
+    kinds: Map<string, string>,
+    objectsById: Map<string, Record<string, any>>,
+  ): Set<string> {
+    const readinessReferences = new Set<string>();
+    const readinessEffects = new Set<string>();
+    for (const obj of objects) {
+      if (!obj || typeof obj !== "object" || !READINESS_DRIVER_KINDS.has(obj.kind)) {
+        continue;
+      }
+      for (const field of REFERENCE_FIELDS) {
+        const values = obj[field];
+        if (!Array.isArray(values)) {
+          continue;
+        }
+        for (const value of values) {
+          if (typeof value !== "string") {
+            continue;
+          }
+          readinessReferences.add(value);
+          if (kinds.get(value) === "effect") {
+            readinessEffects.add(value);
+          }
+        }
+      }
+      if (obj.kind === "workflow") {
+        const transitions = Array.isArray(obj.transitions) ? obj.transitions : [];
+        for (const transition of transitions) {
+          if (!transition || typeof transition !== "object") {
+            continue;
+          }
+          if (typeof transition.from === "string") {
+            readinessReferences.add(transition.from);
+          }
+          if (typeof transition.to === "string") {
+            readinessReferences.add(transition.to);
+          }
+        }
+        const actorCapabilities = Array.isArray(obj.actorCapabilities) ? obj.actorCapabilities : [];
+        for (const binding of actorCapabilities) {
+          if (binding && typeof binding === "object" && typeof binding.capability === "string") {
+            readinessReferences.add(binding.capability);
+          }
+        }
+      }
+    }
+    for (const effectId of readinessEffects) {
+      const effect = objectsById.get(effectId);
+      const requiredCapabilities = effect?.requires;
+      if (!Array.isArray(requiredCapabilities)) {
+        continue;
+      }
+      for (const capabilityId of requiredCapabilities) {
+        if (typeof capabilityId === "string") {
+          readinessReferences.add(capabilityId);
+        }
+      }
+    }
+    return readinessReferences;
   }
 
   private removeMetadata(value: any): void {

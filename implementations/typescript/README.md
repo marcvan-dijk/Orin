@@ -5,7 +5,7 @@ password-reset proof flow.
 
 Current files mirror the Python proof path at a small scope:
 
-- `src/orin_model.ts` — canonicalization and unresolved-ambiguity readiness check
+- `src/orin_model.ts` — canonicalization and readiness diagnostics parity checks
 - `src/lowering.ts` — implementation-policy based artifact derivation
 - `src/password_reset.ts` — deterministic password-reset runtime
 - `src/conformance_runner.ts` — language-neutral fixture execution

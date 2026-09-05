@@ -48,6 +48,22 @@
         "compilation": "fail",
         "diagnostics": ["ORIN-E042"]
       }
+    },
+    {
+      "id": "shared-tasks/validation/orphaned-capability",
+      "model": "shared-tasks.orphaned-capability.model.json",
+      "then": {
+        "compilation": "fail",
+        "diagnostics": ["ORIN-E043"]
+      }
+    },
+    {
+      "id": "shared-tasks/validation/orphaned-state",
+      "model": "shared-tasks.orphaned-state.model.json",
+      "then": {
+        "compilation": "fail",
+        "diagnostics": ["ORIN-E044"]
+      }
     }
   ]
 }

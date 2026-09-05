@@ -503,10 +503,9 @@ capture important decisions and which parts add unnecessary friction.
 4. [in progress] Implement the semantic validator; entity field/identity
    schemas, relation endpoints/cardinality, typed workflow values, state
    transition checks, actor capability binding, persistence contracts, and an
-   initial readiness diagnostic for orphaned effect declarations now cover the
-   shared-task model. Next step: extend readiness diagnostics to additional
-   declaration kinds (for example orphaned capabilities and states) with stable
-   fixture-driven assertions.
+   readiness diagnostic set for orphaned effect/capability/state declarations
+   now cover the shared-task model. Next step: carry the same readiness
+   diagnostics parity into the TypeScript validator implementation.
 5. [done] Make unresolved `rate-limit` block compilation.
 6. [done] Implement the minimal `.orin` parser and analyzer in the separate
    `implementations/python/` host-language folder. It parses the password-reset
@@ -604,9 +603,11 @@ capture important decisions and which parts add unnecessary friction.
     `implementations/typescript/src/shared_tasks_validation.test.ts`,
     expanded `implementations/typescript/src/orin_model.ts` diagnostics parity
     checks, and added direct-execution proof runner coverage.
-31. [next] Extend readiness diagnostics beyond orphaned effects to additional
-    declaration kinds with stable fixture-driven assertions shared across
-    Python and TypeScript validation runners.
+31. [done] Extend readiness diagnostics beyond orphaned effects to orphaned
+    capability/state declarations with stable `ORIN-E043`/`ORIN-E044`
+    fixture-driven assertions in the shared conformance suite.
+32. [next] Keep Python and TypeScript readiness-diagnostic behavior in lockstep
+    as new declaration kinds are introduced so fixture parity remains stable.
 
 ## Test strategy
 

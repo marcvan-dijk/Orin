@@ -133,7 +133,9 @@ class SemanticModel:
                         obj.get("id"),
                     )
                 )
-        readiness_references = self._collect_readiness_references(objects)
+        readiness_references = self._collect_readiness_references(objects, kinds, objects_by_id)
+        state_references = self._collect_readiness_state_references(objects)
+        capability_readiness_enabled = self._capability_readiness_enabled(objects, kinds)
         for obj in objects:
             if not isinstance(obj, dict) or obj.get("kind") != "effect":
                 continue
@@ -146,18 +148,108 @@ class SemanticModel:
                         object_id,
                     )
                 )
+        for obj in objects:
+            if not isinstance(obj, dict) or obj.get("kind") != "capability":
+                continue
+            object_id = obj.get("id")
+            if capability_readiness_enabled and isinstance(object_id, str) and object_id not in readiness_references:
+                diagnostics.append(
+                    Diagnostic(
+                        "ORIN-E043",
+                        "capability declaration is not referenced by any workflow/rule/example",
+                        object_id,
+                    )
+                )
+        for obj in objects:
+            if not isinstance(obj, dict) or obj.get("kind") != "state":
+                continue
+            object_id = obj.get("id")
+            if state_references and isinstance(object_id, str) and object_id not in state_references:
+                diagnostics.append(
+                    Diagnostic(
+                        "ORIN-E044",
+                        "state declaration is not referenced by any workflow transition",
+                        object_id,
+                    )
+                )
         return diagnostics
 
     @staticmethod
-    def _collect_readiness_references(objects: list[Any]) -> set[str]:
+    def _collect_readiness_references(
+        objects: list[Any],
+        kinds: dict[str, str],
+        objects_by_id: dict[str, dict[str, Any]],
+    ) -> set[str]:
         references: set[str] = set()
+        readiness_effects: set[str] = set()
         for obj in objects:
             if not isinstance(obj, dict) or obj.get("kind") not in READINESS_DRIVER_KINDS:
                 continue
             for field in REFERENCE_FIELDS:
                 values = obj.get(field, [])
                 if isinstance(values, list):
-                    references.update(value for value in values if isinstance(value, str))
+                    for value in values:
+                        if isinstance(value, str):
+                            references.add(value)
+                            if kinds.get(value) == "effect":
+                                readiness_effects.add(value)
+            if obj.get("kind") == "workflow":
+                transitions = obj.get("transitions", [])
+                if isinstance(transitions, list):
+                    for transition in transitions:
+                        if not isinstance(transition, dict):
+                            continue
+                        from_state = transition.get("from")
+                        to_state = transition.get("to")
+                        if isinstance(from_state, str):
+                            references.add(from_state)
+                        if isinstance(to_state, str):
+                            references.add(to_state)
+                actor_capabilities = obj.get("actorCapabilities", [])
+                if isinstance(actor_capabilities, list):
+                    for binding in actor_capabilities:
+                        if isinstance(binding, dict) and isinstance(binding.get("capability"), str):
+                            references.add(binding["capability"])
+        for effect_id in readiness_effects:
+            effect = objects_by_id.get(effect_id, {})
+            if isinstance(effect, dict):
+                required_capabilities = effect.get("requires", [])
+                if isinstance(required_capabilities, list):
+                    for capability_id in required_capabilities:
+                        if isinstance(capability_id, str):
+                            references.add(capability_id)
+        return references
+
+    @staticmethod
+    def _capability_readiness_enabled(objects: list[Any], kinds: dict[str, str]) -> bool:
+        for obj in objects:
+            if not isinstance(obj, dict) or obj.get("kind") not in READINESS_DRIVER_KINDS:
+                continue
+            if obj.get("kind") == "workflow" and "actorCapabilities" in obj:
+                return True
+            uses = obj.get("uses", [])
+            if isinstance(uses, list) and any(isinstance(value, str) and kinds.get(value) == "effect" for value in uses):
+                return True
+        return False
+
+    @staticmethod
+    def _collect_readiness_state_references(objects: list[Any]) -> set[str]:
+        references: set[str] = set()
+        for obj in objects:
+            if not isinstance(obj, dict) or obj.get("kind") != "workflow":
+                continue
+            transitions = obj.get("transitions", [])
+            if not isinstance(transitions, list):
+                continue
+            for transition in transitions:
+                if not isinstance(transition, dict):
+                    continue
+                from_state = transition.get("from")
+                to_state = transition.get("to")
+                if isinstance(from_state, str):
+                    references.add(from_state)
+                if isinstance(to_state, str):
+                    references.add(to_state)
         return references
 
     @staticmethod

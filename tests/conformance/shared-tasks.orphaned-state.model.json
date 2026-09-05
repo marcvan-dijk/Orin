@@ -1,0 +1,182 @@
+{
+  "modelVersion": "0.1.0",
+  "module": {
+    "id": "shared-tasks/module",
+    "kind": "module",
+    "name": "shared-tasks",
+    "status": "accepted"
+  },
+  "objects": [
+    {
+      "id": "shared-tasks/value-type/person-id",
+      "kind": "value-type",
+      "name": "person-id",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks/value-type/list-name",
+      "kind": "value-type",
+      "name": "list-name",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks/value-type/task-id",
+      "kind": "value-type",
+      "name": "task-id",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks/value-type/task-title",
+      "kind": "value-type",
+      "name": "task-title",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks/entity-type/person",
+      "kind": "entity-type",
+      "name": "person",
+      "status": "accepted",
+      "fields": [
+        {
+          "name": "id",
+          "type": "shared-tasks/value-type/person-id",
+          "identity": true
+        }
+      ]
+    },
+    {
+      "id": "shared-tasks/entity-type/task-list",
+      "kind": "entity-type",
+      "name": "task-list",
+      "status": "accepted",
+      "fields": [
+        {
+          "name": "id",
+          "type": "shared-tasks/value-type/task-id",
+          "identity": true
+        },
+        {
+          "name": "name",
+          "type": "shared-tasks/value-type/list-name"
+        }
+      ]
+    },
+    {
+      "id": "shared-tasks/entity-type/task",
+      "kind": "entity-type",
+      "name": "task",
+      "status": "accepted",
+      "fields": [
+        {
+          "name": "id",
+          "type": "shared-tasks/value-type/task-id",
+          "identity": true
+        },
+        {
+          "name": "title",
+          "type": "shared-tasks/value-type/task-title"
+        }
+      ]
+    },
+    {
+      "id": "shared-tasks/relation/member-of",
+      "kind": "relation",
+      "name": "member-of",
+      "status": "accepted",
+      "endpoints": [
+        {
+          "type": "shared-tasks/entity-type/person"
+        },
+        {
+          "type": "shared-tasks/entity-type/task-list"
+        }
+      ],
+      "cardinality": "many-to-many"
+    },
+    {
+      "id": "shared-tasks/state/open",
+      "kind": "state",
+      "name": "open",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks/state/completed",
+      "kind": "state",
+      "name": "completed",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks/capability/complete-task",
+      "kind": "capability",
+      "name": "complete-task",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks/capability/write-task-state",
+      "kind": "capability",
+      "name": "write-task-state",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks/effect/persistent-entity-store.write.task-state",
+      "kind": "effect",
+      "name": "persistent-entity-store.write.task-state",
+      "status": "accepted",
+      "requires": [
+        "shared-tasks/capability/write-task-state"
+      ],
+      "durability": "strong"
+    },
+    {
+      "id": "shared-tasks/workflow/complete-task",
+      "kind": "workflow",
+      "name": "complete-task",
+      "status": "accepted",
+      "inputs": [
+        {
+          "name": "actor",
+          "type": "shared-tasks/entity-type/person"
+        },
+        {
+          "name": "task",
+          "type": "shared-tasks/entity-type/task"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "task",
+          "type": "shared-tasks/entity-type/task"
+        }
+      ],
+      "actor": "actor",
+      "requires": [
+        "shared-tasks/capability/complete-task"
+      ],
+      "uses": [
+        "shared-tasks/effect/persistent-entity-store.write.task-state"
+      ],
+      "actorCapabilities": [
+        {
+          "actor": "actor",
+          "capability": "shared-tasks/capability/complete-task"
+        },
+        {
+          "actor": "actor",
+          "capability": "shared-tasks/capability/write-task-state"
+        }
+      ],
+      "transitions": [
+        {
+          "from": "shared-tasks/state/open",
+          "to": "shared-tasks/state/completed"
+        }
+      ]
+    },
+    {
+      "id": "shared-tasks/state/archived",
+      "kind": "state",
+      "name": "archived",
+      "status": "accepted"
+    }
+  ]
+}
