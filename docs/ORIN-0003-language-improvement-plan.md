@@ -638,16 +638,20 @@ capture important decisions and which parts add unnecessary friction.
     extended `shared-tasks.validation-cases.json` with deterministic
     `diagnosticEntries`, and updated both Python and TypeScript validation
     runners/assertions to compare those entries.
-38. [post-mvp-next] Mirror the fixture-driven multi-contradiction
-    diagnostic-entry assertions directly in
-    `implementations/python/test_orin_model.py` so object identity and message
-    ordering are validated without the shared-task conformance harness.
+38. [done] Mirror the fixture-driven multi-contradiction diagnostic-entry
+    assertions directly in `implementations/python/test_orin_model.py` so
+    object identity and message ordering are validated without the shared-task
+    conformance harness. Added direct `ORIN-E046` diagnostic-entry assertions
+    using `shared-tasks.rule-contradiction-multi.model.json`.
+39. [post-mvp-next] Add a dedicated TypeScript semantic-model unit test module
+    for multi-contradiction `ORIN-E046` diagnostic-entry assertions
+    independent of the shared-task fixture harness.
 
 ### Current status after reevaluation
 
 - **Current project scope (password-reset MVP):** complete.
 - **Remaining tasks in current project scope:** `0`.
-- **Open post-MVP backlog tasks in this sequence:** `1` (item 38).
+- **Open post-MVP backlog tasks in this sequence:** `1` (item 39).
 
 ## Test strategy
 
