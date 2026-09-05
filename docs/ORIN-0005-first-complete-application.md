@@ -7,6 +7,8 @@
 **Execution note:** ORIN-0005 remains deferred roadmap work after MVP
 completion. It is not current execution work; any future implementation tasks
 for this application should first be activated and tracked in `ORIN-0003`.
+See also the docs-only alignment brief:
+`docs/ORIN-0005-shared-tasks-to-ORIN-0004-alignment-brief.md`.
 
 ## Decision
 
