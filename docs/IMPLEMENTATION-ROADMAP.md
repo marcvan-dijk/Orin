@@ -41,6 +41,9 @@ This roadmap is intentionally narrow: prove Orin's core meaning-first hypothesis
 
 The MVP is complete when password-reset demonstrates deterministic meaning, ambiguity gating, and implementation-equivalence evidence with a clear beginner path.
 
-## Exact next implementation step
+## Execution tracking
 
-Add focused TypeScript validation coverage for the password-reset derivation proof flow so the TypeScript reference slice stays behaviorally aligned with language-neutral conformance fixtures.
+- Current-project execution (password-reset MVP) is complete.
+- Open work is now tracked as post-MVP backlog in
+  [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md)
+  using the `[post-mvp-next]` marker.
