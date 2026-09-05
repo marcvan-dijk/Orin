@@ -20,9 +20,15 @@ test("shared-tasks validation fixtures assert diagnostics parity", async (t) => 
     await t.test(validationCase.id, () => {
       const modelPath = resolve(ROOT, "tests/conformance", validationCase.model);
       const model = new SemanticModel(loadJson(modelPath));
+      const diagnostics = model.diagnostics();
       const actual = {
         compilation: model.compilationStatus(),
-        diagnostics: model.diagnostics().map((diagnostic) => diagnostic.code).sort(),
+        diagnostics: diagnostics.map((diagnostic) => diagnostic.code).sort(),
+        diagnosticEntries: diagnostics.map((diagnostic) => ({
+          code: diagnostic.code,
+          objectId: diagnostic.objectId ?? null,
+          message: diagnostic.message,
+        })),
       };
       const expectedDiagnostics = [...(validationCase.then?.diagnostics || [])].sort();
       for (const code of [...expectedDiagnostics, ...actual.diagnostics]) {
@@ -30,6 +36,9 @@ test("shared-tasks validation fixtures assert diagnostics parity", async (t) => 
       }
       assert.equal(actual.compilation, validationCase.then?.compilation);
       assert.deepEqual(actual.diagnostics, expectedDiagnostics);
+      if (validationCase.then?.diagnosticEntries) {
+        assert.deepEqual(actual.diagnosticEntries, validationCase.then.diagnosticEntries);
+      }
     });
   }
 });

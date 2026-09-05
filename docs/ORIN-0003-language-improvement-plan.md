@@ -631,9 +631,17 @@ capture important decisions and which parts add unnecessary friction.
     contradictory propositions appear in one model. Added
     `implementations/typescript/src/shared_tasks_validation.test.ts` coverage
     asserting stable multi-contradiction ordering and object identity.
-37. [next] Extend language-neutral shared-task validation fixtures and both
+37. [done] Extend language-neutral shared-task validation fixtures and both
     runners to assert full diagnostic entries (code, object identity, and
-    deterministic ordering) for multi-contradiction `ORIN-E046` cases.
+    deterministic ordering) for multi-contradiction `ORIN-E046` cases. Added
+    `tests/conformance/shared-tasks.rule-contradiction-multi.model.json`,
+    extended `shared-tasks.validation-cases.json` with deterministic
+    `diagnosticEntries`, and updated both Python and TypeScript validation
+    runners/assertions to compare those entries.
+38. [next] Mirror the fixture-driven multi-contradiction diagnostic-entry
+    assertions directly in `implementations/python/test_orin_model.py` so
+    object identity and message ordering are validated without the shared-task
+    conformance harness.
 
 ## Test strategy
 

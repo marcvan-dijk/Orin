@@ -53,9 +53,18 @@ def run_validation_fixture(path: str | Path) -> list[tuple[str, dict[str, Any], 
     results: list[tuple[str, dict[str, Any], dict[str, Any]]] = []
     for case in fixture["cases"]:
         model = SemanticModel.from_json_file(fixture_path.parent / case["model"])
+        diagnostics = model.diagnostics()
         actual = {
             "compilation": model.compilation_status(),
-            "diagnostics": sorted(diagnostic.code for diagnostic in model.diagnostics()),
+            "diagnostics": sorted(diagnostic.code for diagnostic in diagnostics),
+            "diagnosticEntries": [
+                {
+                    "code": diagnostic.code,
+                    "objectId": diagnostic.object_id,
+                    "message": diagnostic.message,
+                }
+                for diagnostic in diagnostics
+            ],
         }
         results.append((case["id"], actual, case["then"]))
     return results
