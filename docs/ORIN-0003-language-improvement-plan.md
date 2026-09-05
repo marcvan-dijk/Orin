@@ -656,14 +656,18 @@ capture important decisions and which parts add unnecessary friction.
     `docs/ORIN-0004-semantic-model.md`, and
     `docs/ORIN-0005-first-complete-application.md` without changing
     implementation/runtime behavior.
+41. [post-mvp-next] Add a docs-only post-MVP alignment brief that maps the
+    first ORIN-0005 shared-tasks semantic additions onto ORIN-0004 declaration
+    kinds, explicitly separating semantic requirements from host/runtime
+    implementation choices before any new implementation increment is started.
 
 ### Current status after reevaluation
 
 - **Current project scope (password-reset MVP):** complete.
 - **Remaining tasks in current project scope:** `0`.
-- **Open post-MVP backlog tasks in this sequence:** `0`.
-- **Exact next step:** define the next ORIN-0003 post-MVP backlog task before
-  starting additional implementation increments.
+- **Open post-MVP backlog tasks in this sequence:** `1`.
+- **Exact next step:** execute item 41 as a docs-only ORIN-0003 roadmap
+  increment before starting additional implementation increments.
 
 ## Test strategy
 
