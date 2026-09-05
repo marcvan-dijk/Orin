@@ -25,6 +25,16 @@ These files are not tied to a parser, runtime, or implementation language.
 
 `shared-tasks.validation-cases.json` adds advanced model-validation checks for actor-capability authorization contracts (including missing and invalid actor bindings), persistence durability contracts, and deterministic multi-contradiction `ORIN-E046` diagnostic entries (`code`, `objectId`, `message`) ordering.
 
+`shared-tasks.readiness-partial.model.json` is a language-neutral partial
+application slice for deterministic completeness/readiness reporting. It is
+used to prove stable readiness diagnostics for blocking required decisions,
+optional defaults, unresolved assumptions, implementation preferences, and
+affected-object paths without generating a full application artifact.
+
+`readiness.schema.json` defines the shared readiness-schema version and category
+set consumed by host implementations so completeness reporting stays aligned
+across languages.
+
 `password-reset.structured.json` is an internal/interchange structured frontend artifact used only to prove frontend-to-model equivalence against `examples/password-reset.orin`. It is not a primary beginner authoring format.
 
 `shared-tasks.structured.json` is retained as a future advanced structured artifact. The text authoring example is intentionally removed from the current MVP path.

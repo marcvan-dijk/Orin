@@ -8,6 +8,8 @@ import { SemanticModel } from "./orin_model.ts";
 
 const ROOT = resolve(fileURLToPath(new URL("../../..", import.meta.url)));
 const VALIDATION_FIXTURE = resolve(ROOT, "tests/conformance/shared-tasks.validation-cases.json");
+const READINESS_FIXTURE = resolve(ROOT, "tests/conformance/shared-tasks.readiness-partial.model.json");
+const READINESS_SCHEMA_FIXTURE = resolve(ROOT, "tests/conformance/readiness.schema.json");
 
 function loadJson(path: string): Record<string, any> {
   return JSON.parse(readFileSync(path, "utf-8"));
@@ -125,4 +127,83 @@ test("rule contradiction diagnostics stay deterministic for multi-claim contradi
     },
   ]);
   assert.equal(model.compilationStatus(), "fail");
+});
+
+test("readiness report is deterministic for a partially complete model", () => {
+  const report = new SemanticModel(loadJson(READINESS_FIXTURE)).readinessReport();
+  assert.equal(report.schemaVersion, loadJson(READINESS_SCHEMA_FIXTURE).schemaVersion);
+  assert.equal(report.status, "blocked");
+  assert.equal(report.validationStatus, "eligible");
+  assert.deepEqual(
+    report.diagnostics.map((diagnostic) => ({
+      code: diagnostic.code,
+      category: diagnostic.category,
+      blocking: diagnostic.blocking,
+      path: diagnostic.path,
+    })),
+    [
+      {
+        code: "ORIN-R001",
+        category: "required-decision",
+        blocking: true,
+        path: "/objects/shared-tasks~1capability~1complete-task/owner",
+      },
+      {
+        code: "ORIN-R002",
+        category: "required-decision",
+        blocking: true,
+        path: "/objects/shared-tasks~1capability~1complete-task/scope",
+      },
+      {
+        code: "ORIN-R010",
+        category: "required-decision",
+        blocking: true,
+        path: "/objects/shared-tasks~1effect~1persistent-entity-store.write.task-state/failureModes",
+      },
+      {
+        code: "ORIN-R020",
+        category: "required-decision",
+        blocking: true,
+        path: "/objects/shared-tasks~1workflow~1complete-task/failureBehavior",
+      },
+      {
+        code: "ORIN-R101",
+        category: "optional-default",
+        blocking: false,
+        path: "/objects/shared-tasks~1relation~1assigned-to/deletionBehavior",
+      },
+      {
+        code: "ORIN-R102",
+        category: "optional-default",
+        blocking: false,
+        path: "/objects/shared-tasks~1effect~1persistent-entity-store.write.task-state/retryPolicy",
+      },
+      {
+        code: "ORIN-R201",
+        category: "unresolved-assumption",
+        blocking: false,
+        path: "/objects/shared-tasks~1uncertainty~1audit-retention",
+      },
+      {
+        code: "ORIN-R301",
+        category: "implementation-preference",
+        blocking: false,
+        path: "/module/implementationPolicies/optimize-for",
+      },
+    ],
+  );
+});
+
+test("readiness affected-object paths preserve downstream references", () => {
+  const report = new SemanticModel(loadJson(READINESS_FIXTURE)).readinessReport();
+  const ownerGap = report.diagnostics.find((diagnostic) => diagnostic.code === "ORIN-R001");
+  assert.ok(ownerGap);
+  assert.equal(ownerGap.objectId, "shared-tasks/capability/complete-task");
+  assert.deepEqual(ownerGap.affectedObjectPaths, [
+    "/objects/shared-tasks~1capability~1complete-task",
+    "/objects/shared-tasks~1workflow~1complete-task",
+    "/objects/shared-tasks~1example~1successful-completion",
+    "/objects/shared-tasks~1target~1web-service",
+    "/objects/shared-tasks~1uncertainty~1audit-retention",
+  ]);
 });

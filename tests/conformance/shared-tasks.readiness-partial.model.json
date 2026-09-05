@@ -1,0 +1,199 @@
+{
+  "modelVersion": "0.1.0",
+  "module": {
+    "id": "shared-tasks/module",
+    "kind": "module",
+    "name": "shared-tasks",
+    "status": "accepted",
+    "implementationPolicies": {
+      "optimize-for": "simplicity"
+    }
+  },
+  "objects": [
+    {
+      "id": "shared-tasks/value-type/person-id",
+      "kind": "value-type",
+      "name": "person-id",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks/value-type/task-id",
+      "kind": "value-type",
+      "name": "task-id",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks/value-type/task-title",
+      "kind": "value-type",
+      "name": "task-title",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks/entity-type/person",
+      "kind": "entity-type",
+      "name": "person",
+      "status": "accepted",
+      "fields": [
+        {
+          "name": "id",
+          "type": "shared-tasks/value-type/person-id",
+          "identity": true
+        }
+      ]
+    },
+    {
+      "id": "shared-tasks/entity-type/task",
+      "kind": "entity-type",
+      "name": "task",
+      "status": "accepted",
+      "fields": [
+        {
+          "name": "id",
+          "type": "shared-tasks/value-type/task-id",
+          "identity": true
+        },
+        {
+          "name": "title",
+          "type": "shared-tasks/value-type/task-title"
+        }
+      ]
+    },
+    {
+      "id": "shared-tasks/relation/assigned-to",
+      "kind": "relation",
+      "name": "assigned-to",
+      "status": "accepted",
+      "endpoints": [
+        {
+          "type": "shared-tasks/entity-type/task"
+        },
+        {
+          "type": "shared-tasks/entity-type/person"
+        }
+      ],
+      "cardinality": "many-to-one"
+    },
+    {
+      "id": "shared-tasks/state/open",
+      "kind": "state",
+      "name": "open",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks/state/completed",
+      "kind": "state",
+      "name": "completed",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks/capability/complete-task",
+      "kind": "capability",
+      "name": "complete-task",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks/capability/write-task-state",
+      "kind": "capability",
+      "name": "write-task-state",
+      "status": "accepted",
+      "owner": "system",
+      "scope": "task-state"
+    },
+    {
+      "id": "shared-tasks/effect/persistent-entity-store.write.task-state",
+      "kind": "effect",
+      "name": "persistent-entity-store.write.task-state",
+      "status": "accepted",
+      "requires": [
+        "shared-tasks/capability/write-task-state"
+      ],
+      "durability": "strong",
+      "dataAccess": [
+        "task-state"
+      ]
+    },
+    {
+      "id": "shared-tasks/workflow/complete-task",
+      "kind": "workflow",
+      "name": "complete-task",
+      "status": "accepted",
+      "inputs": [
+        {
+          "name": "actor",
+          "type": "shared-tasks/entity-type/person"
+        },
+        {
+          "name": "task",
+          "type": "shared-tasks/entity-type/task"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "task",
+          "type": "shared-tasks/entity-type/task"
+        }
+      ],
+      "actor": "actor",
+      "requires": [
+        "shared-tasks/capability/complete-task"
+      ],
+      "uses": [
+        "shared-tasks/effect/persistent-entity-store.write.task-state"
+      ],
+      "actorCapabilities": [
+        {
+          "actor": "actor",
+          "capability": "shared-tasks/capability/complete-task"
+        },
+        {
+          "actor": "actor",
+          "capability": "shared-tasks/capability/write-task-state"
+        }
+      ],
+      "transitions": [
+        {
+          "from": "shared-tasks/state/open",
+          "to": "shared-tasks/state/completed"
+        }
+      ],
+      "recoveryBehavior": [
+        "retry-persisted-transition"
+      ]
+    },
+    {
+      "id": "shared-tasks/example/successful-completion",
+      "kind": "example",
+      "name": "successful-completion",
+      "status": "accepted",
+      "demonstrates": [
+        "shared-tasks/workflow/complete-task"
+      ]
+    },
+    {
+      "id": "shared-tasks/target/web-service",
+      "kind": "target",
+      "name": "web-service",
+      "status": "accepted",
+      "requires": [
+        "shared-tasks/workflow/complete-task"
+      ]
+    },
+    {
+      "id": "shared-tasks/uncertainty/audit-retention",
+      "kind": "uncertainty",
+      "name": "audit-retention",
+      "status": "unresolved",
+      "consequential": false,
+      "question": "How long should audit records be retained for task completions?",
+      "authority": "human",
+      "impactAreas": [
+        "cost",
+        "operability"
+      ],
+      "affects": [
+        "shared-tasks/effect/persistent-entity-store.write.task-state",
+        "shared-tasks/target/web-service"
+      ]
+    }
+  ]
+}
