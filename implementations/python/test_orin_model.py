@@ -18,6 +18,7 @@ CASES = FIXTURE.parent / "password-reset.cases.json"
 TASKS_FIXTURE = FIXTURE.parent / "shared-tasks.model.json"
 TASKS_RULE_CONTRADICTION_MULTI_FIXTURE = FIXTURE.parent / "shared-tasks.rule-contradiction-multi.model.json"
 TASKS_READINESS_PARTIAL_FIXTURE = FIXTURE.parent / "shared-tasks.readiness-partial.model.json"
+READINESS_SCHEMA_FIXTURE = FIXTURE.parent / "readiness.schema.json"
 PASSWORD_RESET_STRUCTURED = FIXTURE.parent / "password-reset.structured.json"
 
 
@@ -329,8 +330,9 @@ class SemanticModelTests(unittest.TestCase):
 
     def test_readiness_report_is_deterministic_for_partially_complete_model(self):
         report = SemanticModel.from_json_file(TASKS_READINESS_PARTIAL_FIXTURE).readiness_report().to_dict()
+        readiness_schema = json.loads(READINESS_SCHEMA_FIXTURE.read_text(encoding="utf-8"))
 
-        self.assertEqual(report["schemaVersion"], "0.1.0")
+        self.assertEqual(report["schemaVersion"], readiness_schema["schemaVersion"])
         self.assertEqual(report["status"], "blocked")
         self.assertEqual(report["validationStatus"], "eligible")
         self.assertEqual(

@@ -9,6 +9,7 @@ import { SemanticModel } from "./orin_model.ts";
 const ROOT = resolve(fileURLToPath(new URL("../../..", import.meta.url)));
 const VALIDATION_FIXTURE = resolve(ROOT, "tests/conformance/shared-tasks.validation-cases.json");
 const READINESS_FIXTURE = resolve(ROOT, "tests/conformance/shared-tasks.readiness-partial.model.json");
+const READINESS_SCHEMA_FIXTURE = resolve(ROOT, "tests/conformance/readiness.schema.json");
 
 function loadJson(path: string): Record<string, any> {
   return JSON.parse(readFileSync(path, "utf-8"));
@@ -130,7 +131,7 @@ test("rule contradiction diagnostics stay deterministic for multi-claim contradi
 
 test("readiness report is deterministic for a partially complete model", () => {
   const report = new SemanticModel(loadJson(READINESS_FIXTURE)).readinessReport();
-  assert.equal(report.schemaVersion, "0.1.0");
+  assert.equal(report.schemaVersion, loadJson(READINESS_SCHEMA_FIXTURE).schemaVersion);
   assert.equal(report.status, "blocked");
   assert.equal(report.validationStatus, "eligible");
   assert.deepEqual(

@@ -1,7 +1,3 @@
-import { readFileSync } from "node:fs";
-import { fileURLToPath } from "node:url";
-import { resolve } from "node:path";
-
 export type Diagnostic = {
   code: string;
   message: string;
@@ -37,13 +33,7 @@ export type ReadinessReport = {
 
 const READINESS_DRIVER_KINDS = new Set(["workflow", "rule", "example"]);
 const REFERENCE_FIELDS = ["affects", "constrainedBy", "demonstrates", "requires", "uses", "verifies"];
-const READINESS_SCHEMA = JSON.parse(
-  readFileSync(
-    resolve(fileURLToPath(new URL("../../..", import.meta.url)), "tests/conformance/readiness.schema.json"),
-    "utf-8",
-  ),
-) as { schemaVersion: string };
-const COMPLETENESS_SCHEMA_VERSION = READINESS_SCHEMA.schemaVersion;
+const COMPLETENESS_SCHEMA_VERSION = "0.1.0";
 const READINESS_CATEGORY_ORDER = new Map([
   ["required-decision", 0],
   ["optional-default", 1],

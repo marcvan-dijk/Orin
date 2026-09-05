@@ -15,10 +15,7 @@ DECLARATION_KINDS = {
     "rule", "workflow", "example", "uncertainty", "target", "evidence",
 }
 READINESS_DRIVER_KINDS = {"workflow", "rule", "example"}
-READINESS_SCHEMA = json.loads(
-    (Path(__file__).parents[2] / "tests" / "conformance" / "readiness.schema.json").read_text(encoding="utf-8")
-)
-COMPLETENESS_SCHEMA_VERSION = READINESS_SCHEMA["schemaVersion"]
+COMPLETENESS_SCHEMA_VERSION = "0.1.0"
 READINESS_CATEGORY_ORDER = {
     "required-decision": 0,
     "optional-default": 1,
