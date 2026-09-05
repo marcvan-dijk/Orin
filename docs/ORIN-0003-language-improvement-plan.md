@@ -141,7 +141,7 @@ just editor presentation.
 
 ### Workstream B: Minimal executable kernel
 
-Implement only the concepts needed for the first complete workflow:
+Implement only the concepts needed for password-reset (the MVP proof's first complete workflow):
 
 1. `module`
 2. `purpose`
@@ -621,7 +621,12 @@ capture important decisions and which parts add unnecessary friction.
     `implementations/typescript/src/orin_model.ts` for `not ...` and structured
     `{"text","negated"}` rule-claim forms, plus parity assertions in
     `implementations/typescript/src/shared_tasks_validation.test.ts`.
-35. [next] Extend TypeScript semantic diagnostics assertions to verify
+35. [done] Tighten the MVP scope to password-reset only by removing
+    `examples/shared-tasks.orin`, deleting Python tests that depended on the
+    shared-tasks text authoring path, and reclassifying ORIN-0005 plus
+    conformance/docs references so shared-tasks remains retained post-MVP
+    validation material instead of a co-equal proof domain.
+36. [next] Extend TypeScript semantic diagnostics assertions to verify
     deterministic `ORIN-E046` diagnostic ordering/object identity when multiple
     contradictory propositions appear in one model.
 

@@ -1,16 +1,16 @@
-# ORIN-0005: First Complete Application
+# ORIN-0005: Post-MVP Stress-Test Application
 
-**Status:** Proposal only  
+**Status:** Deferred until the password-reset MVP proof is complete  
 **Version:** 0.1.0  
-**Scope:** One complete vertical application slice before adding broad language features
+**Scope:** One broader application slice after the password-reset MVP proves the core thesis
 
 ## Decision
 
-The first complete application should be a **shared task list service**.
+After the password-reset MVP is complete, the first broader stress-test application should be a **shared task list service**.
 Multiple people can belong to a task list, create tasks, assign tasks to
 members, and move tasks through a small lifecycle.
 
-This is a better next proof than expanding password reset because it requires
+This is the best next proof after the MVP because it requires
 several application fundamentals at once:
 
 - actors with identity;
@@ -27,6 +27,10 @@ application. A CLI, HTTP service, desktop client, or another interface can
 invoke the same workflows later. The first reference slice should use one
 simple command interface or in-memory adapter while preserving the semantic
 boundary.
+
+This document does not redefine the current MVP. The current MVP remains the
+password-reset proof path; shared-tasks is deferred so the kernel can stay
+lean until the core meaning/ambiguity/equivalence claims are proven.
 
 ## Application behavior
 

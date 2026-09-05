@@ -2,7 +2,7 @@
 
 ## What Orin currently is
 
-Orin is a language-neutral semantic-kernel prototype with a strong password-reset proof slice, a growing shared-tasks slice, and substantial internal planning/spec material. The repository already shows deterministic model handling, consequential-uncertainty blocking, and host-language reference runtimes under `implementations/`.
+Orin is a language-neutral semantic-kernel prototype with a strong password-reset proof slice, post-MVP shared-tasks validation material, and substantial internal planning/spec material. The repository already shows deterministic model handling, consequential-uncertainty blocking, and host-language reference runtimes under `implementations/`.
 
 ## What Orin should become
 
@@ -19,7 +19,7 @@ Orin should be the primary human-readable program meaning, while generated sourc
 | Reference Python runtime/parser/validator | SUPPORTING | Practical host-language proof of semantics, not Orin itself. |
 | Conformance infrastructure (`tests/conformance/*`) | SUPPORTING | Shared evidence contract for deterministic meaning and equivalence checks. |
 | Lowering policy experiment | SUPPORTING | Shows implementation can vary while semantic behavior stays fixed. |
-| Shared-tasks slice | ADVANCED | Useful next proof, but not the beginner or MVP center right now. |
+| Shared-tasks slice | ADVANCED | Useful post-MVP proof, but not the beginner or MVP center. |
 | VS Code extension | SUPPORTING | Helpful authoring aid; not a completeness signal for Orin itself. |
 | Julius Skills integration docs | INTERNAL | Internal AI workflow optimization; should not burden beginner path. |
 | Large phase-by-phase expansion plans | DISTRACTION | Premature breadth weakens focus on proving the core hypothesis now. |
