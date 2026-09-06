@@ -18,7 +18,7 @@ If you want to understand Orin as a novice, follow this path:
 
 1. Start with the human request: "Let a person reset a password without revealing whether the account exists."
 2. Open the readable Orin program: [`examples/password-reset.orin`](examples/password-reset.orin).
-3. Notice the unresolved `rate-limit` question that Orin refuses to guess.
+3. Notice the unresolved question that Orin refuses to guess.
 4. Run the short walkthrough: [`docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`](docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md).
 
 This is the core claim: AI can help write the Orin program, but the human can still read it, inspect it, and approve the important decisions before implementation takes over.
@@ -44,12 +44,6 @@ Human tries to understand and maintain it
 ```
 
 If AI can increasingly handle implementation, asking humans to understand every implementation detail may eventually become the wrong abstraction.
-
-Optional host-language derivation proof run (Python reference only):
-
-```bash
-python implementations/python/password_reset_proof.py
-```
 
 Orin explores a different model:
 
@@ -284,7 +278,7 @@ Run from repository root (`/home/runner/work/Orin/Orin`).
 
 1. Read the human request in this README: password reset without revealing whether the account exists.
 2. Open [`examples/password-reset.orin`](examples/password-reset.orin). This readable Orin file is the program meaning the human reviews.
-3. Notice the unresolved `rate-limit` question in that file and in [`tests/conformance/password-reset.model.json`](tests/conformance/password-reset.model.json).
+3. Notice the unresolved question in that file and in [`tests/conformance/password-reset.model.json`](tests/conformance/password-reset.model.json).
 4. Follow the short walkthrough in [`docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`](docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md).
 
 Minimal proof check:
@@ -390,7 +384,7 @@ It is an experiment based on a question:
 
 > **If AI increasingly writes the implementation, what should humans program?**
 
-My hypothesis is that humans will increasingly need a higher-level representation of software — one that allows them to define, understand and evolve what a program does without requiring the implementation itself to be the primary thing they read and maintain.
+My hypothesis is that humans will increasingly need a higher-level representation of software — one that allows them to define, understand and evolve what a program does without requiring the implementation to be the only thing they can read.
 
 Orin is an attempt to explore that hypothesis.
 
