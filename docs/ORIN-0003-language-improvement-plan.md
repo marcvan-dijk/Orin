@@ -677,15 +677,30 @@ capture important decisions and which parts add unnecessary friction.
     entity lifecycle, effect inputs/outputs, rule evidence links, and workflow
     postconditions) are covered by language-neutral fixtures and deterministic
     readiness diagnostics.
+    - [planned-workstream] 44A: readiness-schema extension matrix and stable
+      code allocation for entity lifecycle, effect I/O contracts, rule evidence
+      links, and workflow postconditions.
+    - [planned-workstream] 44B: language-neutral conformance fixtures for each
+      new readiness contract (positive and missing-contract variants) and
+      expected deterministic readiness entries.
+    - [planned-workstream] 44C: Python readiness implementation update
+      (`implementations/python/orin_model.py`) plus focused readiness tests in
+      `implementations/python/test_orin_model.py`.
+    - [planned-workstream] 44D: TypeScript readiness implementation update
+      (`implementations/typescript/src/orin_model.ts`) plus fixture-parity
+      assertions in `implementations/typescript/src/shared_tasks_validation.test.ts`.
+    - [planned-workstream] 44E: cross-implementation deterministic ordering and
+      affected-object-path parity lock using shared fixture expectations only.
 
 ### Current status after reevaluation
 
 - **Current project scope (password-reset MVP):** complete.
 - **Remaining tasks in current project scope:** `0`.
-- **Open post-MVP backlog tasks in this sequence:** `1`.
-- **Exact next step:** execute item 44 to widen the completeness/readiness
-  schema coverage across more ORIN-0004 contracts while keeping the work in the
-  semantic analysis layer.
+- **Open post-MVP backlog tasks in this sequence:** `5` (item 44 workstreams
+  44A-44E).
+- **Exact next step:** execute workstream 44A first (readiness-schema extension
+  matrix and stable code allocation), then run 44B-44D in parallel and finish
+  with 44E parity lock.
 
 ## Test strategy
 

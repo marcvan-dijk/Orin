@@ -35,6 +35,13 @@ affected-object paths without generating a full application artifact.
 set consumed by host implementations so completeness reporting stays aligned
 across languages.
 
+Current readiness fixture coverage is intentionally narrow: required decisions
+for capability/effect/workflow contracts, optional defaults for
+relation/effect, unresolved uncertainty entries, and implementation-preference
+entries. Item 44 extends this surface; add new readiness coverage through
+language-neutral fixtures in this folder before widening host-language
+diagnostics.
+
 `password-reset.structured.json` is an internal/interchange structured frontend artifact used only to prove frontend-to-model equivalence against `examples/password-reset.orin`. It is not a primary beginner authoring format.
 
 `shared-tasks.structured.json` is retained as a future advanced structured artifact. The text authoring example is intentionally removed from the current MVP path.
