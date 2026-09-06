@@ -704,15 +704,23 @@ capture important decisions and which parts add unnecessary friction.
       affected-object-path parity lock using
       `tests/conformance/shared-tasks.readiness-extension-cases.json` as the
       readiness source of truth.
+45. [done] Add the decision-completion principle to `ORIN-0001` so
+    consequential project decisions are surfaced, explained, explicitly chosen,
+    and recorded as durable project meaning rather than being silently resolved
+    as implementation detail. Updated `docs/ORIN-0001-intent-spec.md` with a
+    canonical decision-completion section and synced `docs/README.md` so
+    readers can find the protocol role and current tracker status.
 
 ### Current status after reevaluation
 
 - **Current project scope (password-reset MVP):** complete.
 - **Remaining tasks in current project scope:** `0`.
 - **Open post-MVP backlog tasks in this sequence:** `0` (item 44 workstreams
-  44A-44E complete after reconciliation).
-- **Exact next step:** begin the next prioritized post-MVP language-improvement
-  backlog item after 44A-44E parity lock completion.
+  44A-44E complete after reconciliation; item 45 documented the decision-
+  completion protocol addition in ORIN-0001).
+- **Exact next step:** prioritize the next post-MVP language-improvement
+  backlog item after the ORIN-0001 decision-completion documentation
+  increment.
 
 ## Test strategy
 

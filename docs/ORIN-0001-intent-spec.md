@@ -123,6 +123,31 @@ human goal or acceptance criteria.
 10. Evidence MUST distinguish an observed result from an AI inference or a human
     assertion.
 
+## Decision completion
+
+When the AI encounters a consequential project decision that is not yet defined,
+it MUST treat the gap as missing project meaning rather than as an
+implementation detail to fill silently.
+
+Where practical, the AI SHOULD:
+
+1. identify the missing decision,
+2. explain why it matters to observable project behavior, constraints, or
+   acceptance,
+3. present a small number of understandable options, preferably as explicit
+   multiple-choice alternatives,
+4. allow the human to choose one option or provide a different answer, and
+5. record the accepted decision in the authoritative project representation.
+
+An accepted consequential decision MUST become part of the durable project
+meaning. Future implementations, regenerations, and refactorings MUST preserve
+that meaning unless a later exchange explicitly revises it.
+
+The AI MAY choose implementation details without additional approval when those
+choices do not materially change the accepted project meaning. The boundary
+between implementation freedom and consequential project decisions is a central
+design principle of this protocol.
+
 ## Example session
 
 The canonical session is [`examples/password-reset.orin`](../examples/password-reset.orin).
