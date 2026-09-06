@@ -130,22 +130,6 @@ The resulting meaning becomes part of the program.
 
 ---
 
-## Orin is not
-
-Orin is **not**:
-
-* A prompt wrapper around an AI coding assistant
-* A tool for analysing existing codebases
-* A replacement syntax for TypeScript, Python or another language
-* A low-code UI builder
-* A system where an AI's generated source code becomes the only source of truth
-
-AI-generated code can be an implementation.
-
-Orin explores whether the **program itself can exist at a higher level than that implementation**.
-
----
-
 ## The vision
 
 The long-term idea behind Orin is:
@@ -186,6 +170,22 @@ Later, the implementation may change:
 The implementation is replaceable.
 
 The program's meaning is not.
+
+---
+
+## Orin is not
+
+Orin is **not**:
+
+* A prompt wrapper around an AI coding assistant
+* A tool for analysing existing codebases
+* A replacement syntax for TypeScript, Python or another language
+* A low-code UI builder
+* A system where an AI's generated source code becomes the only source of truth
+
+AI-generated code can be an implementation.
+
+Orin explores whether the **program itself can exist at a higher level than that implementation**.
 
 ---
 
