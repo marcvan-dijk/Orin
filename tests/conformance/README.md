@@ -8,6 +8,18 @@ This directory contains language-neutral fixtures for proving Orin's core thesis
 
 These files are not tied to a parser, runtime, or implementation language.
 
+## For a first-time viewer
+
+If you are trying to understand the MVP quickly, start here:
+
+1. **Readable program meaning:** [`../../examples/password-reset.orin`](../../examples/password-reset.orin)
+2. **Visible unresolved ambiguity:** [`password-reset.model.json`](./password-reset.model.json) (`account.password-reset/uncertainty/rate-limit`)
+3. **Blocked proof evidence:** [`password-reset.cases.json`](./password-reset.cases.json) (`account.password-reset/case/unresolved-rate-limit`)
+4. **Implementation-variation evidence:** [`password-reset.policies.json`](./password-reset.policies.json)
+5. **Executable walkthrough:** [`../../docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`](../../docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md)
+
+You do not need to read Python or TypeScript first. The beginner path is to inspect the Orin program and these fixtures before looking at host-language runners.
+
 ## Required checks for a conforming implementation
 
 1. Load `password-reset.model.json` as semantic meaning.
@@ -67,9 +79,10 @@ The Python proof runner (`implementations/python/password_reset_proof.py`) uses 
 Language-neutral proof artifacts live in this folder; execution commands stay in
 `implementations/<language>/`.
 
-| MVP claim | Existing artifact(s) | Command(s) | Expected evidence |
+| Newcomer question | Existing artifact(s) | Command(s) | Expected evidence |
 | --- | --- | --- | --- |
-| Unresolved consequential ambiguity blocks compilation. | `password-reset.model.json` (`account.password-reset/uncertainty/rate-limit`), `password-reset.cases.json` (`account.password-reset/case/unresolved-rate-limit`) | `python implementations/python/password_reset_proof.py` | JSON includes `"blockedCompilation": "blocked"`. |
-| Resolving that ambiguity makes the same model eligible. | `implementations/python/password_reset_proof.py` (resolves only rate-limit uncertainty), `password-reset.model.json` | `python implementations/python/password_reset_proof.py` | JSON includes `"resolvedCompilation": "eligible"`. |
-| Required observable behavior is deterministic for the MVP cases (privacy-preserving response, delivery/store failure recovery, duplicate/concurrent request handling, token expiry/reuse rejection). | `password-reset.cases.json`, `implementations/python/conformance_runner.py`, `implementations/typescript/src/conformance_runner.ts` | `node --test --experimental-strip-types implementations/typescript/src/password_reset_proof.test.ts` | Test passes, including assertion that every non-compile case from `password-reset.cases.json` is executed and matched. |
-| Lowering policy variants can change artifact strategy without changing canonical meaning or required behavior. | `password-reset.policies.json`, `implementations/python/password_reset_proof.py`, `implementations/typescript/src/password_reset_proof.ts` | `python implementations/python/password_reset_proof.py` | JSON includes `"canonicalMeaningStableAcrossVariants": true` and at least two distinct `variants[*].derivedArtifact` entries. |
+| Where is the readable program meaning? | `../../examples/password-reset.orin` | none | The file states purpose, rules, workflow, examples, and `uncertainty: rate-limit` in readable outline form. |
+| Where is the visible ambiguity? | `password-reset.model.json` (`account.password-reset/uncertainty/rate-limit`) | none | The model marks the uncertainty as `consequential: true` and compilation as `blocked`. |
+| Where is the blocked proof? | `password-reset.cases.json` (`account.password-reset/case/unresolved-rate-limit`), `password-reset.model.json` | `python implementations/python/password_reset_proof.py` | JSON includes `"blockedCompilation": "blocked"`. |
+| Where is the stable behavior proof? | `password-reset.cases.json`, `implementations/python/conformance_runner.py`, `implementations/typescript/src/conformance_runner.ts` | `node --test --experimental-strip-types implementations/typescript/src/password_reset_proof.test.ts` | Test passes, including the password-reset behavior cases. |
+| Where is the evidence that implementations can differ without changing behavior? | `password-reset.policies.json`, `implementations/python/password_reset_proof.py`, `implementations/typescript/src/password_reset_proof.ts` | `python implementations/python/password_reset_proof.py` | JSON includes `"canonicalMeaningStableAcrossVariants": true` and at least two distinct `variants[*].derivedArtifact` entries. |

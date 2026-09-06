@@ -10,6 +10,19 @@ The goal is not to replace programming with prompts.
 
 The goal is to create a durable, human-understandable definition of software that can remain stable even when its implementation changes.
 
+## Start here: the 5-minute beginner demo
+
+You do **not** need to read Python or TypeScript first.
+
+If you want to understand Orin as a novice, follow this path:
+
+1. Start with the human request: "Let a person reset a password without revealing whether the account exists."
+2. Open the readable Orin program: [`examples/password-reset.orin`](examples/password-reset.orin).
+3. Notice the unresolved `rate-limit` question that Orin refuses to guess.
+4. Run the short walkthrough: [`docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`](docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md).
+
+This is the core claim: AI can help write the Orin program, but the human can still read it, inspect it, and approve the important decisions before implementation takes over.
+
 ---
 
 ## Why?
@@ -183,9 +196,9 @@ AI can help ask questions when something important is unclear.
 
 For example:
 
-> Should requesting a reset always return the same response, whether or not an account exists?
+> Should reset requests be rate-limited?
 
-That decision changes observable behaviour.
+That decision changes observable behaviour and abuse resistance.
 
 Orin should not silently guess.
 
@@ -267,6 +280,13 @@ The goal is to discover the smallest useful foundation needed to prove the idea.
 
 Run from repository root (`/home/runner/work/Orin/Orin`).
 
+### Beginner path
+
+1. Read the human request in this README: password reset without revealing whether the account exists.
+2. Open [`examples/password-reset.orin`](examples/password-reset.orin). This readable Orin file is the program meaning the human reviews.
+3. Notice the unresolved `rate-limit` question in that file and in [`tests/conformance/password-reset.model.json`](tests/conformance/password-reset.model.json).
+4. Follow the short walkthrough in [`docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`](docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md).
+
 Minimal proof check:
 
 ```bash
@@ -274,7 +294,7 @@ python implementations/python/password_reset_proof.py
 node --test --experimental-strip-types implementations/typescript/src/password_reset_proof.test.ts
 ```
 
-Full 1-day demo gate command sequence:
+Full demo gate command sequence:
 
 ```bash
 python implementations/python/password_reset_proof.py
@@ -285,6 +305,7 @@ node --test --experimental-strip-types implementations/typescript/src/password_r
 
 How to inspect evidence quickly:
 
+- Readable program meaning: `examples/password-reset.orin`.
 - Claim-to-artifact checklist: `tests/conformance/README.md` (`Demo Evidence Checklist`).
 - Full executable runbook and pass/fail gate: `docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`.
 - Decision-completion protocol context: `docs/ORIN-0001-intent-spec.md`.

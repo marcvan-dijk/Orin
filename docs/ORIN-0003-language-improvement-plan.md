@@ -750,6 +750,16 @@ capture important decisions and which parts add unnecessary friction.
     expectations.
     Exact next step: execute the runbook with a real first-time reader and
     patch only remaining wording/location friction before opening post-MVP work.
+51. [done] Reframe the password-reset MVP as a 5-minute beginner demo so a
+    novice can start from the human request, inspect the readable Orin program,
+    notice the unresolved `rate-limit` decision, and then run the existing
+    proof commands. Updated `README.md`, `docs/README.md`,
+    `docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`, and
+    `tests/conformance/README.md` to center that story path without changing
+    the underlying proof mechanism.
+    Exact next step: run the 5-minute beginner walkthrough with a real
+    first-time reader and patch only any remaining wording/navigation friction
+    that blocks understanding before opening post-MVP work.
 
 ### Current status after reevaluation
 
@@ -761,9 +771,9 @@ capture important decisions and which parts add unnecessary friction.
   acceptance/stop governance gate; item 47 added an executable docs runbook
   for the same gate; items 48-49 tightened fixture-local newcomer evidence
   mapping and root proof quickstart discoverability).
-- **Exact next step:** execute `docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md` with a
-  real first-time reader and patch only wording/navigation friction that blocks
-  evidence verification before any post-MVP work.
+- **Exact next step:** run the 5-minute beginner walkthrough with a real
+  first-time reader and patch only any wording/navigation friction that blocks
+  understanding before any post-MVP work.
 
 ## Test strategy
 
