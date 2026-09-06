@@ -45,6 +45,7 @@ The MVP is complete when password-reset demonstrates deterministic meaning, ambi
 
 - Current-project execution (password-reset MVP) is complete.
 - No post-MVP backlog task is currently active.
+- Director stop rule: if the 1-day password-reset demo gate is not fully met, stop and close only the missing MVP gate items; do not begin post-MVP implementation.
 - When post-MVP execution resumes, activate and track it in
   [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md)
   using the `[post-mvp-next]` marker.

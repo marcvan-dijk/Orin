@@ -27,6 +27,17 @@ A human can define password-reset behavior in Orin meaning-first form, Orin can 
 4. Semantic meaning remains stable under non-semantic formatting changes.
 5. Implementation variation does not change required observable behavior.
 
+## Director 1-day demo gate (hard)
+
+Pass this increment only when all of the following are true in a single 1-day run:
+
+1. The demo stays on password-reset only (no shared-tasks or broader profile slices).
+2. The `rate-limit` consequential decision is explicit, human-chosen, and recorded in project artifacts (ORIN-0001 decision-completion).
+3. Readiness/compile blocks until any consequential ambiguity is resolved; no silent defaults.
+4. Deterministic conformance evidence is produced for the password-reset MVP proof path.
+
+If any gate item fails, STOP. Fix only the missing gate evidence; do not start post-MVP implementation work.
+
 ## Immediate execution order
 
 1. Keep password-reset docs and fixtures as the canonical path.

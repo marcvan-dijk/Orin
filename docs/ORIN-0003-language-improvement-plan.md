@@ -710,6 +710,46 @@ capture important decisions and which parts add unnecessary friction.
     as implementation detail. Updated `docs/ORIN-0001-intent-spec.md` with a
     canonical decision-completion section and synced `docs/README.md` so
     readers can find the protocol role and current tracker status.
+46. [done] Add a director control gate for the 1-day password-reset MVP demo and
+    a hard out-of-scope stop rule in existing roadmap docs. Updated
+    `docs/MVP-PLAN.md` with a strict pass/fail gate (including explicit
+    ORIN-0001 decision-completion handling for `rate-limit`) and updated
+    `docs/IMPLEMENTATION-ROADMAP.md` with the matching stop rule that blocks
+    post-MVP implementation expansion.
+47. [done] Add an executable docs runbook for the password-reset proof path with
+    exact Python and TypeScript command sequence, expected outcomes, explicit
+    pass/fail acceptance gate, and a concise out-of-scope stop rule for a
+    first-time reader. Added `docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`, linked
+    it from `docs/README.md`, and validated the listed commands against current
+    fixtures/tests.
+    Exact next step: run `docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md` unchanged
+    with a new reader and capture only blocking command/output mismatches.
+48. [done] Add fixture-local newcomer demo evidence mapping so MVP claims are
+    directly traceable from conformance artifacts without broadening scope.
+    Updated `tests/conformance/README.md` with a concise `Demo Evidence
+    Checklist` that maps password-reset MVP claims to exact existing artifacts
+    and proof commands, and added a short root `README.md` proof quickstart
+    linking checklist, decision-completion context, and completion tracker.
+    Exact next step: execute the proof quickstart commands with a first-time
+    reader and capture only any unclear checklist wording or command-location
+    mismatches as docs-only follow-up.
+49. [done] Tighten password-reset MVP newcomer proof discoverability by mapping
+    each demo claim to deterministic in-repo evidence and confirming the listed
+    commands still pass. Updated `tests/conformance/README.md` with a concise
+    claim-to-artifact/command checklist, refreshed root `README.md` with a
+    quick proof entry point, and re-ran the referenced Python and TypeScript
+    proof commands against current fixtures.
+    Exact next step: run the checklist once with a newcomer and patch only any
+    wording or navigation friction that blocks evidence verification.
+50. [done] Rehearse the newcomer proof path from repository root and patch only
+    documentation friction discovered in quickstart navigation. Updated
+    `README.md` to distinguish minimal proof checks from the full 1-day demo
+    gate sequence and linked the executable runbook
+    `docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md` directly from the quickstart.
+    Re-ran the full demo command sequence unchanged to confirm command/output
+    expectations.
+    Exact next step: execute the runbook with a real first-time reader and
+    patch only remaining wording/location friction before opening post-MVP work.
 
 ### Current status after reevaluation
 
@@ -717,10 +757,13 @@ capture important decisions and which parts add unnecessary friction.
 - **Remaining tasks in current project scope:** `0`.
 - **Open post-MVP backlog tasks in this sequence:** `0` (item 44 workstreams
   44A-44E complete after reconciliation; item 45 documented the decision-
-  completion protocol addition in ORIN-0001).
-- **Exact next step:** prioritize the next post-MVP language-improvement
-  backlog item after the ORIN-0001 decision-completion documentation
-  increment.
+  completion protocol addition in ORIN-0001; item 46 added a strict MVP
+  acceptance/stop governance gate; item 47 added an executable docs runbook
+  for the same gate; items 48-49 tightened fixture-local newcomer evidence
+  mapping and root proof quickstart discoverability).
+- **Exact next step:** execute `docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md` with a
+  real first-time reader and patch only wording/navigation friction that blocks
+  evidence verification before any post-MVP work.
 
 ## Test strategy
 
