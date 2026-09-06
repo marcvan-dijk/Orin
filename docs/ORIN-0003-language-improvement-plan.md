@@ -741,6 +741,15 @@ capture important decisions and which parts add unnecessary friction.
     proof commands against current fixtures.
     Exact next step: run the checklist once with a newcomer and patch only any
     wording or navigation friction that blocks evidence verification.
+50. [done] Rehearse the newcomer proof path from repository root and patch only
+    documentation friction discovered in quickstart navigation. Updated
+    `README.md` to distinguish minimal proof checks from the full 1-day demo
+    gate sequence and linked the executable runbook
+    `docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md` directly from the quickstart.
+    Re-ran the full demo command sequence unchanged to confirm command/output
+    expectations.
+    Exact next step: execute the runbook with a real first-time reader and
+    patch only remaining wording/location friction before opening post-MVP work.
 
 ### Current status after reevaluation
 
@@ -752,9 +761,9 @@ capture important decisions and which parts add unnecessary friction.
   acceptance/stop governance gate; item 47 added an executable docs runbook
   for the same gate; items 48-49 tightened fixture-local newcomer evidence
   mapping and root proof quickstart discoverability).
-- **Exact next step:** execute the proof quickstart commands with a first-time
-  reader and patch only wording/navigation friction that blocks evidence
-  verification before any post-MVP work.
+- **Exact next step:** execute `docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md` with a
+  real first-time reader and patch only wording/navigation friction that blocks
+  evidence verification before any post-MVP work.
 
 ## Test strategy
 

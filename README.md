@@ -265,16 +265,28 @@ The goal is to discover the smallest useful foundation needed to prove the idea.
 
 ## Password-reset MVP proof quickstart
 
-Run the existing proof commands from the repository root:
+Run from repository root (`/home/runner/work/Orin/Orin`).
+
+Minimal proof check:
 
 ```bash
 python implementations/python/password_reset_proof.py
 node --test --experimental-strip-types implementations/typescript/src/password_reset_proof.test.ts
 ```
 
+Full 1-day demo gate command sequence:
+
+```bash
+python implementations/python/password_reset_proof.py
+python implementations/python/test_orin_model.py PasswordResetProofRunTests.test_password_reset_end_to_end_derivation_proof
+node --experimental-strip-types implementations/typescript/src/password_reset_proof.ts
+node --test --experimental-strip-types implementations/typescript/src/password_reset_proof.test.ts
+```
+
 How to inspect evidence quickly:
 
 - Claim-to-artifact checklist: `tests/conformance/README.md` (`Demo Evidence Checklist`).
+- Full executable runbook and pass/fail gate: `docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`.
 - Decision-completion protocol context: `docs/ORIN-0001-intent-spec.md`.
 - Completion log and exact next step tracker: `docs/ORIN-0003-language-improvement-plan.md`.
 
