@@ -710,6 +710,20 @@ capture important decisions and which parts add unnecessary friction.
     as implementation detail. Updated `docs/ORIN-0001-intent-spec.md` with a
     canonical decision-completion section and synced `docs/README.md` so
     readers can find the protocol role and current tracker status.
+46. [done] Add a director control gate for the 1-day password-reset MVP demo and
+    a hard out-of-scope stop rule in existing roadmap docs. Updated
+    `docs/MVP-PLAN.md` with a strict pass/fail gate (including explicit
+    ORIN-0001 decision-completion handling for `rate-limit`) and updated
+    `docs/IMPLEMENTATION-ROADMAP.md` with the matching stop rule that blocks
+    post-MVP implementation expansion.
+47. [done] Add an executable docs runbook for the password-reset proof path with
+    exact Python and TypeScript command sequence, expected outcomes, explicit
+    pass/fail acceptance gate, and a concise out-of-scope stop rule for a
+    first-time reader. Added `docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`, linked
+    it from `docs/README.md`, and validated the listed commands against current
+    fixtures/tests.
+    Exact next step: run `docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md` unchanged
+    with a new reader and capture only blocking command/output mismatches.
 
 ### Current status after reevaluation
 
@@ -717,10 +731,11 @@ capture important decisions and which parts add unnecessary friction.
 - **Remaining tasks in current project scope:** `0`.
 - **Open post-MVP backlog tasks in this sequence:** `0` (item 44 workstreams
   44A-44E complete after reconciliation; item 45 documented the decision-
-  completion protocol addition in ORIN-0001).
-- **Exact next step:** prioritize the next post-MVP language-improvement
-  backlog item after the ORIN-0001 decision-completion documentation
-  increment.
+  completion protocol addition in ORIN-0001; item 46 added a strict MVP
+  acceptance/stop governance gate).
+- **Exact next step:** execute only the 1-day password-reset MVP demo proof run
+  against the director gate in `docs/MVP-PLAN.md`; if any criterion fails, stop
+  and close only that missing gate evidence before any post-MVP work.
 
 ## Test strategy
 
