@@ -5,5 +5,72 @@
     "optional-default",
     "unresolved-assumption",
     "implementation-preference"
+  ],
+  "requiredDecisionExtensionMatrix": [
+    {
+      "contractFamily": "entity-lifecycle",
+      "diagnostics": [
+        {
+          "code": "ORIN-R030",
+          "kind": "entity-type",
+          "field": "lifecycle",
+          "category": "required-decision",
+          "blocking": true,
+          "severity": "blocked",
+          "message": "entity-type requires lifecycle contract declaration"
+        }
+      ]
+    },
+    {
+      "contractFamily": "effect-inputs-outputs",
+      "diagnostics": [
+        {
+          "code": "ORIN-R031",
+          "kind": "effect",
+          "field": "inputs",
+          "category": "required-decision",
+          "blocking": true,
+          "severity": "blocked",
+          "message": "effect requires declared input contract"
+        },
+        {
+          "code": "ORIN-R032",
+          "kind": "effect",
+          "field": "outputs",
+          "category": "required-decision",
+          "blocking": true,
+          "severity": "blocked",
+          "message": "effect requires declared output contract"
+        }
+      ]
+    },
+    {
+      "contractFamily": "rule-evidence-links",
+      "diagnostics": [
+        {
+          "code": "ORIN-R040",
+          "kind": "rule",
+          "field": "evidenceLinks",
+          "category": "required-decision",
+          "blocking": true,
+          "severity": "blocked",
+          "message": "rule requires linked evidence contract"
+        }
+      ]
+    },
+    {
+      "contractFamily": "workflow-postconditions",
+      "diagnostics": [
+        {
+          "code": "ORIN-R050",
+          "kind": "workflow",
+          "field": "postconditions",
+          "category": "required-decision",
+          "blocking": true,
+          "severity": "blocked",
+          "message": "workflow requires declared postconditions"
+        }
+      ]
+    }
   ]
 }

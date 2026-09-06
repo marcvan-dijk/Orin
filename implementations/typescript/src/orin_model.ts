@@ -41,6 +41,9 @@ const READINESS_CATEGORY_ORDER = new Map([
   ["implementation-preference", 3],
 ]);
 const READINESS_REQUIRED_FIELDS = new Map<string, Array<{ code: string; field: string; message: string; impactAreas: string[] }>>([
+  ["entity-type", [
+    { code: "ORIN-R030", field: "lifecycle", message: "entity-type requires lifecycle contract declaration", impactAreas: ["operability", "safety"] },
+  ]],
   ["capability", [
     { code: "ORIN-R001", field: "owner", message: "capability requires issuing authority/owner decision", impactAreas: ["safety"] },
     { code: "ORIN-R002", field: "scope", message: "capability requires scope decision", impactAreas: ["safety", "privacy"] },
@@ -48,10 +51,13 @@ const READINESS_REQUIRED_FIELDS = new Map<string, Array<{ code: string; field: s
   ["effect", [
     { code: "ORIN-R010", field: "failureModes", message: "effect requires declared failure modes", impactAreas: ["operability"] },
     { code: "ORIN-R011", field: "dataAccess", message: "effect requires declared data access boundary", impactAreas: ["privacy", "safety"] },
+    { code: "ORIN-R031", field: "inputs", message: "effect requires declared input contract", impactAreas: ["operability", "safety"] },
+    { code: "ORIN-R032", field: "outputs", message: "effect requires declared output contract", impactAreas: ["operability", "safety"] },
   ]],
   ["workflow", [
     { code: "ORIN-R020", field: "failureBehavior", message: "workflow requires declared failure behavior", impactAreas: ["operability", "safety"] },
     { code: "ORIN-R021", field: "recoveryBehavior", message: "workflow requires declared recovery behavior", impactAreas: ["operability"] },
+    { code: "ORIN-R050", field: "postconditions", message: "workflow requires declared postconditions", impactAreas: ["operability", "safety"] },
   ]],
 ]);
 const READINESS_OPTIONAL_DEFAULTS = new Map<string, Array<{ code: string; field: string; defaultValue: string; message: string; impactAreas: string[] }>>([
@@ -245,13 +251,25 @@ export class SemanticModel {
 
     const objects = this.document.objects as Array<Record<string, any>>;
     const reverseReferences = this.buildReverseReferenceGraph(objects);
+    const objectsById = new Map<string, Record<string, any>>();
+    const kinds = new Map<string, string>();
+    for (const obj of objects) {
+      if (obj && typeof obj.id === "string") {
+        objectsById.set(obj.id, obj);
+        if (typeof obj.kind === "string") {
+          kinds.set(obj.id, obj.kind);
+        }
+      }
+    }
+    const lifecycleRequiredEntities = this.collectLifecycleRequiredEntities(objects, kinds);
     const readinessDiagnostics: ReadinessDiagnostic[] = [];
     for (const obj of objects) {
       if (!obj || typeof obj !== "object") {
         continue;
       }
-      readinessDiagnostics.push(...this.collectRequiredFieldReadiness(obj, reverseReferences));
+      readinessDiagnostics.push(...this.collectRequiredFieldReadiness(obj, reverseReferences, lifecycleRequiredEntities));
       readinessDiagnostics.push(...this.collectOptionalDefaultReadiness(obj, reverseReferences));
+      readinessDiagnostics.push(...this.collectRuleEvidenceReadiness(obj, objectsById, reverseReferences));
       if (obj.kind === "uncertainty" && obj.status === "unresolved") {
         readinessDiagnostics.push(this.collectUncertaintyReadiness(obj, reverseReferences));
       }
@@ -686,8 +704,12 @@ export class SemanticModel {
   private collectRequiredFieldReadiness(
     obj: Record<string, any>,
     reverseReferences: Map<string, Set<string>>,
+    lifecycleRequiredEntities: Set<string>,
   ): ReadinessDiagnostic[] {
     if (typeof obj.id !== "string" || typeof obj.kind !== "string") {
+      return [];
+    }
+    if (obj.kind === "entity-type" && !lifecycleRequiredEntities.has(obj.id)) {
       return [];
     }
     return (READINESS_REQUIRED_FIELDS.get(obj.kind) ?? [])
@@ -703,6 +725,27 @@ export class SemanticModel {
         impactAreas: this.impactAreas(obj.impactAreas, rule.impactAreas),
         affectedObjectPaths: this.collectAffectedObjectPaths(new Set([obj.id]), reverseReferences),
       }));
+  }
+
+  private collectLifecycleRequiredEntities(
+    objects: Record<string, any>[],
+    kinds: Map<string, string>,
+  ): Set<string> {
+    const requiredEntities = new Set<string>();
+    for (const obj of objects) {
+      if (!obj || typeof obj !== "object" || obj.kind !== "workflow" || !Array.isArray(obj.outputs)) {
+        continue;
+      }
+      for (const output of obj.outputs) {
+        if (!output || typeof output !== "object" || typeof output.type !== "string") {
+          continue;
+        }
+        if (kinds.get(output.type) === "entity-type") {
+          requiredEntities.add(output.type);
+        }
+      }
+    }
+    return requiredEntities;
   }
 
   private collectOptionalDefaultReadiness(
@@ -725,6 +768,30 @@ export class SemanticModel {
         impactAreas: [...rule.impactAreas],
         affectedObjectPaths: this.collectAffectedObjectPaths(new Set([obj.id]), reverseReferences),
       }));
+  }
+
+  private collectRuleEvidenceReadiness(
+    obj: Record<string, any>,
+    _objectsById: Map<string, Record<string, any>>,
+    reverseReferences: Map<string, Set<string>>,
+  ): ReadinessDiagnostic[] {
+    if (obj.kind !== "rule" || typeof obj.id !== "string") {
+      return [];
+    }
+    if (this.hasDeclaredValue(obj.evidenceLinks)) {
+      return [];
+    }
+    return [{
+      code: "ORIN-R040",
+      category: "required-decision",
+      message: "rule requires linked evidence contract",
+      severity: "blocked",
+      blocking: true,
+      objectId: obj.id,
+      path: this.objectPath(obj.id, "evidenceLinks"),
+      impactAreas: this.impactAreas(obj.impactAreas, ["operability", "safety"]),
+      affectedObjectPaths: this.collectAffectedObjectPaths(new Set([obj.id]), reverseReferences),
+    }];
   }
 
   private collectUncertaintyReadiness(

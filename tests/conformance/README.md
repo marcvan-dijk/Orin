@@ -35,12 +35,24 @@ affected-object paths without generating a full application artifact.
 set consumed by host implementations so completeness reporting stays aligned
 across languages.
 
-Current readiness fixture coverage is intentionally narrow: required decisions
-for capability/effect/workflow contracts, optional defaults for
-relation/effect, unresolved uncertainty entries, and implementation-preference
-entries. Item 44 extends this surface; add new readiness coverage through
-language-neutral fixtures in this folder before widening host-language
-diagnostics.
+Current readiness fixture coverage includes required-decision contracts for
+capability/effect/workflow plus the item-44 extension families (entity
+lifecycle, effect input/output, rule evidence links, workflow
+postconditions), optional defaults (relation/effect), unresolved assumptions,
+and implementation-preference entries.
+
+Item 44A extends `readiness.schema.json` with a required-decision extension
+matrix and stable code allocation for:
+
+- entity lifecycle contracts (`ORIN-R030`)
+- effect input/output contracts (`ORIN-R031`, `ORIN-R032`)
+- rule evidence-link contracts (`ORIN-R040`)
+- workflow postcondition contracts (`ORIN-R050`)
+
+Item 44B adds `shared-tasks.readiness-extension-cases.json` and associated
+language-neutral model fixtures (`shared-tasks.readiness-extended.*.model.json`)
+with deterministic readiness expectations for both complete and missing-contract
+variants of each family.
 
 `password-reset.structured.json` is an internal/interchange structured frontend artifact used only to prove frontend-to-model equivalence against `examples/password-reset.orin`. It is not a primary beginner authoring format.
 

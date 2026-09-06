@@ -1,0 +1,125 @@
+{
+  "fixtureVersion": "0.1.0",
+  "schema": "readiness.schema.json",
+  "cases": [
+    {
+      "id": "shared-tasks/readiness/entity-lifecycle/complete",
+      "contractFamily": "entity-lifecycle",
+      "model": "shared-tasks.readiness-extended.complete.model.json",
+      "then": {
+        "status": "eligible",
+        "validationStatus": "eligible",
+        "requiredDecisionDiagnostics": []
+      }
+    },
+    {
+      "id": "shared-tasks/readiness/entity-lifecycle/missing",
+      "contractFamily": "entity-lifecycle",
+      "model": "shared-tasks.readiness-extended.missing-entity-lifecycle.model.json",
+      "then": {
+        "status": "blocked",
+        "validationStatus": "eligible",
+        "requiredDecisionDiagnostics": [
+          {
+            "code": "ORIN-R030",
+            "category": "required-decision",
+            "blocking": true,
+            "objectId": "shared-tasks/entity-type/task",
+            "path": "/objects/shared-tasks~1entity-type~1task/lifecycle"
+          }
+        ]
+      }
+    },
+    {
+      "id": "shared-tasks/readiness/effect-io/complete",
+      "contractFamily": "effect-inputs-outputs",
+      "model": "shared-tasks.readiness-extended.complete.model.json",
+      "then": {
+        "status": "eligible",
+        "validationStatus": "eligible",
+        "requiredDecisionDiagnostics": []
+      }
+    },
+    {
+      "id": "shared-tasks/readiness/effect-io/missing",
+      "contractFamily": "effect-inputs-outputs",
+      "model": "shared-tasks.readiness-extended.missing-effect-io.model.json",
+      "then": {
+        "status": "blocked",
+        "validationStatus": "eligible",
+        "requiredDecisionDiagnostics": [
+          {
+            "code": "ORIN-R031",
+            "category": "required-decision",
+            "blocking": true,
+            "objectId": "shared-tasks/effect/persistent-entity-store.write.task-state",
+            "path": "/objects/shared-tasks~1effect~1persistent-entity-store.write.task-state/inputs"
+          },
+          {
+            "code": "ORIN-R032",
+            "category": "required-decision",
+            "blocking": true,
+            "objectId": "shared-tasks/effect/persistent-entity-store.write.task-state",
+            "path": "/objects/shared-tasks~1effect~1persistent-entity-store.write.task-state/outputs"
+          }
+        ]
+      }
+    },
+    {
+      "id": "shared-tasks/readiness/rule-evidence-links/complete",
+      "contractFamily": "rule-evidence-links",
+      "model": "shared-tasks.readiness-extended.complete.model.json",
+      "then": {
+        "status": "eligible",
+        "validationStatus": "eligible",
+        "requiredDecisionDiagnostics": []
+      }
+    },
+    {
+      "id": "shared-tasks/readiness/rule-evidence-links/missing",
+      "contractFamily": "rule-evidence-links",
+      "model": "shared-tasks.readiness-extended.missing-rule-evidence-links.model.json",
+      "then": {
+        "status": "blocked",
+        "validationStatus": "eligible",
+        "requiredDecisionDiagnostics": [
+          {
+            "code": "ORIN-R040",
+            "category": "required-decision",
+            "blocking": true,
+            "objectId": "shared-tasks/rule/member-completion",
+            "path": "/objects/shared-tasks~1rule~1member-completion/evidenceLinks"
+          }
+        ]
+      }
+    },
+    {
+      "id": "shared-tasks/readiness/workflow-postconditions/complete",
+      "contractFamily": "workflow-postconditions",
+      "model": "shared-tasks.readiness-extended.complete.model.json",
+      "then": {
+        "status": "eligible",
+        "validationStatus": "eligible",
+        "requiredDecisionDiagnostics": []
+      }
+    },
+    {
+      "id": "shared-tasks/readiness/workflow-postconditions/missing",
+      "contractFamily": "workflow-postconditions",
+      "model": "shared-tasks.readiness-extended.missing-workflow-postconditions.model.json",
+      "then": {
+        "status": "blocked",
+        "validationStatus": "eligible",
+        "requiredDecisionDiagnostics": [
+          {
+            "code": "ORIN-R050",
+            "category": "required-decision",
+            "blocking": true,
+            "objectId": "shared-tasks/workflow/complete-task",
+            "path": "/objects/shared-tasks~1workflow~1complete-task/postconditions"
+          }
+        ]
+      }
+    }
+  ]
+}

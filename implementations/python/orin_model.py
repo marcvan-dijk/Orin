@@ -23,6 +23,14 @@ READINESS_CATEGORY_ORDER = {
     "implementation-preference": 3,
 }
 READINESS_REQUIRED_FIELDS: dict[str, tuple[dict[str, Any], ...]] = {
+    "entity-type": (
+        {
+            "code": "ORIN-R030",
+            "field": "lifecycle",
+            "message": "entity-type requires lifecycle contract declaration",
+            "impactAreas": ("operability", "safety"),
+        },
+    ),
     "capability": (
         {
             "code": "ORIN-R001",
@@ -50,6 +58,18 @@ READINESS_REQUIRED_FIELDS: dict[str, tuple[dict[str, Any], ...]] = {
             "message": "effect requires declared data access boundary",
             "impactAreas": ("privacy", "safety"),
         },
+        {
+            "code": "ORIN-R031",
+            "field": "inputs",
+            "message": "effect requires declared input contract",
+            "impactAreas": ("operability", "safety"),
+        },
+        {
+            "code": "ORIN-R032",
+            "field": "outputs",
+            "message": "effect requires declared output contract",
+            "impactAreas": ("operability", "safety"),
+        },
     ),
     "workflow": (
         {
@@ -63,6 +83,12 @@ READINESS_REQUIRED_FIELDS: dict[str, tuple[dict[str, Any], ...]] = {
             "field": "recoveryBehavior",
             "message": "workflow requires declared recovery behavior",
             "impactAreas": ("operability",),
+        },
+        {
+            "code": "ORIN-R050",
+            "field": "postconditions",
+            "message": "workflow requires declared postconditions",
+            "impactAreas": ("operability", "safety"),
         },
     ),
 }
@@ -351,12 +377,28 @@ class SemanticModel:
             )
 
         reverse_references = self._build_reverse_reference_graph(objects)
+        objects_by_id = {
+            obj.get("id"): obj
+            for obj in objects
+            if isinstance(obj, dict) and isinstance(obj.get("id"), str)
+        }
+        kinds = {
+            obj.get("id"): obj.get("kind")
+            for obj in objects
+            if isinstance(obj, dict)
+            and isinstance(obj.get("id"), str)
+            and isinstance(obj.get("kind"), str)
+        }
+        lifecycle_required_entities = self._collect_lifecycle_required_entities(objects, kinds)
         readiness_diagnostics: list[ReadinessDiagnostic] = []
         for obj in objects:
             if not isinstance(obj, dict):
                 continue
             readiness_diagnostics.extend(
-                self._collect_required_field_readiness(obj, reverse_references)
+                self._collect_required_field_readiness(obj, reverse_references, lifecycle_required_entities)
+            )
+            readiness_diagnostics.extend(
+                self._collect_rule_evidence_readiness(obj, objects_by_id, reverse_references)
             )
             readiness_diagnostics.extend(
                 self._collect_optional_default_readiness(obj, reverse_references)
@@ -809,16 +851,36 @@ class SemanticModel:
                     queue.append(dependent_id)
         return tuple(ordered_paths)
 
+    @staticmethod
+    def _collect_lifecycle_required_entities(objects: list[Any], kinds: dict[str, str]) -> set[str]:
+        required_entities: set[str] = set()
+        for obj in objects:
+            if not isinstance(obj, dict) or obj.get("kind") != "workflow":
+                continue
+            outputs = obj.get("outputs", [])
+            if not isinstance(outputs, list):
+                continue
+            for output in outputs:
+                if not isinstance(output, dict):
+                    continue
+                output_type = output.get("type")
+                if isinstance(output_type, str) and kinds.get(output_type) == "entity-type":
+                    required_entities.add(output_type)
+        return required_entities
+
     @classmethod
     def _collect_required_field_readiness(
         cls,
         obj: dict[str, Any],
         reverse_references: dict[str, set[str]],
+        lifecycle_required_entities: set[str],
     ) -> list[ReadinessDiagnostic]:
         diagnostics: list[ReadinessDiagnostic] = []
         object_id = obj.get("id")
         kind = obj.get("kind")
         if not isinstance(object_id, str) or not isinstance(kind, str):
+            return diagnostics
+        if kind == "entity-type" and object_id not in lifecycle_required_entities:
             return diagnostics
         for rule in READINESS_REQUIRED_FIELDS.get(kind, ()):
             if cls._has_declared_value(obj.get(rule["field"])):
@@ -866,6 +928,32 @@ class SemanticModel:
                 )
             )
         return diagnostics
+
+    @classmethod
+    def _collect_rule_evidence_readiness(
+        cls,
+        obj: dict[str, Any],
+        _objects_by_id: dict[str, dict[str, Any]],
+        reverse_references: dict[str, set[str]],
+    ) -> list[ReadinessDiagnostic]:
+        object_id = obj.get("id")
+        if obj.get("kind") != "rule" or not isinstance(object_id, str):
+            return []
+        if cls._has_declared_value(obj.get("evidenceLinks")):
+            return []
+        return [
+            ReadinessDiagnostic(
+                code="ORIN-R040",
+                category="required-decision",
+                message="rule requires linked evidence contract",
+                severity="blocked",
+                blocking=True,
+                object_id=object_id,
+                path=cls._object_path(object_id, "evidenceLinks"),
+                impact_areas=("operability", "safety"),
+                affected_object_paths=cls._collect_affected_object_paths({object_id}, reverse_references),
+            )
+        ]
 
     @classmethod
     def _collect_uncertainty_readiness(
