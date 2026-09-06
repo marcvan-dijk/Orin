@@ -677,15 +677,42 @@ capture important decisions and which parts add unnecessary friction.
     entity lifecycle, effect inputs/outputs, rule evidence links, and workflow
     postconditions) are covered by language-neutral fixtures and deterministic
     readiness diagnostics.
+    - [done] 44A: readiness-schema extension matrix and stable
+      code allocation for entity lifecycle, effect I/O contracts, rule evidence
+      links, and workflow postconditions. Added extension-matrix entries in
+      `tests/conformance/readiness.schema.json` with stable required-decision
+      codes `ORIN-R030`, `ORIN-R031`, `ORIN-R032`, `ORIN-R040`, and
+      `ORIN-R050`.
+    - [done] 44B: language-neutral conformance fixtures for each
+      new readiness contract (positive and missing-contract variants) and
+      expected deterministic readiness entries. Added
+      `tests/conformance/shared-tasks.readiness-extension-cases.json`,
+      `tests/conformance/shared-tasks.readiness-extended.complete.model.json`,
+      and four missing-contract model variants covering entity lifecycle, effect
+      I/O, rule evidence links, and workflow postconditions.
+    - [done] 44C: Python readiness implementation update
+      (`implementations/python/orin_model.py`) plus focused readiness tests in
+      `implementations/python/test_orin_model.py`, reconciled to the 44A/44B
+      fixture code set (`ORIN-R030`, `ORIN-R031`, `ORIN-R032`, `ORIN-R040`,
+      `ORIN-R050`) and fixture-driven expectations.
+    - [done] 44D: TypeScript readiness implementation update
+      (`implementations/typescript/src/orin_model.ts`) plus fixture-parity
+      assertions in
+      `implementations/typescript/src/shared_tasks_validation.test.ts`,
+      reconciled to the same fixture code/message/path set.
+    - [done] 44E: cross-implementation deterministic ordering and
+      affected-object-path parity lock using
+      `tests/conformance/shared-tasks.readiness-extension-cases.json` as the
+      readiness source of truth.
 
 ### Current status after reevaluation
 
 - **Current project scope (password-reset MVP):** complete.
 - **Remaining tasks in current project scope:** `0`.
-- **Open post-MVP backlog tasks in this sequence:** `1`.
-- **Exact next step:** execute item 44 to widen the completeness/readiness
-  schema coverage across more ORIN-0004 contracts while keeping the work in the
-  semantic analysis layer.
+- **Open post-MVP backlog tasks in this sequence:** `0` (item 44 workstreams
+  44A-44E complete after reconciliation).
+- **Exact next step:** begin the next prioritized post-MVP language-improvement
+  backlog item after 44A-44E parity lock completion.
 
 ## Test strategy
 

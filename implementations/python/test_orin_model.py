@@ -18,6 +18,7 @@ CASES = FIXTURE.parent / "password-reset.cases.json"
 TASKS_FIXTURE = FIXTURE.parent / "shared-tasks.model.json"
 TASKS_RULE_CONTRADICTION_MULTI_FIXTURE = FIXTURE.parent / "shared-tasks.rule-contradiction-multi.model.json"
 TASKS_READINESS_PARTIAL_FIXTURE = FIXTURE.parent / "shared-tasks.readiness-partial.model.json"
+TASKS_READINESS_EXTENSION_CASES_FIXTURE = FIXTURE.parent / "shared-tasks.readiness-extension-cases.json"
 READINESS_SCHEMA_FIXTURE = FIXTURE.parent / "readiness.schema.json"
 PASSWORD_RESET_STRUCTURED = FIXTURE.parent / "password-reset.structured.json"
 
@@ -366,6 +367,30 @@ class SemanticModelTests(unittest.TestCase):
                     "/objects/shared-tasks~1workflow~1complete-task/failureBehavior",
                 ),
                 (
+                    "ORIN-R030",
+                    "required-decision",
+                    True,
+                    "/objects/shared-tasks~1entity-type~1task/lifecycle",
+                ),
+                (
+                    "ORIN-R031",
+                    "required-decision",
+                    True,
+                    "/objects/shared-tasks~1effect~1persistent-entity-store.write.task-state/inputs",
+                ),
+                (
+                    "ORIN-R032",
+                    "required-decision",
+                    True,
+                    "/objects/shared-tasks~1effect~1persistent-entity-store.write.task-state/outputs",
+                ),
+                (
+                    "ORIN-R050",
+                    "required-decision",
+                    True,
+                    "/objects/shared-tasks~1workflow~1complete-task/postconditions",
+                ),
+                (
                     "ORIN-R101",
                     "optional-default",
                     False,
@@ -417,10 +442,36 @@ class SemanticModelTests(unittest.TestCase):
             if item["id"] == "shared-tasks/effect/persistent-entity-store.write.task-state"
         )
         workflow = next(item for item in document["objects"] if item["id"] == "shared-tasks/workflow/complete-task")
+        person = next(item for item in document["objects"] if item["id"] == "shared-tasks/entity-type/person")
+        task = next(item for item in document["objects"] if item["id"] == "shared-tasks/entity-type/task")
         capability["owner"] = "task-list-owner"
         capability["scope"] = "task-completion"
+        person["lifecycle"] = ["created", "active"]
+        task["lifecycle"] = ["open", "completed"]
         effect["failureModes"] = ["storage-unavailable"]
+        effect["inputs"] = [{"name": "task", "type": "shared-tasks/entity-type/task"}]
+        effect["outputs"] = [{"name": "task", "type": "shared-tasks/entity-type/task"}]
         workflow["failureBehavior"] = ["report-storage-failure"]
+        workflow["postconditions"] = ["shared-tasks/rule/task-is-completed"]
+        document["objects"].append(
+            {
+                "id": "shared-tasks/rule/task-is-completed",
+                "kind": "rule",
+                "name": "task-is-completed",
+                "status": "accepted",
+                "claims": ["Completed workflow output task must be in completed state."],
+                "evidenceLinks": ["shared-tasks/evidence/task-is-completed"],
+            }
+        )
+        document["objects"].append(
+            {
+                "id": "shared-tasks/evidence/task-is-completed",
+                "kind": "evidence",
+                "name": "task-is-completed",
+                "status": "pass",
+                "verifies": ["shared-tasks/rule/task-is-completed"],
+            }
+        )
 
         report = SemanticModel(document).readiness_report().to_dict()
 
@@ -435,6 +486,50 @@ class SemanticModelTests(unittest.TestCase):
             ],
         )
         self.assertTrue(all(item["blocking"] is False for item in report["diagnostics"]))
+
+    def test_rule_requires_linked_evidence_in_readiness_report(self):
+        document = json.loads(TASKS_READINESS_PARTIAL_FIXTURE.read_text(encoding="utf-8"))
+        document["objects"].append(
+            {
+                "id": "shared-tasks/rule/task-title-required",
+                "kind": "rule",
+                "name": "task-title-required",
+                "status": "accepted",
+                "claims": ["Task title must be non-empty."],
+            }
+        )
+
+        report = SemanticModel(document).readiness_report().to_dict()
+        rule_gap = next(item for item in report["diagnostics"] if item["code"] == "ORIN-R040")
+
+        self.assertEqual(rule_gap["category"], "required-decision")
+        self.assertEqual(rule_gap["objectId"], "shared-tasks/rule/task-title-required")
+        self.assertEqual(rule_gap["path"], "/objects/shared-tasks~1rule~1task-title-required/evidenceLinks")
+        self.assertEqual(
+            rule_gap["affectedObjectPaths"],
+            ["/objects/shared-tasks~1rule~1task-title-required"],
+        )
+
+    def test_readiness_extension_cases_match_language_neutral_fixture(self):
+        fixture = json.loads(TASKS_READINESS_EXTENSION_CASES_FIXTURE.read_text(encoding="utf-8"))
+        for case in fixture["cases"]:
+            with self.subTest(case_id=case["id"]):
+                model = SemanticModel.from_json_file(FIXTURE.parent / case["model"])
+                report = model.readiness_report().to_dict()
+                required = [
+                    {
+                        "code": item["code"],
+                        "category": item["category"],
+                        "blocking": item["blocking"],
+                        "objectId": item.get("objectId"),
+                        "path": item.get("path"),
+                    }
+                    for item in report["diagnostics"]
+                    if item["category"] == "required-decision"
+                ]
+                self.assertEqual(report["status"], case["then"]["status"])
+                self.assertEqual(report["validationStatus"], case["then"]["validationStatus"])
+                self.assertEqual(required, case["then"]["requiredDecisionDiagnostics"])
 
 class PasswordResetRuntimeTests(unittest.TestCase):
     def setUp(self):

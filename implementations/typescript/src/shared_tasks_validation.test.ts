@@ -9,6 +9,7 @@ import { SemanticModel } from "./orin_model.ts";
 const ROOT = resolve(fileURLToPath(new URL("../../..", import.meta.url)));
 const VALIDATION_FIXTURE = resolve(ROOT, "tests/conformance/shared-tasks.validation-cases.json");
 const READINESS_FIXTURE = resolve(ROOT, "tests/conformance/shared-tasks.readiness-partial.model.json");
+const READINESS_EXTENSION_CASES_FIXTURE = resolve(ROOT, "tests/conformance/shared-tasks.readiness-extension-cases.json");
 const READINESS_SCHEMA_FIXTURE = resolve(ROOT, "tests/conformance/readiness.schema.json");
 
 function loadJson(path: string): Record<string, any> {
@@ -167,6 +168,30 @@ test("readiness report is deterministic for a partially complete model", () => {
         path: "/objects/shared-tasks~1workflow~1complete-task/failureBehavior",
       },
       {
+        code: "ORIN-R030",
+        category: "required-decision",
+        blocking: true,
+        path: "/objects/shared-tasks~1entity-type~1task/lifecycle",
+      },
+      {
+        code: "ORIN-R031",
+        category: "required-decision",
+        blocking: true,
+        path: "/objects/shared-tasks~1effect~1persistent-entity-store.write.task-state/inputs",
+      },
+      {
+        code: "ORIN-R032",
+        category: "required-decision",
+        blocking: true,
+        path: "/objects/shared-tasks~1effect~1persistent-entity-store.write.task-state/outputs",
+      },
+      {
+        code: "ORIN-R050",
+        category: "required-decision",
+        blocking: true,
+        path: "/objects/shared-tasks~1workflow~1complete-task/postconditions",
+      },
+      {
         code: "ORIN-R101",
         category: "optional-default",
         blocking: false,
@@ -206,4 +231,106 @@ test("readiness affected-object paths preserve downstream references", () => {
     "/objects/shared-tasks~1target~1web-service",
     "/objects/shared-tasks~1uncertainty~1audit-retention",
   ]);
+});
+
+test("readiness diagnostics cover 44D contract families with deterministic object/path parity", () => {
+  const report = new SemanticModel({
+    modelVersion: "0.1.0",
+    module: { id: "contracts/module", kind: "module", name: "contracts", status: "accepted" },
+    objects: [
+      {
+        id: "contracts/entity-type/task",
+        kind: "entity-type",
+        name: "task",
+        status: "accepted",
+        fields: [{ name: "id", type: "contracts/value-type/task-id", identity: true }],
+      },
+      { id: "contracts/value-type/task-id", kind: "value-type", name: "task-id", status: "accepted" },
+      {
+        id: "contracts/capability/write",
+        kind: "capability",
+        name: "write",
+        status: "accepted",
+        owner: "system",
+        scope: "task-state",
+      },
+      {
+        id: "contracts/effect/write-task",
+        kind: "effect",
+        name: "write-task",
+        status: "accepted",
+        requires: ["contracts/capability/write"],
+        failureModes: ["unavailable"],
+        dataAccess: ["task-state"],
+        retryPolicy: "none",
+      },
+      {
+        id: "contracts/rule/postcondition-proof",
+        kind: "rule",
+        name: "postcondition-proof",
+        status: "accepted",
+        claims: ["Task state update is observable."],
+      },
+      {
+        id: "contracts/workflow/complete-task",
+        kind: "workflow",
+        name: "complete-task",
+        status: "accepted",
+        outputs: [{ name: "task", type: "contracts/entity-type/task" }],
+        requires: ["contracts/capability/write"],
+        uses: ["contracts/effect/write-task"],
+        constrainedBy: ["contracts/rule/postcondition-proof"],
+        failureBehavior: ["surface-effect-error"],
+        recoveryBehavior: ["retry-once"],
+      },
+      {
+        id: "contracts/example/complete-task-success",
+        kind: "example",
+        name: "complete-task-success",
+        status: "accepted",
+        demonstrates: ["contracts/workflow/complete-task"],
+      },
+    ],
+  }).readinessReport();
+
+  assert.deepEqual(
+    report.diagnostics.map((diagnostic) => [diagnostic.code, diagnostic.objectId, diagnostic.path]),
+    [
+    ["ORIN-R030", "contracts/entity-type/task", "/objects/contracts~1entity-type~1task/lifecycle"],
+    ["ORIN-R031", "contracts/effect/write-task", "/objects/contracts~1effect~1write-task/inputs"],
+    ["ORIN-R032", "contracts/effect/write-task", "/objects/contracts~1effect~1write-task/outputs"],
+    ["ORIN-R040", "contracts/rule/postcondition-proof", "/objects/contracts~1rule~1postcondition-proof/evidenceLinks"],
+    ["ORIN-R050", "contracts/workflow/complete-task", "/objects/contracts~1workflow~1complete-task/postconditions"],
+    ],
+  );
+  const ruleGap = report.diagnostics.find((diagnostic) => diagnostic.code === "ORIN-R040");
+  assert.ok(ruleGap);
+  assert.equal(ruleGap.message, "rule requires linked evidence contract");
+  assert.deepEqual(ruleGap.affectedObjectPaths, [
+    "/objects/contracts~1rule~1postcondition-proof",
+    "/objects/contracts~1workflow~1complete-task",
+    "/objects/contracts~1example~1complete-task-success",
+  ]);
+});
+
+test("readiness extension fixtures are the cross-implementation parity source", async (t) => {
+  const fixture = loadJson(READINESS_EXTENSION_CASES_FIXTURE);
+  for (const readinessCase of fixture.cases || []) {
+    await t.test(readinessCase.id, () => {
+    const modelPath = resolve(ROOT, "tests/conformance", readinessCase.model);
+    const report = new SemanticModel(loadJson(modelPath)).readinessReport();
+    const requiredDecisionDiagnostics = report.diagnostics
+      .filter((diagnostic) => diagnostic.category === "required-decision")
+      .map((diagnostic) => ({
+        code: diagnostic.code,
+        category: diagnostic.category,
+        blocking: diagnostic.blocking,
+        objectId: diagnostic.objectId,
+        path: diagnostic.path,
+      }));
+    assert.equal(report.status, readinessCase.then?.status);
+    assert.equal(report.validationStatus, readinessCase.then?.validationStatus);
+    assert.deepEqual(requiredDecisionDiagnostics, readinessCase.then?.requiredDecisionDiagnostics ?? []);
+    });
+  }
 });
