@@ -10,28 +10,15 @@ The goal is not to replace programming with prompts.
 
 The goal is to create a durable, human-understandable definition of software that can remain stable even when its implementation changes.
 
-## Start here: the 5-minute beginner demo
-
-You do **not** need to read Python or TypeScript first.
-
-If you want to understand Orin as a novice, follow this path:
-
-1. Start with the human request: "Let a person reset a password without revealing whether the account exists."
-2. Open the readable Orin program: [`examples/password-reset.orin`](examples/password-reset.orin).
-3. Notice the unresolved question that Orin refuses to guess.
-4. Run the short walkthrough: [`docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`](docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md).
-
-This is the core claim: AI can help write the Orin program, but the human can still read it, inspect it, and approve the important decisions before implementation takes over.
-
 ---
 
-## Why?
+## Why Orin exists
 
 Software is becoming increasingly complex.
 
 At the same time, AI is becoming increasingly capable of generating and modifying source code.
 
-This creates a problem:
+That creates a challenge:
 
 ```text
 Human
@@ -65,7 +52,7 @@ Generated source code becomes an implementation detail.
 
 ---
 
-# The core idea
+## The core idea
 
 Traditional programming usually mixes together two things:
 
@@ -105,7 +92,61 @@ Orin's job is to turn those definitions into something precise enough to execute
 
 ---
 
-# The vision
+## What this means in practice
+
+Imagine defining a password reset system.
+
+The important behaviour might be:
+
+```text
+A user can request a password reset.
+
+If the account exists, a reset link can be created.
+
+The system must not reveal whether an account exists.
+
+A reset link expires after 15 minutes.
+
+An expired link cannot be used.
+
+A successful reset invalidates the link.
+```
+
+The goal is for Orin to capture the meaning of these rules.
+
+AI can help ask questions when something important is unclear.
+
+For example:
+
+> Should reset requests be rate-limited?
+
+Rate limiting means slowing down or blocking repeated requests to reduce abuse.
+That choice matters because it affects user experience and safety.
+Orin should not silently guess.
+
+The human makes the decision.
+
+The resulting meaning becomes part of the program.
+
+---
+
+## Orin is not
+
+Orin is **not**:
+
+* A prompt wrapper around an AI coding assistant
+* A tool for analysing existing codebases
+* A replacement syntax for TypeScript, Python or another language
+* A low-code UI builder
+* A system where an AI's generated source code becomes the only source of truth
+
+AI-generated code can be an implementation.
+
+Orin explores whether the **program itself can exist at a higher level than that implementation**.
+
+---
+
+## The vision
 
 The long-term idea behind Orin is:
 
@@ -148,99 +189,22 @@ The program's meaning is not.
 
 ---
 
-# Orin is not
+## Start here: the 5-minute beginner demo
 
-Orin is **not**:
+You do **not** need to read Python or TypeScript first.
 
-* A prompt wrapper around an AI coding assistant
-* A tool for analysing existing codebases
-* A replacement syntax for TypeScript, Python or another language
-* A low-code UI builder
-* A system where an AI's generated source code becomes the only source of truth
+If you want to understand Orin as a novice, follow this path:
 
-AI-generated code can be an implementation.
+1. Start with the human request: "Let a person reset a password without revealing whether the account exists."
+2. Open the readable Orin program: [`examples/password-reset.orin`](examples/password-reset.orin).
+3. Notice the unresolved question about rate limiting.
+4. Run the short walkthrough: [`docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`](docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md).
 
-Orin explores whether the **program itself can exist at a higher level than that implementation**.
-
----
-
-# A simple example
-
-Imagine defining a password reset system.
-
-The important behaviour might be:
-
-```text
-A user can request a password reset.
-
-If the account exists, a reset link can be created.
-
-The system must not reveal whether an account exists.
-
-A reset link expires after 15 minutes.
-
-An expired link cannot be used.
-
-A successful reset invalidates the link.
-```
-
-The goal is for Orin to capture the meaning of these rules.
-
-AI can help ask questions when something important is unclear.
-
-For example:
-
-> Should reset requests be rate-limited?
-
-That decision changes observable behaviour and abuse resistance.
-
-Orin should not silently guess.
-
-The human makes the decision.
-
-The resulting meaning becomes part of the program.
+This is the core claim: AI can help write the Orin program, but the human can still read it, inspect it, and approve the important decisions before implementation takes over.
 
 ---
 
-# Authoring is not the same as meaning
-
-One of Orin's central ideas is that **how a program is authored should not define what the program means**.
-
-Eventually, the same program might be created through different frontends:
-
-```text
-Conversation with AI
-        │
-        │
-.orin source
-        │
-        │
-Structured input
-        │
-        ▼
-┌───────────────────────┐
-│                       │
-│   Orin program model  │
-│                       │
-│   Canonical meaning   │
-│                       │
-└───────────┬───────────┘
-            │
-            ▼
-     Implementations
-```
-
-This is important for the long-term vision.
-
-A beginner should not necessarily need to learn a large programming language before defining useful software.
-
-An experienced developer may want more direct control.
-
-Both should ultimately be able to describe the same underlying program.
-
----
-
-# Current status
+## Current status
 
 Orin is currently an **early experimental project**.
 
