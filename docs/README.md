@@ -21,8 +21,8 @@ Authoritative completion log: see the `[done]` items in
 
 - **Current project scope (password-reset MVP): complete**
 - **Remaining tasks in current project scope: 0**
-- **Open post-MVP backlog tasks: 1**
-- **Exact next step: execute ORIN-0003 item 44 to widen completeness/readiness coverage across more ORIN-0004 semantic contracts**
+- **Open post-MVP backlog tasks: 0**
+- **Exact next step: begin the next prioritized post-MVP language-improvement backlog item after the completed readiness-extension workstreams**
 
 Authoritative status and task markers are maintained in
 [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md).
@@ -35,5 +35,5 @@ Authoritative status and task markers are maintained in
 - **Syntax guide:** `ORIN-SYNTAX-GUIDE.md`
 - **Long-term foundational spec:** `ORIN-0004` (architectural/spec direction, not an active task list)
 - **Deferred post-MVP roadmap spec:** `ORIN-0005` (future application slice, not an active task list)
-- **Background/reference specs:** `ORIN-0001`, `ORIN-0002`, gap/integration analyses
+- **Background/reference specs:** `ORIN-0001` (pairing and decision-completion protocol), `ORIN-0002` (language kernel), gap/integration analyses
 - **Future post-MVP task queue marker:** `ORIN-0003` item tagged `[post-mvp-next]` when backlog execution resumes
