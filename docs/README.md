@@ -3,13 +3,15 @@
 This folder now has one clear flow:
 
 1. Read [`REFOCUS-ASSESSMENT.md`](./REFOCUS-ASSESSMENT.md) first (guiding constraint).
-2. Track execution in [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md) (source of truth for done/next).
-3. Use [`IMPLEMENTATION-ROADMAP.md`](./IMPLEMENTATION-ROADMAP.md) and [`MVP-PLAN.md`](./MVP-PLAN.md) for short strategic framing.
-4. Read [`ORIN-SYNTAX-GUIDE.md`](./ORIN-SYNTAX-GUIDE.md) for the current readable authoring style.
+2. Run the 1-day executable MVP walkthrough in [`PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`](./PASSWORD-RESET-MVP-DEMO-RUNBOOK.md).
+3. Track execution in [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md) (source of truth for done/next).
+4. Use [`IMPLEMENTATION-ROADMAP.md`](./IMPLEMENTATION-ROADMAP.md) and [`MVP-PLAN.md`](./MVP-PLAN.md) for short strategic framing.
+5. Read [`ORIN-SYNTAX-GUIDE.md`](./ORIN-SYNTAX-GUIDE.md) for the current readable authoring style.
 
 ## Status snapshot
 
 - **Password-reset MVP:** complete.
+- **1-day demo runbook:** [`PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`](./PASSWORD-RESET-MVP-DEMO-RUNBOOK.md).
 - **Active execution tracker:** [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md).
 - **ORIN-0004:** long-term foundational semantic-model specification, not current execution work.
 - **ORIN-0005:** deferred post-MVP application roadmap, not current execution work.

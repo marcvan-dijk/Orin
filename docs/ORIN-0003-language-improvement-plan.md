@@ -724,6 +724,15 @@ capture important decisions and which parts add unnecessary friction.
     fixtures/tests.
     Exact next step: run `docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md` unchanged
     with a new reader and capture only blocking command/output mismatches.
+48. [done] Add fixture-local newcomer demo evidence mapping so MVP claims are
+    directly traceable from conformance artifacts without broadening scope.
+    Updated `tests/conformance/README.md` with a concise `Demo Evidence
+    Checklist` that maps password-reset MVP claims to exact existing artifacts
+    and proof commands, and added a short root `README.md` proof quickstart
+    linking checklist, decision-completion context, and completion tracker.
+    Exact next step: execute the proof quickstart commands with a first-time
+    reader and capture only any unclear checklist wording or command-location
+    mismatches as docs-only follow-up.
 
 ### Current status after reevaluation
 
@@ -732,10 +741,12 @@ capture important decisions and which parts add unnecessary friction.
 - **Open post-MVP backlog tasks in this sequence:** `0` (item 44 workstreams
   44A-44E complete after reconciliation; item 45 documented the decision-
   completion protocol addition in ORIN-0001; item 46 added a strict MVP
-  acceptance/stop governance gate).
-- **Exact next step:** execute only the 1-day password-reset MVP demo proof run
-  against the director gate in `docs/MVP-PLAN.md`; if any criterion fails, stop
-  and close only that missing gate evidence before any post-MVP work.
+  acceptance/stop governance gate; item 47 added an executable docs runbook
+  for the same gate; item 48 added fixture-local newcomer evidence mapping and
+  root proof quickstart links).
+- **Exact next step:** execute the proof quickstart commands with a first-time
+  reader and capture only unclear checklist wording or command-location
+  mismatches before any post-MVP work.
 
 ## Test strategy
 
