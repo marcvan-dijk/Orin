@@ -263,6 +263,21 @@ The goal is not yet to build a complete general-purpose programming language.
 
 The goal is to discover the smallest useful foundation needed to prove the idea.
 
+## Password-reset MVP proof quickstart
+
+Run the existing proof commands from the repository root:
+
+```bash
+python implementations/python/password_reset_proof.py
+node --test --experimental-strip-types implementations/typescript/src/password_reset_proof.test.ts
+```
+
+How to inspect evidence quickly:
+
+- Claim-to-artifact checklist: `tests/conformance/README.md` (`Demo Evidence Checklist`).
+- Decision-completion protocol context: `docs/ORIN-0001-intent-spec.md`.
+- Completion log and exact next step tracker: `docs/ORIN-0003-language-improvement-plan.md`.
+
 ---
 
 # A readable Orin syntax

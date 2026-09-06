@@ -61,3 +61,15 @@ variants of each family.
 Host-language runners must remain under `implementations/<language>/` and consume these fixtures unchanged.
 
 The Python proof runner (`implementations/python/password_reset_proof.py`) uses these fixtures to show one end-to-end flow: unresolved ambiguity blocks readiness, resolving that ambiguity enables derivation of different implementation artifacts, and required observable behavior remains equivalent.
+
+## Demo Evidence Checklist (password-reset MVP)
+
+Language-neutral proof artifacts live in this folder; execution commands stay in
+`implementations/<language>/`.
+
+| MVP claim | Existing artifact(s) | Command(s) | Expected evidence |
+| --- | --- | --- | --- |
+| Unresolved consequential ambiguity blocks compilation. | `password-reset.model.json` (`account.password-reset/uncertainty/rate-limit`), `password-reset.cases.json` (`account.password-reset/case/unresolved-rate-limit`) | `python implementations/python/password_reset_proof.py` | JSON includes `"blockedCompilation": "blocked"`. |
+| Resolving that ambiguity makes the same model eligible. | `implementations/python/password_reset_proof.py` (resolves only rate-limit uncertainty), `password-reset.model.json` | `python implementations/python/password_reset_proof.py` | JSON includes `"resolvedCompilation": "eligible"`. |
+| Required observable behavior is deterministic for the MVP cases (privacy-preserving response, delivery/store failure recovery, duplicate/concurrent request handling, token expiry/reuse rejection). | `password-reset.cases.json`, `implementations/python/conformance_runner.py`, `implementations/typescript/src/conformance_runner.ts` | `node --test --experimental-strip-types implementations/typescript/src/password_reset_proof.test.ts` | Test passes, including assertion that every non-compile case from `password-reset.cases.json` is executed and matched. |
+| Lowering policy variants can change artifact strategy without changing canonical meaning or required behavior. | `password-reset.policies.json`, `implementations/python/password_reset_proof.py`, `implementations/typescript/src/password_reset_proof.ts` | `python implementations/python/password_reset_proof.py` | JSON includes `"canonicalMeaningStableAcrossVariants": true` and at least two distinct `variants[*].derivedArtifact` entries. |

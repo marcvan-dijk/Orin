@@ -733,6 +733,14 @@ capture important decisions and which parts add unnecessary friction.
     Exact next step: execute the proof quickstart commands with a first-time
     reader and capture only any unclear checklist wording or command-location
     mismatches as docs-only follow-up.
+49. [done] Tighten password-reset MVP newcomer proof discoverability by mapping
+    each demo claim to deterministic in-repo evidence and confirming the listed
+    commands still pass. Updated `tests/conformance/README.md` with a concise
+    claim-to-artifact/command checklist, refreshed root `README.md` with a
+    quick proof entry point, and re-ran the referenced Python and TypeScript
+    proof commands against current fixtures.
+    Exact next step: run the checklist once with a newcomer and patch only any
+    wording or navigation friction that blocks evidence verification.
 
 ### Current status after reevaluation
 
@@ -742,11 +750,11 @@ capture important decisions and which parts add unnecessary friction.
   44A-44E complete after reconciliation; item 45 documented the decision-
   completion protocol addition in ORIN-0001; item 46 added a strict MVP
   acceptance/stop governance gate; item 47 added an executable docs runbook
-  for the same gate; item 48 added fixture-local newcomer evidence mapping and
-  root proof quickstart links).
+  for the same gate; items 48-49 tightened fixture-local newcomer evidence
+  mapping and root proof quickstart discoverability).
 - **Exact next step:** execute the proof quickstart commands with a first-time
-  reader and capture only unclear checklist wording or command-location
-  mismatches before any post-MVP work.
+  reader and patch only wording/navigation friction that blocks evidence
+  verification before any post-MVP work.
 
 ## Test strategy
 
