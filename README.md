@@ -1,306 +1,449 @@
 # Orin
 
-> **What if humans programmed what software means, while AI handled more of how it is built?**
+> **What if the most important representation of a software project was not its source code?**
 
-Orin is an experiment in a new way of programming software.
+Orin is an experiment in a different way of programming software.
 
-Instead of making source code the primary way humans define a program, Orin explores whether humans can define **what software should do**, while AI and implementations handle more of **how it is built**.
+The idea is simple:
 
-The goal is not to replace programming with prompts.
+> **Humans define what the software is supposed to do. AI helps make important decisions explicit. Orin preserves that meaning. AI can then choose how to implement it.**
 
-The goal is to create a durable, human-understandable definition of software that can remain stable even when its implementation changes.
+The implementation may change.
 
----
-
-## Why Orin exists
-
-Software is becoming increasingly complex.
-
-At the same time, AI is becoming increasingly capable of generating and modifying source code.
-
-That creates a challenge:
-
-```text
-Human
-  ↓
-AI
-  ↓
-Thousands of lines of generated code
-  ↓
-Human tries to understand and maintain it
-```
-
-If AI can increasingly handle implementation, asking humans to understand every implementation detail may eventually become the wrong abstraction.
-
-Orin explores a different model:
-
-```text
-Human
-  ↓
-Describe what the software should do
-  ↓
-AI helps clarify and refine it
-  ↓
-Orin captures the program's meaning
-  ↓
-Implementation is generated
-```
-
-The human-readable definition remains the primary representation of the software.
-
-Generated source code becomes an implementation detail.
+The project should not lose its meaning.
 
 ---
 
-## The core idea
+## The problem
 
-Traditional programming usually mixes together two things:
+Software projects contain far more knowledge than their source code.
+
+Important information is often spread across:
+
+- conversations
+- tickets
+- documentation
+- architecture diagrams
+- source code
+- tests
+- AI conversations
+- decisions people made months ago
+- assumptions nobody recorded
+
+As AI increasingly generates and modifies code, this problem may become more important.
+
+An AI can generate thousands of lines of working code.
+
+But later, someone still needs to answer:
+
+- What is this software supposed to do?
+- Why does it behave this way?
+- Which decisions were deliberate?
+- Which things were left open?
+- What should happen when requirements change?
+- Can the implementation be replaced without changing the project itself?
+
+Today, the answer is often:
+
+> "Somewhere in the code, documentation, tickets and chat history."
+
+Orin explores whether a project can instead have a durable representation of its meaning.
+
+---
+
+# The idea
+
+Traditional programming usually mixes two things together:
 
 1. **What the software should do**
-2. **How the software should do it**
+2. **How the software does it**
 
-For example, a developer might need to think about:
+For example, implementing a feature may require choosing:
 
-* data structures
-* APIs
-* databases
-* frameworks
-* functions
-* classes
-* control flow
-* infrastructure
+- a programming language
+- a framework
+- a database
+- APIs
+- classes
+- functions
+- infrastructure
+- data structures
+- deployment architecture
 
-Those things are often necessary to implement software.
+Those decisions may be necessary to build software.
 
-But they are not necessarily the best way for a human to describe what the software is supposed to mean.
+But they are not necessarily the best way to describe what the software is.
 
-Orin explores separating these concerns.
-
-Instead of starting with implementation, a program should be able to express things such as:
-
-> Users can reset their password.
-
-> A reset link expires after 15 minutes.
-
-> Never reveal whether an email address belongs to an account.
-
-> A user must not be able to use an expired reset link.
-
-These statements describe **behaviour, rules and constraints**.
-
-Orin's job is to turn those definitions into something precise enough to execute and implement.
-
----
-
-## What this means in practice
-
-Imagine defining a password reset system.
-
-The important behaviour might be:
+Orin explores a separation:
 
 ```text
-A user can request a password reset.
-
-If the account exists, a reset link can be created.
-
-The system must not reveal whether an account exists.
-
-A reset link expires after 15 minutes.
-
-An expired link cannot be used.
-
-A successful reset invalidates the link.
+WHAT THE PROJECT MEANS
+        ↓
+        ORIN
+        ↓
+AI CHOOSES HOW TO IMPLEMENT IT
+        ↓
+CODE / INFRASTRUCTURE / UI / SERVICES
 ```
 
-The goal is for Orin to capture the meaning of these rules.
+The implementation is a realisation of the project.
 
-AI can help ask questions when something important is unclear.
-
-For example:
-
-> Should reset requests be rate-limited?
-
-Rate limiting means slowing down or blocking repeated requests to reduce abuse.
-That choice matters because it affects user experience and safety.
-Orin should not silently guess.
-
-The human makes the decision.
-
-The resulting meaning becomes part of the program.
+The Orin definition represents the project itself.
 
 ---
 
-## The vision
+# A simple example
 
-The long-term idea behind Orin is:
+Imagine asking for this:
+
+> Let a person reset their password without revealing whether the account exists.
+
+An Orin definition might contain:
 
 ```text
-Human expresses what they want
-            ↓
-AI helps clarify ambiguity
-            ↓
-Important decisions are made explicit
-            ↓
-Orin captures the resulting program meaning
-            ↓
-The program has deterministic meaning
-            ↓
-AI / implementations build the software
-```
-
-The important part is that AI should not simply generate code and leave the human with the result.
-
-The meaning of the program should remain available as something humans can understand, inspect and change.
-
-Later, the implementation may change:
-
-```text
-                 Orin program
-                      │
-                      │
-              defines meaning
-                      │
-          ┌───────────┴───────────┐
-          ↓                       ↓
-    Implementation A       Implementation B
-          ↓                       ↓
-      Same program meaning and behaviour
-```
-
-The implementation is replaceable.
-
-The program's meaning is not.
-
----
-
-## Orin is not
-
-Orin is **not**:
-
-* A prompt wrapper around an AI coding assistant
-* A tool for analysing existing codebases
-* A replacement syntax for TypeScript, Python or another language
-* A low-code UI builder
-* A system where an AI's generated source code becomes the only source of truth
-
-AI-generated code can be an implementation.
-
-Orin explores whether the **program itself can exist at a higher level than that implementation**.
-
----
-
-## Start here: the 5-minute beginner demo
-
-You do **not** need to read Python or TypeScript first.
-
-If you want to understand Orin as a novice, follow this path:
-
-1. Start with the human request: "Let a person reset a password without revealing whether the account exists."
-2. Open the readable Orin program: [`examples/password-reset.orin`](examples/password-reset.orin).
-3. Notice the unresolved question about rate limiting.
-4. Run the short walkthrough: [`docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`](docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md).
-
-This is the core claim: AI can help write the Orin program, but the human can still read it, inspect it, and approve the important decisions before implementation takes over.
-
----
-
-## Current status
-
-Orin is currently an **early experimental project**.
-
-The current work focuses on proving the central hypothesis with a small example.
-
-The current proof is roughly:
-
-```text
-Program definition
-        ↓
-Semantic model
-        ↓
-Validation
-        ↓
-Deterministic meaning
-        ↓
-Executable behaviour
-        ↓
-Multiple implementations
-        ↓
-Equivalent observable behaviour
-```
-
-The password reset example is currently used as the primary proof.
-
-The goal is not yet to build a complete general-purpose programming language.
-
-The goal is to discover the smallest useful foundation needed to prove the idea.
-
-## Password-reset MVP proof quickstart
-
-Run from repository root (`/home/runner/work/Orin/Orin`).
-
-### Beginner path
-
-1. Read the human request in this README: password reset without revealing whether the account exists.
-2. Open [`examples/password-reset.orin`](examples/password-reset.orin). This readable Orin file is the program meaning the human reviews.
-3. Notice the unresolved question in that file and in [`tests/conformance/password-reset.model.json`](tests/conformance/password-reset.model.json).
-4. Follow the short walkthrough in [`docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`](docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md).
-
-Minimal proof check:
-
-```bash
-python implementations/python/password_reset_proof.py
-node --test --experimental-strip-types implementations/typescript/src/password_reset_proof.test.ts
-```
-
-Full demo gate command sequence:
-
-```bash
-python implementations/python/password_reset_proof.py
-python implementations/python/test_orin_model.py PasswordResetProofRunTests.test_password_reset_end_to_end_derivation_proof
-node --experimental-strip-types implementations/typescript/src/password_reset_proof.ts
-node --test --experimental-strip-types implementations/typescript/src/password_reset_proof.test.ts
-```
-
-How to inspect evidence quickly:
-
-- Readable program meaning: `examples/password-reset.orin`.
-- Claim-to-artifact checklist: `tests/conformance/README.md` (`Demo Evidence Checklist`).
-- Full executable runbook and pass/fail gate: `docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`.
-- Decision-completion protocol context: `docs/ORIN-0001-intent-spec.md`.
-- Completion log and exact next step tracker: `docs/ORIN-0003-language-improvement-plan.md`.
-
----
-
-# A readable Orin syntax
-
-Orin currently uses a readable outline style for authoring.
-
-See the full guide here:
-
-[`docs/ORIN-SYNTAX-GUIDE.md`](docs/ORIN-SYNTAX-GUIDE.md)
-
-Short version:
-
-```text
-module: password-reset
-
 purpose:
-  Reset passwords safely.
+  Reset passwords safely without revealing whether an account exists.
 
 rules:
   - Do not reveal whether an email exists.
   - Reset links expire after 15 minutes.
   - Reset links can only be used once.
-
-workflow: request-reset
-  input:
-    email
-  steps:
-    check account
-    create token if allowed
-    send reset message if allowed
-    return same response
 ```
+
+This describes important project behaviour without requiring the user to first decide:
+
+- whether the backend uses Python or TypeScript
+- which database is used
+- which web framework is used
+- how tokens are stored
+- where the service runs
+
+Those may be implementation decisions.
+
+AI can choose them.
+
+---
+
+# But AI should not silently decide everything
+
+Some missing information is harmless.
+
+Other missing information changes what the software actually does.
+
+For example:
+
+> Should password reset requests be rate-limited?
+
+That decision affects behaviour and security.
+
+Orin should not silently let AI make that decision.
+
+Instead, the intended interaction is:
+
+```text
+User describes software
+        ↓
+AI helps create the Orin project
+        ↓
+Important decision is missing
+        ↓
+AI explains the decision
+        ↓
+AI presents understandable options
+        ↓
+User chooses
+        ↓
+Decision is recorded in Orin
+```
+
+For example:
+
+> **Password reset rate limiting has not been defined.**
+>
+> How should reset requests be limited?
+>
+> **A.** Limit by email address  
+> **B.** Limit by network origin  
+> **C.** Limit by both  
+> **D.** Do not rate-limit
+
+The user decides.
+
+That decision becomes part of the project.
+
+It should not disappear into:
+
+- an AI conversation
+- a developer's memory
+- an implementation detail
+
+---
+
+# The central distinction
+
+Orin needs to distinguish between four things.
+
+## 1. Defined project meaning
+
+Things the user has explicitly decided.
+
+```text
+Reset links expire after 15 minutes.
+```
+
+These are part of the project and must be preserved.
+
+---
+
+## 2. Implementation freedom
+
+Things that do not materially change the accepted project meaning.
+
+```text
+Which database stores reset tokens?
+```
+
+AI may choose the most appropriate implementation.
+
+The answer might change over time without changing what the project is.
+
+---
+
+## 3. Unknown but inconsequential details
+
+Some things simply do not need to be decided yet.
+
+Orin should not force users to specify everything.
+
+The goal is abstraction, not replacing code with an enormous specification.
+
+---
+
+## 4. Unknown consequential decisions
+
+Some missing decisions change observable behaviour or important guarantees.
+
+These should be surfaced to the user.
+
+```text
+AI detects missing project decision
+        ↓
+Explains why it matters
+        ↓
+Presents options where possible
+        ↓
+User decides
+        ↓
+Decision becomes durable project meaning
+```
+
+This distinction is central to Orin.
+
+> **AI should be free to choose implementation details. AI should not silently invent important project meaning.**
+
+---
+
+# A project should outlive its implementation
+
+Imagine a project starts with:
+
+```text
+Orin project
+        ↓
+AI chooses implementation
+        ↓
+Python service + web frontend
+```
+
+Years later:
+
+```text
+Same Orin project
+        ↓
+Requirements change
+        ↓
+AI chooses a new implementation
+        ↓
+Different services + different technology
+```
+
+The implementation may change completely.
+
+The project meaning should remain understandable.
+
+```text
+                  ORIN
+                    │
+                    │
+             Project meaning
+                    │
+        ┌───────────┼───────────┐
+        ↓           ↓           ↓
+Implementation A  Implementation B  Future implementation
+        │           │
+        └───── must satisfy ─────┘
+                    │
+              Project meaning
+```
+
+The goal is not that every implementation looks the same.
+
+The goal is that implementations remain accountable to what the project means.
+
+---
+
+# Orin and AI
+
+Orin is not intended to compete with AI coding assistants.
+
+AI is fundamental to the vision.
+
+The intended relationship is:
+
+```text
+Human
+  │
+  │ describes what they want
+  ▼
+AI
+  │
+  │ helps clarify and identify
+  │ important missing decisions
+  ▼
+ORIN
+  │
+  │ preserves accepted project meaning
+  ▼
+AI
+  │
+  │ chooses and creates an appropriate
+  │ implementation
+  ▼
+WORKING SOFTWARE
+```
+
+AI may become increasingly capable of:
+
+- generating code
+- choosing architectures
+- selecting technologies
+- changing frameworks
+- replacing implementations
+- maintaining infrastructure
+
+Orin explores what should remain stable while those things change.
+
+---
+
+# Start here
+
+You do not need to understand the Python or TypeScript implementation to understand the idea.
+
+Start with the password reset example:
+
+1. Read the human request:
+
+   > Let a person reset a password without revealing whether the account exists.
+
+2. Open:
+
+   [`examples/password-reset.orin`](examples/password-reset.orin)
+
+3. Notice the behaviour and rules.
+
+4. Notice the unresolved consequential decision.
+
+5. Follow the walkthrough:
+
+   [`docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`](docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md)
+
+The current example is intentionally small.
+
+The purpose is not to demonstrate a complete application.
+
+The purpose is to demonstrate the core interaction:
+
+> **Define what is known. Identify what important decision is missing. Do not silently guess.**
+
+---
+
+# What Orin is
+
+Orin is an experiment in creating a durable, implementation-independent representation of a software project.
+
+It aims to preserve things such as:
+
+- purpose
+- behaviour
+- rules
+- constraints
+- concepts
+- relationships
+- workflows
+- guarantees
+- important decisions
+
+The long-term question is whether these things can become the primary representation through which humans understand and evolve software.
+
+---
+
+# What Orin is not
+
+Orin is **not** currently intended to be:
+
+- a replacement syntax for Python or TypeScript
+- a prompt wrapper around an AI coding assistant
+- a low-code application builder
+- a tool primarily for analysing existing codebases
+- a system where generated code becomes the only source of truth
+
+Orin does not assume that humans should manually define every implementation detail.
+
+Quite the opposite.
+
+The experiment is whether humans can increasingly focus on:
+
+> **What must be true about the software?**
+
+while AI increasingly handles:
+
+> **How should this be implemented?**
+
+---
+
+# The current experiment
+
+Orin is still early.
+
+The current work focuses on proving the idea with small examples.
+
+The project currently explores a flow similar to:
+
+```text
+Human request
+        ↓
+Readable Orin definition
+        ↓
+Semantic model
+        ↓
+Validation
+        ↓
+Identify missing consequential decisions
+        ↓
+Accepted project meaning
+        ↓
+Implementation
+        ↓
+Observable behaviour
+```
+
+The current password-reset example is the primary proof.
+
+The goal is not yet to design a complete programming language or application platform.
+
+The goal is to discover:
+
+> **What is the smallest useful representation of a software project that can preserve its meaning independently from its implementation?**
 
 ---
 
@@ -308,100 +451,154 @@ workflow: request-reset
 
 ## Meaning before implementation
 
-The program should primarily describe what software means, not how a particular technology implements it.
+The project should first be understandable in terms of what it does and what must remain true.
 
-## AI assists; meaning remains explicit
+Implementation is secondary.
 
-AI can help interpret, refine and build a program.
+---
 
-Important decisions should ultimately become part of the program's defined meaning rather than remaining hidden inside a chat conversation.
+## Important decisions should be durable
 
-## Ambiguity matters
+If a decision materially affects the project, it should not be lost in conversation history or hidden inside generated code.
 
-Not every detail needs to be specified immediately.
+Once accepted, it should become part of the project's durable representation.
 
-But if an unresolved decision changes observable behaviour, it should be surfaced.
+---
 
-Orin should not silently invent important semantics.
+## AI assists; humans remain responsible for project meaning
 
-## Internal complexity is acceptable
+AI can suggest, clarify and implement.
 
-The implementation of Orin may require sophisticated semantic models, validation and execution machinery.
+But consequential project decisions should be visible to the human.
 
-That does not mean those concepts should automatically become part of the primary user experience.
+---
 
-Complexity should exist where it provides value.
+## Not everything must be specified
+
+Orin should not become a giant specification language.
+
+Implementation freedom is valuable.
+
+The goal is to record what matters while leaving AI free to decide what does not.
+
+---
 
 ## The implementation is replaceable
 
-A program's meaning should not depend on one generated codebase.
+Programming languages, frameworks and architectures may change.
 
-Different implementations should be able to represent the same accepted Orin program.
-
----
-
-# An experiment
-
-Orin does not claim to have solved the future of programming.
-
-It is an experiment based on a question:
-
-> **If AI increasingly writes the implementation, what should humans program?**
-
-My hypothesis is that humans will increasingly need a higher-level representation of software — one that allows them to define, understand and evolve what a program does without requiring the implementation to be the only thing they can read.
-
-Orin is an attempt to explore that hypothesis.
+The project meaning should remain.
 
 ---
 
-# Project status
+## Internal complexity should not become user complexity
 
-⚠️ **Experimental**
+Orin may require sophisticated semantic models, validation and verification internally.
 
-The language, semantic model and architecture are actively evolving.
+That does not mean users should have to understand those mechanisms.
 
-The current focus is on proving the core idea rather than building a complete ecosystem.
-
-Expect breaking changes and incomplete functionality.
+The user experience should remain focused on defining and understanding the project.
 
 ---
 
 # Repository structure
 
-Orin keeps **execution implementations** and **authoring/analysis tooling** separate:
+The repository separates implementations from tooling:
 
-- `implementations/` contains host-language backends that execute or generate artifacts from the same Orin semantic meaning.
-- `tooling/` contains authoring, inspection, and analysis tools that operate on that same meaning.
+```text
+implementations/
+    Host-language implementations and execution backends
 
-This means multiple tools can help author and review one Orin program, while multiple implementations can execute that same program meaning.
+tooling/
+    Authoring, inspection and analysis tools
+
+docs/
+    Specifications, design decisions and project documentation
+
+examples/
+    Human-readable Orin examples
+
+tests/
+    Conformance and behavioural verification
+```
+
+The structure is intended to reinforce an important architectural principle:
+
+> **Tools help humans and AI work with the project. Implementations realise the project. Neither should become the definition of what the project means.**
+
+---
+
+# Current status
+
+⚠️ **Experimental**
+
+Orin is actively evolving.
+
+The syntax, semantic model, architecture and implementation approach are not stable.
+
+Breaking changes are expected.
+
+The project is currently more interested in proving a useful idea than pretending the final design is already known.
+
+---
+
+# Why this project exists
+
+The question behind Orin is:
+
+> **If AI increasingly writes the implementation, what should humans program?**
+
+One possible answer is:
+
+> **Humans should increasingly define what software means.**
+
+Not every implementation detail.
+
+Not every line of code.
+
+But the purpose, behaviour, rules and important decisions that make the project what it is.
+
+Orin is an attempt to explore whether that can become a useful way to build software.
 
 ---
 
 # Contributing
 
-Orin is still in an exploratory stage.
+Orin is exploratory, and criticism is welcome.
 
-Feedback is particularly valuable around the central question:
+The most useful feedback is not necessarily:
 
-> **What should a human-readable program look like when AI handles increasingly more of the implementation?**
+> "You should add feature X."
 
-Ideas, criticism and experiments are welcome.
+More interesting questions are:
+
+- Is this representation actually easier to understand than code?
+- Which decisions belong in project meaning?
+- Which decisions should remain implementation freedom?
+- When should AI ask the user instead of deciding?
+- Can important project knowledge remain useful after the implementation changes?
+- Would you want AI-assisted development to preserve this kind of project memory?
+
+If you have thoughts, ideas or criticism, they are welcome.
 
 ---
 
-## The short version
+# The short version
 
 ```text
-Humans define what software should do.
+Humans describe what software should do.
 
-AI helps make that definition precise.
+AI helps find important things that have not been decided.
 
-Orin captures what the program means.
+Humans make consequential decisions.
 
-Implementations are generated from that meaning.
+Orin records what the project means.
 
-Humans continue to understand and evolve the software
-through the program's meaning rather than its implementation.
+AI chooses how best to implement it.
+
+The implementation can change.
+
+The project meaning remains.
 ```
 
-**That's the experiment.**
+> **That's the experiment.**
