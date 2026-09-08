@@ -1,8 +1,12 @@
 # Orin Primary Programming Gap Analysis
 
-**Status:** Current-state review  
-**Date:** 2026-09-02  
+**Status:** Current-state review
+**Date:** 2026-09-02
 **Scope:** Making Orin capable of defining and producing a complete new software application
+
+**Deferred note:** This is a larger future-facing gap analysis. It is retained
+for later evaluation and is not part of Orin's current primary path. See
+[`DEFERRED-EVALUATION-BACKLOG.md`](./DEFERRED-EVALUATION-BACKLOG.md).
 
 ## Executive conclusion
 

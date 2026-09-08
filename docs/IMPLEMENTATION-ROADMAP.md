@@ -1,51 +1,15 @@
-# Orin Implementation Roadmap (Refocused)
+# Orin Implementation Roadmap
 
-## Purpose
+This document is retained as a short historical framing note only.
 
-This roadmap is intentionally narrow: prove Orin's core meaning-first hypothesis with password reset before expanding scope.
+Active execution tracking belongs in
+[`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md).
+Future expansion material belongs in
+[`DEFERRED-EVALUATION-BACKLOG.md`](./DEFERRED-EVALUATION-BACKLOG.md).
 
-## Priority 0: Protect the core proof
+## What this still preserves
 
-- Keep password-reset as the canonical demonstration.
-- Keep consequential ambiguity gating explicit and blocking.
-- Keep deterministic conformance as the main evidence mechanism.
-- Keep generated implementation replaceable and secondary.
-
-## Priority 1: Complete the minimum proof loop
-
-1. **Meaning completeness for the slice**  
-   Ensure required semantic objects for password-reset claims are explicit and validated.
-
-2. **Deterministic readiness/compile gate**  
-   Emit stable diagnostics and block unresolved consequential uncertainty.
-
-3. **Deterministic executable checks**  
-   Execute conformance cases with deterministic adapters and stable outcomes.
-
-4. **Implementation-equivalence evidence**  
-   Show that implementation choices can differ while observable behavior remains equal.
-
-## Priority 2: Keep advanced work behind internal framing
-
-- Shared-tasks remains an advanced follow-up slice.
-- VS Code extension remains supporting tooling.
-- Julius Skills remains internal workflow optimization.
-
-## Not now
-
-- Broad profile expansion.
-- Generic architecture growth.
-- Feature-complete tooling claims.
-
-## Exit for refocused MVP
-
-The MVP is complete when password-reset demonstrates deterministic meaning, ambiguity gating, and implementation-equivalence evidence with a clear beginner path.
-
-## Execution tracking
-
-- Current-project execution (password-reset MVP) is complete.
-- No post-MVP backlog task is currently active.
-- Director stop rule: if the 1-day password-reset demo gate is not fully met, stop and close only the missing MVP gate items; do not begin post-MVP implementation.
-- When post-MVP execution resumes, activate and track it in
-  [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md)
-  using the `[post-mvp-next]` marker.
+- Password-reset remains the current proof slice.
+- Consequential ambiguity must stay explicit and blocking.
+- Generated implementation remains replaceable evidence, not the primary source
+  of project meaning.

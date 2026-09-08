@@ -1,37 +1,33 @@
-# Orin Docs Guide (Start Here)
+# Orin Docs Guide
 
-This folder should support one beginner-first flow:
+Use this folder with one rule in mind: concept authority lives in
+[`ORIN-0001-intent-spec.md`](./ORIN-0001-intent-spec.md), active execution
+tracking lives in [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md),
+and broader future material is kept out of the primary path.
 
-1. Open the readable program: [`../examples/password-reset.orin`](../examples/password-reset.orin).
-2. Follow the 5-minute walkthrough in [`PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`](./PASSWORD-RESET-MVP-DEMO-RUNBOOK.md).
-3. Use [`../tests/conformance/README.md`](../tests/conformance/README.md) to map each MVP claim to exact proof artifacts.
-4. Read [`ORIN-SYNTAX-GUIDE.md`](./ORIN-SYNTAX-GUIDE.md) only if you want help reading the outline syntax.
-5. Track execution in [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md).
+## Authoritative now
 
-## Status snapshot
+- [`ORIN-0001-intent-spec.md`](./ORIN-0001-intent-spec.md) — canonical
+  conceptual source for the current human/AI meaning boundary and
+  decision-completion rule.
+- [`../examples/password-reset.orin`](../examples/password-reset.orin) — current
+  readable Orin program for the password-reset proof slice.
+- [`../tests/conformance/README.md`](../tests/conformance/README.md) — exact map
+  from current proof claims to existing evidence artifacts.
 
-- **Password-reset MVP:** complete and demoable as the beginner path.
-- **5-minute walkthrough:** [`PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`](./PASSWORD-RESET-MVP-DEMO-RUNBOOK.md).
-- **Readable program meaning:** [`../examples/password-reset.orin`](../examples/password-reset.orin).
-- **Active execution tracker:** [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md).
-- **ORIN-0004:** long-term foundational semantic-model specification, not current execution work.
-- **ORIN-0005:** deferred post-MVP application roadmap, not current execution work.
+## Execution now
 
-## Current execution status
+- [`PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`](./PASSWORD-RESET-MVP-DEMO-RUNBOOK.md) —
+  5-minute walkthrough for the current proof path.
+- [`ORIN-SYNTAX-GUIDE.md`](./ORIN-SYNTAX-GUIDE.md) — concise help for reading
+  the current outline syntax.
+- [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md) —
+  active execution tracker and implementation log.
 
-- **Current project scope (password-reset MVP): complete**
-- **Remaining tasks in current project scope: 0**
-- **Open post-MVP backlog tasks: 0**
-- **Exact next step: run the beginner walkthrough with a real first-time reader and patch only any wording or navigation friction that blocks understanding**
+## Deferred later
 
-## Document roles
-
-- **Beginner walkthrough:** `PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`
-- **Readable authoring example:** `../examples/password-reset.orin`
-- **Proof artifact map:** `../tests/conformance/README.md`
-- **Primary execution tracker:** `ORIN-0003-language-improvement-plan.md`
-- **Supporting strategy docs:** `IMPLEMENTATION-ROADMAP.md`, `MVP-PLAN.md`
-- **Syntax guide:** `ORIN-SYNTAX-GUIDE.md`
-- **Long-term foundational spec:** `ORIN-0004`
-- **Deferred post-MVP roadmap spec:** `ORIN-0005`
-- **Background/reference specs:** `ORIN-0001`, `ORIN-0002`, gap/integration analyses
+- [`ORIN-0004-semantic-model.md`](./ORIN-0004-semantic-model.md) — deferred
+  long-term foundational semantic specification, not current execution work.
+- [`DEFERRED-EVALUATION-BACKLOG.md`](./DEFERRED-EVALUATION-BACKLOG.md) — parked
+  future expansion, historical strategy, and gap-analysis material with source
+  pointers.

@@ -1,7 +1,7 @@
 # ORIN-0005: Post-MVP Stress-Test Application
 
 **Status:** Deferred post-MVP roadmap work
-**Version:** 0.1.0  
+**Version:** 0.1.0
 **Scope:** One broader application slice after the password-reset MVP proves the core thesis
 
 **Execution note:** ORIN-0005 remains deferred roadmap work after MVP
@@ -9,6 +9,9 @@ completion. It is not current execution work; any future implementation tasks
 for this application should first be activated and tracked in `ORIN-0003`.
 See also the docs-only alignment brief:
 `docs/ORIN-0005-shared-tasks-to-ORIN-0004-alignment-brief.md`.
+This document is also listed in
+[`DEFERRED-EVALUATION-BACKLOG.md`](./DEFERRED-EVALUATION-BACKLOG.md) to keep it
+out of the current primary path.
 
 ## Decision
 

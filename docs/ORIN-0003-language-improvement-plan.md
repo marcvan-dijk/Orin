@@ -760,6 +760,21 @@ capture important decisions and which parts add unnecessary friction.
     Exact next step: run the 5-minute beginner walkthrough with a real
     first-time reader and patch only any remaining wording/navigation friction
     that blocks understanding before opening post-MVP work.
+52. [done] Restructure repository documentation so conceptual authority is
+    defined once, primary-path docs stay narrow, and broader future material is
+    parked for later evaluation instead of competing with the current core.
+    Simplified `README.md` into a concise entrypoint, rewrote `docs/README.md`
+    into strict authoritative-now / execution-now / deferred-later sections,
+    added `docs/DEFERRED-EVALUATION-BACKLOG.md`, trimmed duplicated strategy
+    docs (`docs/IMPLEMENTATION-ROADMAP.md`, `docs/MVP-PLAN.md`,
+    `docs/REFOCUS-ASSESSMENT.md`) into short retained-reference notes, and
+    added deferred-path framing to `docs/ORIN-0005-first-complete-application.md`,
+    `docs/ORIN-0005-shared-tasks-to-ORIN-0004-alignment-brief.md`,
+    `docs/ORIN-PRIMARY-PROGRAMMING-GAP-ANALYSIS.md`, and
+    `docs/SKILLS-INTEGRATION.md`.
+    Exact next step: run the trimmed README/docs path with a first-time reader
+    and patch only any remaining wording or navigation friction that blocks the
+    current password-reset proof path.
 
 ### Current status after reevaluation
 
@@ -770,10 +785,11 @@ capture important decisions and which parts add unnecessary friction.
   completion protocol addition in ORIN-0001; item 46 added a strict MVP
   acceptance/stop governance gate; item 47 added an executable docs runbook
   for the same gate; items 48-49 tightened fixture-local newcomer evidence
-  mapping and root proof quickstart discoverability).
-- **Exact next step:** run the 5-minute beginner walkthrough with a real
-  first-time reader and patch only any wording/navigation friction that blocks
-  understanding before any post-MVP work.
+  mapping and root proof quickstart discoverability; items 50-52 then trimmed
+  primary-path documentation and parked broader material in a deferred backlog).
+- **Exact next step:** run the trimmed README/docs path with a real first-time
+  reader and patch only any wording or navigation friction that blocks the
+  current password-reset proof path before any post-MVP work.
 
 ## Test strategy
 
