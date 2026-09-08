@@ -17,9 +17,13 @@ function loadJson(path: string): Record<string, any> {
 
 function resolveRateLimit(model: SemanticModel): SemanticModel {
   const next = JSON.parse(JSON.stringify(model.document));
-  for (const obj of next.objects || []) {
-    if (obj.kind === "uncertainty" && obj.id === "account.password-reset/uncertainty/rate-limit") {
-      obj.status = "resolved";
+  if (Array.isArray(next.unresolved)) {
+    next.unresolved = next.unresolved.filter((item: unknown) => item !== "account.password-reset/uncertainty/rate-limit");
+  } else {
+    for (const obj of next.objects || []) {
+      if (obj.kind === "uncertainty" && obj.id === "account.password-reset/uncertainty/rate-limit") {
+        obj.status = "resolved";
+      }
     }
   }
   return new SemanticModel(next);

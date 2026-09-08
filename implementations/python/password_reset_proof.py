@@ -18,11 +18,18 @@ POLICIES_FIXTURE = ROOT / "tests" / "conformance" / "password-reset.policies.jso
 
 def _resolve_rate_limit(model: SemanticModel) -> SemanticModel:
     resolved = deepcopy(model.document)
-    for obj in resolved.get("objects", []):
-        if obj.get("kind") != "uncertainty":
-            continue
-        if obj.get("id") == "account.password-reset/uncertainty/rate-limit":
-            obj["status"] = "resolved"
+    unresolved = resolved.get("unresolved", [])
+    if isinstance(unresolved, list):
+        resolved["unresolved"] = [
+            item for item in unresolved
+            if item != "account.password-reset/uncertainty/rate-limit"
+        ]
+    else:
+        for obj in resolved.get("objects", []):
+            if obj.get("kind") != "uncertainty":
+                continue
+            if obj.get("id") == "account.password-reset/uncertainty/rate-limit":
+                obj["status"] = "resolved"
     return SemanticModel(resolved)
 
 

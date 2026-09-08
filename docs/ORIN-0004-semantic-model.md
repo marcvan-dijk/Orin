@@ -75,7 +75,6 @@ object {
   id: stable identity
   kind: declaration kind
   name: local display name
-  status: semantic status
   claims: typed semantic properties
   references: links to other objects
   source: optional source location
@@ -356,6 +355,12 @@ else if model errors exist:
 else:
   result = eligible
 ```
+
+Readiness is computed from semantic content; it is not stored as mutable
+workflow metadata in the model. In particular, implementations should compute
+blocked status from unresolved consequential uncertainties (for example,
+`model.unresolved` + uncertainty declarations) rather than reading a persisted
+`compilation.status` field.
 
 `eligible` means that compilation may begin. It does not mean that the resulting
 artifact is verified or accepted.

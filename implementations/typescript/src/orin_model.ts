@@ -100,6 +100,7 @@ export class SemanticModel {
   diagnostics(): Diagnostic[] {
     const diagnostics: Diagnostic[] = [];
     const objects = Array.isArray(this.document.objects) ? this.document.objects : [];
+    const unresolvedUncertaintyIds = this.unresolvedUncertaintyIds(objects);
     const kinds = new Map<string, string>();
     const objectsById = new Map<string, Record<string, any>>();
     const hasStatefulWorkflow = objects.some(
@@ -119,6 +120,7 @@ export class SemanticModel {
     }
     const readinessReferences = this.collectReadinessReferences(objects, kinds, objectsById);
     const relationReferences = this.collectReadinessRelationReferences(objects, kinds);
+    const effectReferenceValidationEnabled = this.effectReferenceValidationEnabled(objects);
 
     for (const obj of objects) {
       if (!obj || typeof obj !== "object") {
@@ -127,7 +129,7 @@ export class SemanticModel {
       if (
         obj.kind === "uncertainty" &&
         obj.consequential === true &&
-        obj.status === "unresolved"
+        this.isUnresolvedUncertainty(obj, unresolvedUncertaintyIds)
       ) {
         diagnostics.push({
           code: "ORIN-E041",
@@ -162,7 +164,7 @@ export class SemanticModel {
       if (!obj || typeof obj !== "object" || obj.kind !== "effect") {
         continue;
       }
-      if (typeof obj.id === "string" && !readinessReferences.has(obj.id)) {
+      if (effectReferenceValidationEnabled && typeof obj.id === "string" && !readinessReferences.has(obj.id)) {
         diagnostics.push({
           code: "ORIN-E042",
           message: "effect declaration is not referenced by any workflow/rule/example",
@@ -215,10 +217,18 @@ export class SemanticModel {
   }
 
   compilationStatus(): "blocked" | "fail" | "eligible" {
-    const diagnostics = this.diagnostics();
-    if (diagnostics.some((item) => item.code === "ORIN-E041")) {
+    const objects = Array.isArray(this.document.objects) ? this.document.objects : [];
+    const unresolvedUncertaintyIds = this.unresolvedUncertaintyIds(objects);
+    if (objects.some(
+      (obj) => obj
+        && typeof obj === "object"
+        && obj.kind === "uncertainty"
+        && obj.consequential === true
+        && this.isUnresolvedUncertainty(obj, unresolvedUncertaintyIds),
+    )) {
       return "blocked";
     }
+    const diagnostics = this.diagnostics();
     return diagnostics.length > 0 ? "fail" : "eligible";
   }
 
@@ -251,6 +261,7 @@ export class SemanticModel {
 
     const objects = this.document.objects as Array<Record<string, any>>;
     const reverseReferences = this.buildReverseReferenceGraph(objects);
+    const unresolvedUncertaintyIds = this.unresolvedUncertaintyIds(objects);
     const objectsById = new Map<string, Record<string, any>>();
     const kinds = new Map<string, string>();
     for (const obj of objects) {
@@ -270,8 +281,8 @@ export class SemanticModel {
       readinessDiagnostics.push(...this.collectRequiredFieldReadiness(obj, reverseReferences, lifecycleRequiredEntities));
       readinessDiagnostics.push(...this.collectOptionalDefaultReadiness(obj, reverseReferences));
       readinessDiagnostics.push(...this.collectRuleEvidenceReadiness(obj, objectsById, reverseReferences));
-      if (obj.kind === "uncertainty" && obj.status === "unresolved") {
-        readinessDiagnostics.push(this.collectUncertaintyReadiness(obj, reverseReferences));
+      if (obj.kind === "uncertainty" && this.isUnresolvedUncertainty(obj, unresolvedUncertaintyIds)) {
+        readinessDiagnostics.push(this.collectUncertaintyReadiness(obj, reverseReferences, true));
       }
     }
     readinessDiagnostics.push(...this.collectImplementationPreferenceReadiness());
@@ -482,6 +493,20 @@ export class SemanticModel {
     for (const effectId of readinessEffects) {
       const effect = objectsById.get(effectId);
       const requiredCapabilities = effect?.requires;
+      if (!Array.isArray(requiredCapabilities)) {
+        continue;
+      }
+      for (const capabilityId of requiredCapabilities) {
+        if (typeof capabilityId === "string") {
+          readinessReferences.add(capabilityId);
+        }
+      }
+    }
+    for (const obj of objects) {
+      if (!obj || typeof obj !== "object" || obj.kind !== "effect") {
+        continue;
+      }
+      const requiredCapabilities = obj.requires;
       if (!Array.isArray(requiredCapabilities)) {
         continue;
       }
@@ -797,6 +822,7 @@ export class SemanticModel {
   private collectUncertaintyReadiness(
     obj: Record<string, any>,
     reverseReferences: Map<string, Set<string>>,
+    unresolved: boolean,
   ): ReadinessDiagnostic {
     const affectedIds = new Set<string>(typeof obj.id === "string" ? [obj.id] : []);
     for (const targetId of Array.isArray(obj.affects) ? obj.affects : []) {
@@ -804,7 +830,7 @@ export class SemanticModel {
         affectedIds.add(targetId);
       }
     }
-    const blocking = obj.consequential === true;
+    const blocking = unresolved && obj.consequential === true;
     const fallback = blocking ? ["cost", "operability", "privacy", "safety"] : ["cost", "operability"];
     const question = typeof obj.question === "string" ? obj.question : (typeof obj.name === "string" ? obj.name : "unresolved assumption");
     return {
@@ -853,5 +879,41 @@ export class SemanticModel {
       });
     }
     return diagnostics;
+  }
+
+  private effectReferenceValidationEnabled(objects: Array<Record<string, any>>): boolean {
+    return objects.some(
+      (obj) => obj
+        && typeof obj === "object"
+        && obj.kind === "workflow"
+        && Array.isArray(obj.uses),
+    );
+  }
+
+  private unresolvedUncertaintyIds(objects: Array<Record<string, any>>): Set<string> {
+    if (Array.isArray(this.document.unresolved)) {
+      return new Set(
+        this.document.unresolved
+          .filter((item: unknown): item is string => typeof item === "string"),
+      );
+    }
+    return new Set(
+      objects
+        .filter(
+          (obj) => obj
+            && typeof obj === "object"
+            && obj.kind === "uncertainty"
+            && typeof obj.id === "string"
+            && obj.status === "unresolved",
+        )
+        .map((obj) => obj.id as string),
+    );
+  }
+
+  private isUnresolvedUncertainty(
+    obj: Record<string, any>,
+    unresolvedUncertaintyIds: Set<string>,
+  ): boolean {
+    return typeof obj.id === "string" && unresolvedUncertaintyIds.has(obj.id);
   }
 }
