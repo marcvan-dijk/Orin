@@ -3,6 +3,10 @@
 **Status:** Docs-only post-MVP alignment brief  
 **Scope boundary:** No implementation/runtime changes
 
+**Deferred note:** This brief is retained for later evaluation only. It is not
+part of Orin's current primary path; see
+[`DEFERRED-EVALUATION-BACKLOG.md`](./DEFERRED-EVALUATION-BACKLOG.md).
+
 ## Purpose
 
 Map the first ORIN-0005 shared-tasks semantic additions onto existing ORIN-0004

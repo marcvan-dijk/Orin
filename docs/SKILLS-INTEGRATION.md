@@ -3,6 +3,8 @@
 ## Positioning
 
 This document is **internal**. Julius Skills are supporting tools for AI authoring and validation loops; they are not part of Orin language semantics and not part of the beginner path.
+It is listed in [`DEFERRED-EVALUATION-BACKLOG.md`](./DEFERRED-EVALUATION-BACKLOG.md)
+so it stays outside the current primary path.
 
 ## Keep
 
