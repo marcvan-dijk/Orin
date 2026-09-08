@@ -26,7 +26,7 @@ The model MUST:
 
 - Represent intent without requiring a target language.
 - Give every semantic object a stable identity.
-- Distinguish facts, requirements, assumptions, proposals, decisions, and evidence.
+- Distinguish durable behavioral meaning from implementation/provenance scaffolding.
 - Make references and affected objects inspectable.
 - Represent unresolved consequential uncertainty explicitly.
 - Support deterministic canonicalization and comparison.
@@ -44,7 +44,7 @@ The model MUST NOT:
 A semantic model contains one `module` and zero or more named declarations.
 Declarations form a directed graph through typed references.
 
-Initial declaration kinds are:
+Initial declaration kinds may include:
 
 ```text
 module
@@ -59,7 +59,7 @@ workflow
 example
 uncertainty
 target
-evidence
+evidence (optional, provenance-oriented)
 ```
 
 The first executable slice may implement only the kinds required by the
@@ -186,19 +186,10 @@ failure modes, retry behavior, and verification boundary.
 ### Rule
 
 A rule is a claim that constrains valid models, states, transitions, or outputs.
-The initial rule categories are:
-
-- `invariant`
-- `precondition`
-- `postcondition`
-- `temporal`
-- `authorization`
-- `privacy`
-- `resource`
-
-A rule must identify the objects it constrains and the evidence that can test
-it. A natural-language explanation may accompany a rule, but executable checks
-must use structured claims.
+Rule taxonomy labels (for example `privacy`, `temporal`) are optional
+classification metadata and are not required canonical semantics.
+A natural-language explanation may accompany a rule, but executable checks must
+use structured claims.
 
 ### Workflow
 
@@ -227,21 +218,9 @@ policy explicitly permits proceeding.
 
 ### Evidence
 
-Evidence records the result of a check or an assertion about a model or artifact.
-It must identify the claim evaluated, its inputs, the responsible activity or
-agent, and its status.
-
-Evidence statuses are:
-
-```text
-pass
-fail
-blocked
-not-applicable
-```
-
-`accepted` is not an evidence status. It is an authority decision represented by
-ORIN-0001 and linked to the evidence.
+Evidence/provenance records are useful for collaboration and auditing but are
+not part of the minimal canonical durable-meaning core. Implementations may
+maintain evidence out-of-band while preserving equivalent observable semantics.
 
 ## References and graph integrity
 
@@ -296,7 +275,7 @@ A canonical model must:
 5. Preserve order for workflow transitions and ordered effects.
 6. Exclude source locations, formatting, comments, and non-semantic provenance
    from semantic equality.
-7. Include model version and semantic statuses.
+7. Exclude non-semantic bookkeeping/provenance fields from canonical equality.
 
 Two frontends are semantically equivalent when their canonical models are
 equal. A change in source formatting alone must not create a semantic revision.
@@ -421,7 +400,8 @@ A conforming semantic implementation must demonstrate:
 - A diagnostic for an unauthorized effect.
 - A blocked compilation result for unresolved `rate-limit`.
 - An impact set when `rate-limit` changes.
-- Separate evidence status and human acceptance state.
+- Keep readiness as a computed result from unresolved consequential uncertainty,
+  not a stored mutable compilation field.
 - Preservation of workflow ordering where it affects observable behavior.
 
 ## Deferred semantics

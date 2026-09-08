@@ -5,7 +5,8 @@ export function executeCase(model: SemanticModel, conformanceCase: Record<string
   const given = conformanceCase.given || {};
   const action = conformanceCase.when.action;
   if (action === "compile") {
-    return { compilation: model.compilationStatus() };
+    const gates = model.computeReadinessGates();
+    return { compilation: gates.compilation };
   }
 
   const store = new AccountStore(new Set(given.accountExists ? ["person@example.com"] : []), (given.accountStore || "available") === "available");

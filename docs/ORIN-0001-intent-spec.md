@@ -27,6 +27,29 @@ authoritative source.
 - Allow the output medium to be selected per task.
 - Produce a durable trail of decisions and evidence.
 
+## Durable project meaning vs. implementation scaffolding
+
+Orin preserves durable project meaning so implementations can change without
+silently changing what the project means.
+
+**MUST be preserved (durable meaning):**
+
+- purpose, behavioral rules, executable examples, and consequential
+  uncertainties
+- authority boundaries for consequential decisions
+- observable behavior guarantees used for acceptance
+
+**CAN vary (implementation scaffolding):**
+
+- workflow steps as implementation guidance (not required observable sequencing)
+- capability/effect/value-type declarations used to structure implementations
+  (helpful, but not proven minimal)
+- parser/lowering/runtime structure, artifact formats, and host-language design
+
+Workflow steps describe strategy and review intent; they do not, by themselves,
+impose mandatory runtime sequencing unless a separate rule/example declares that
+ordering as observable behavior.
+
 Non-goals for version 0.1 are a new programming language, a required data
 format, automatic deployment, and a complete domain-modeling notation.
 

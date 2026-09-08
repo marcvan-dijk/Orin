@@ -24,12 +24,6 @@ def _resolve_rate_limit(model: SemanticModel) -> SemanticModel:
             item for item in unresolved
             if item != "account.password-reset/uncertainty/rate-limit"
         ]
-    else:
-        for obj in resolved.get("objects", []):
-            if obj.get("kind") != "uncertainty":
-                continue
-            if obj.get("id") == "account.password-reset/uncertainty/rate-limit":
-                obj["status"] = "resolved"
     return SemanticModel(resolved)
 
 
@@ -69,7 +63,7 @@ def run_derivation_proof() -> dict[str, Any]:
     blocked_compile = execute_case(blocked_model, blocked_case)["compilation"]
 
     resolved_model = _resolve_rate_limit(blocked_model)
-    resolved_status = resolved_model.compilation_status()
+    resolved_status = resolved_model.compute_readiness_gates()["compilation"]
     if resolved_status != "eligible":
         raise AssertionError(f"resolved model should be eligible, got {resolved_status}")
 

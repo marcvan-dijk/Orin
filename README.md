@@ -73,6 +73,7 @@ CODE / INFRASTRUCTURE / UI / SERVICES
 The implementation is a realisation of the project.
 
 The Orin definition represents the project itself.
+It preserves durable meaning, not implementation scaffolding metadata.
 
 ---
 
@@ -184,6 +185,10 @@ It aims to preserve things such as:
 - workflows
 - guarantees
 - important decisions
+
+It does not require a specific internal scaffolding shape (for example
+capability/effect/value-type bookkeeping) as long as the same observable meaning
+and guarantees are preserved.
 
 ---
 

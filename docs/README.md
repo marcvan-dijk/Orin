@@ -14,6 +14,8 @@ and broader future material is kept out of the primary path.
   readable Orin program for the password-reset proof slice.
 - [`../tests/conformance/README.md`](../tests/conformance/README.md) — exact map
   from current proof claims to existing evidence artifacts.
+- [`SEMANTIC-BOUNDARY.md`](./SEMANTIC-BOUNDARY.md) — durable meaning vs.
+  scaffolding/provenance boundary for the active password-reset proof.
 
 ## Execution now
 

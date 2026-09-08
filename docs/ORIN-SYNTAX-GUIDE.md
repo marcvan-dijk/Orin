@@ -69,6 +69,9 @@ workflow: request-reset
     return same response
 ```
 
+`steps` are strategy hints for implementation structure. They are not, by
+themselves, required observable sequencing constraints.
+
 ### 5. Plain text values
 
 Values are plain text unless a tool or compiler interprets them as structured meaning.

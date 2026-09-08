@@ -32,3 +32,13 @@ How that meaning is realised or executed
         ↓
 VERIFICATION
 Does the implementation satisfy the accepted meaning?
+```
+
+## Semantic boundary reminder
+
+- Keep durable meaning explicit: purpose, rules, observable examples, and
+  consequential uncertainties/decisions.
+- Treat workflow steps as implementation guidance unless a rule/example makes
+  ordering observable.
+- Do not treat provenance/process bookkeeping (status fields, timestamps,
+  evidence metadata) as core semantic meaning.

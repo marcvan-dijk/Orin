@@ -38,10 +38,12 @@ This file is the readable program meaning. The beginner path is to inspect this 
 Open [`../tests/conformance/password-reset.model.json`](../tests/conformance/password-reset.model.json) and find:
 
 - `account.password-reset/uncertainty/rate-limit`
-- `compilation.status: "blocked"`
-- `account.password-reset/evidence/rate-limit-blocked`
+- `unresolved: ["account.password-reset/uncertainty/rate-limit"]`
+- no stored `compilation.status` field
 
 This is the proof boundary: Orin does not silently guess when a consequential decision is still unresolved.
+Readiness (`blocked`/`eligible`) is computed from unresolved consequential
+uncertainties, not persisted as workflow metadata.
 
 ## Step 4: Run the proof commands and inspect the evidence
 

@@ -22,12 +22,6 @@ function resolveRateLimit(model: SemanticModel): SemanticModel {
   const next = JSON.parse(JSON.stringify(model.document));
   if (Array.isArray(next.unresolved)) {
     next.unresolved = next.unresolved.filter((item: unknown) => item !== "account.password-reset/uncertainty/rate-limit");
-  } else {
-    for (const obj of next.objects || []) {
-      if (obj.kind === "uncertainty" && obj.id === "account.password-reset/uncertainty/rate-limit") {
-        obj.status = "resolved";
-      }
-    }
   }
   return new SemanticModel(next);
 }
@@ -61,6 +55,16 @@ test("resolved model executes every non-compile conformance assertion", () => {
       assert.deepEqual(actual[key], expected, `case ${conformanceCase.id} mismatch for '${key}'`);
     }
   }
+});
+
+test("readiness is computed from unresolved consequential uncertainties", () => {
+  const blocked = new SemanticModel(loadJson(MODEL_FIXTURE));
+  assert.equal(blocked.hasUnresolvedConsequential(), true);
+  assert.deepEqual(blocked.computeReadinessGates().blockingUnresolved, ["account.password-reset/uncertainty/rate-limit"]);
+
+  const resolved = resolveRateLimit(blocked);
+  assert.equal(resolved.hasUnresolvedConsequential(), false);
+  assert.equal(resolved.computeReadinessGates().compilation, "eligible");
 });
 
 test("proof runner is directly executable with node --experimental-strip-types", () => {
