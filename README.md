@@ -30,8 +30,7 @@ Important information is often spread across:
 - decisions people made months ago
 - assumptions nobody recorded
 
-As AI increasingly generates and modifies code, this problem may become more
-important.
+As AI increasingly generates and modifies code, this problem may become more important.
 
 An AI can generate thousands of lines of working code.
 
@@ -48,8 +47,7 @@ Today, the answer is often:
 
 > "Somewhere in the code, documentation, tickets and chat history."
 
-Orin explores whether a project can instead have a durable representation of its
-meaning.
+Orin explores whether a project can instead have a durable representation of its meaning.
 
 ---
 
@@ -65,7 +63,7 @@ Orin explores a separation:
 ```text
 WHAT THE PROJECT MEANS
         ↓
-        ORIN
+       ORIN
         ↓
 AI CHOOSES HOW TO IMPLEMENT IT
         ↓
@@ -175,8 +173,7 @@ The purpose is to demonstrate the core interaction:
 
 ## What Orin is
 
-Orin is an experiment in creating a durable, implementation-independent
-representation of a software project.
+Orin is an experiment in creating a durable, implementation-independent representation of a software project.
 
 It aims to preserve things such as:
 
@@ -215,8 +212,7 @@ Orin is still early.
 
 The current repository proves the idea with one narrow password-reset slice.
 
-The goal is not yet to design a complete programming language or application
-platform.
+The goal is not yet to design a complete programming language or application platform.
 
 The goal is to discover:
 
@@ -248,8 +244,7 @@ tooling/
     Authoring, inspection, and analysis tools
 ```
 
-Implementations and tooling are replaceable. The accepted project meaning is the
-thing Orin is trying to keep durable.
+Implementations and tooling are replaceable. The accepted project meaning is the thing Orin is trying to keep durable.
 
 ---
 
