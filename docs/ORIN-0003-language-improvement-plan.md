@@ -775,6 +775,16 @@ capture important decisions and which parts add unnecessary friction.
     Exact next step: run the trimmed README/docs path with a first-time reader
     and patch only any remaining wording or navigation friction that blocks the
     current password-reset proof path.
+53. [done] Restore a fuller root README for short visitors so the repository
+    front page explains the vision and basics directly instead of offloading
+    most explanation to `docs/`. Re-expanded `README.md` with a shortened
+    version of the original vision/problem/example/current-experiment framing
+    while keeping detailed specification and deferred material linked out to
+    `docs/ORIN-0001-intent-spec.md`, `docs/README.md`, and
+    `docs/DEFERRED-EVALUATION-BACKLOG.md`.
+    Exact next step: check the root README with a first-time visitor and trim
+    only any remaining duplication that still distracts from the current
+    password-reset proof path.
 
 ### Current status after reevaluation
 
@@ -786,10 +796,11 @@ capture important decisions and which parts add unnecessary friction.
   acceptance/stop governance gate; item 47 added an executable docs runbook
   for the same gate; items 48-49 tightened fixture-local newcomer evidence
   mapping and root proof quickstart discoverability; items 50-52 then trimmed
-  primary-path documentation and parked broader material in a deferred backlog).
-- **Exact next step:** run the trimmed README/docs path with a real first-time
-  reader and patch only any wording or navigation friction that blocks the
-  current password-reset proof path before any post-MVP work.
+  primary-path documentation and parked broader material in a deferred backlog;
+  item 53 restored a fuller visitor-facing root README).
+- **Exact next step:** check the root README and linked beginner path with a
+  real first-time reader and patch only any wording or navigation friction that
+  blocks the current password-reset proof path before any post-MVP work.
 
 ## Test strategy
 
