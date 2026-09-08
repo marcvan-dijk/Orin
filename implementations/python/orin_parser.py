@@ -38,7 +38,6 @@ class OrinParser:
             "id": module_id,
             "kind": "module",
             "name": module_name,
-            "status": "accepted",
             "source": {"line": module_match.string.count("\n", 0, module_match.start()) + 1},
         }
         objects: list[dict[str, Any]] = []
@@ -104,7 +103,6 @@ class OrinParser:
             declaration = re.match(r"^evidence\s+(\w+)\s+(.+)$", line)
             if declaration:
                 evidence = self._new_object(module_name, "evidence", declaration.group(1), line_number)
-                evidence["status"] = "blocked" if declaration.group(1) == "blocked" else "accepted"
                 evidence["statement"] = self._string_value(declaration.group(2), line_number)
                 objects.append(evidence)
                 continue
@@ -126,7 +124,9 @@ class OrinParser:
 
         if active is not None:
             raise ValueError("ORIN-P003: unterminated declaration block")
-        model = SemanticModel({"modelVersion": "0.1.0", "module": module, "objects": objects})
+        document = {"module": module, "objects": objects}
+        self._compute_unresolved(document)
+        model = SemanticModel(document)
         self._resolve_type_references(model.document)
         return model
 
@@ -151,7 +151,6 @@ class OrinParser:
             "id": f"{module_name}/{kind}/{name}",
             "kind": kind,
             "name": name,
-            "status": "accepted",
             "source": {"line": line_number},
         }
 
@@ -228,8 +227,20 @@ class OrinParser:
         else:
             obj[key] = self._string_value(value, 0)
         if obj["kind"] == "uncertainty":
-            obj["status"] = "unresolved"
             obj["consequential"] = True
+
+    @staticmethod
+    def _compute_unresolved(document: dict[str, Any]) -> None:
+        unresolved = [
+            obj["id"]
+            for obj in document.get("objects", [])
+            if isinstance(obj, dict)
+            and obj.get("kind") == "uncertainty"
+            and obj.get("consequential") is True
+            and isinstance(obj.get("id"), str)
+        ]
+        if unresolved:
+            document["unresolved"] = unresolved
 
     @staticmethod
     def _reference(obj: dict[str, Any], attribute_text: str, kind: str | None = "capability") -> str:

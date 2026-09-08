@@ -127,7 +127,7 @@ export class SemanticModel {
         continue;
       }
       if (
-        obj.kind === "uncertainty" &&
+        this.kindOf(obj) === "uncertainty" &&
         obj.consequential === true &&
         this.isUnresolvedUncertainty(obj, unresolvedUncertaintyIds)
       ) {
@@ -217,19 +217,44 @@ export class SemanticModel {
   }
 
   compilationStatus(): "blocked" | "fail" | "eligible" {
+    return this.computeReadinessGates().compilation;
+  }
+
+  hasUnresolvedConsequential(): boolean {
+    return this.computeReadinessGates().blockingUnresolved.length > 0;
+  }
+
+  computeReadinessGates(): {
+    compilation: "blocked" | "fail" | "eligible";
+    hasUnresolvedConsequential: boolean;
+    blockingUnresolved: string[];
+  } {
     const objects = Array.isArray(this.document.objects) ? this.document.objects : [];
     const unresolvedUncertaintyIds = this.unresolvedUncertaintyIds(objects);
-    if (objects.some(
-      (obj) => obj
-        && typeof obj === "object"
-        && obj.kind === "uncertainty"
-        && obj.consequential === true
-        && this.isUnresolvedUncertainty(obj, unresolvedUncertaintyIds),
-    )) {
-      return "blocked";
+    const blockingUnresolved = objects
+      .filter(
+        (obj) => obj
+          && typeof obj === "object"
+          && this.kindOf(obj) === "uncertainty"
+          && obj.consequential === true
+          && this.isUnresolvedUncertainty(obj, unresolvedUncertaintyIds)
+          && typeof obj.id === "string",
+      )
+      .map((obj) => obj.id as string)
+      .sort();
+    if (blockingUnresolved.length > 0) {
+      return {
+        compilation: "blocked",
+        hasUnresolvedConsequential: true,
+        blockingUnresolved,
+      };
     }
     const diagnostics = this.diagnostics();
-    return diagnostics.length > 0 ? "fail" : "eligible";
+    return {
+      compilation: diagnostics.length > 0 ? "fail" : "eligible",
+      hasUnresolvedConsequential: false,
+      blockingUnresolved: [],
+    };
   }
 
   readinessReport(): ReadinessReport {
@@ -281,7 +306,7 @@ export class SemanticModel {
       readinessDiagnostics.push(...this.collectRequiredFieldReadiness(obj, reverseReferences, lifecycleRequiredEntities));
       readinessDiagnostics.push(...this.collectOptionalDefaultReadiness(obj, reverseReferences));
       readinessDiagnostics.push(...this.collectRuleEvidenceReadiness(obj, objectsById, reverseReferences));
-      if (obj.kind === "uncertainty" && this.isUnresolvedUncertainty(obj, unresolvedUncertaintyIds)) {
+      if (this.kindOf(obj) === "uncertainty" && this.isUnresolvedUncertainty(obj, unresolvedUncertaintyIds)) {
         readinessDiagnostics.push(this.collectUncertaintyReadiness(obj, reverseReferences, true));
       }
     }
@@ -902,7 +927,7 @@ export class SemanticModel {
         .filter(
           (obj) => obj
             && typeof obj === "object"
-            && obj.kind === "uncertainty"
+            && this.kindOf(obj) === "uncertainty"
             && typeof obj.id === "string"
             && obj.status === "unresolved",
         )
@@ -915,5 +940,19 @@ export class SemanticModel {
     unresolvedUncertaintyIds: Set<string>,
   ): boolean {
     return typeof obj.id === "string" && unresolvedUncertaintyIds.has(obj.id);
+  }
+
+  private kindOf(obj: Record<string, any>): string | undefined {
+    if (typeof obj.kind === "string") {
+      return obj.kind;
+    }
+    if (typeof obj.id !== "string") {
+      return undefined;
+    }
+    const parts = obj.id.split("/");
+    if (parts.length < 3) {
+      return undefined;
+    }
+    return parts[parts.length - 2];
   }
 }

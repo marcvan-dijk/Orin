@@ -27,15 +27,19 @@ class SemanticModelTests(unittest.TestCase):
     def test_fixture_is_blocked_by_rate_limit(self):
         model = SemanticModel.from_json_file(FIXTURE)
         self.assertEqual(model.compilation_status(), "blocked")
+        self.assertTrue(model.has_unresolved_consequential())
+        self.assertEqual(
+            model.compute_readiness_gates()["blockingUnresolved"],
+            ["account.password-reset/uncertainty/rate-limit"],
+        )
         self.assertEqual([item.code for item in model.diagnostics()], ["ORIN-E041"])
 
     def test_unresolved_list_drives_uncertainty_blocking(self):
         document = {
-            "module": {"id": "account.password-reset/module", "kind": "module", "name": "account.password-reset", "status": "accepted"},
+            "module": {"id": "account.password-reset/module", "name": "account.password-reset"},
             "objects": [
                 {
                     "id": "account.password-reset/uncertainty/rate-limit",
-                    "kind": "uncertainty",
                     "name": "rate-limit",
                     "consequential": True,
                 }
@@ -44,7 +48,16 @@ class SemanticModelTests(unittest.TestCase):
         }
 
         self.assertEqual(SemanticModel(document).compilation_status(), "blocked")
+        self.assertTrue(SemanticModel(document).has_unresolved_consequential())
         self.assertEqual([item.code for item in SemanticModel(document).diagnostics()], ["ORIN-E041"])
+
+    def test_readiness_gates_become_eligible_when_unresolved_is_cleared(self):
+        document = json.loads(FIXTURE.read_text(encoding="utf-8"))
+        document["unresolved"] = []
+        model = SemanticModel(document)
+
+        self.assertFalse(model.has_unresolved_consequential())
+        self.assertEqual(model.compute_readiness_gates()["compilation"], "eligible")
 
     def test_canonicalization_ignores_order(self):
         model = SemanticModel.from_json_file(FIXTURE)

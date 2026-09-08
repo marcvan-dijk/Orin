@@ -797,6 +797,19 @@ capture important decisions and which parts add unnecessary friction.
     Exact next step: migrate remaining legacy fixtures/parsers to root
     `unresolved` lists (with compatibility fallback retained) so uncertainty
     readiness is represented consistently across all conformance artifacts.
+55. [done] Complete subtraction-focused semantic-boundary cleanup for the
+    password-reset proof by demoting scaffolding/provenance from canonical core
+    meaning and making readiness explicitly computed. Added
+    `docs/SEMANTIC-BOUNDARY.md`, updated ORIN-0001/syntax/conformance/readme
+    docs with durable-vs-scaffolding guidance, simplified
+    `tests/conformance/password-reset.model.json` to behavior-focused claims,
+    and updated Python/TypeScript proof + runner/model logic to use computed
+    readiness gates (`has_unresolved_consequential`,
+    `compute_readiness_gates/computeReadinessGates`) rather than stored compile
+    metadata.
+    Exact next step: apply the same subtraction audit to shared-tasks fixtures
+    behind a separate post-MVP decision so advanced diagnostics remain explicit
+    while the canonical core stays minimal.
 
 ### Current status after reevaluation
 

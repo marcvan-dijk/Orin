@@ -16,7 +16,8 @@ def execute_case(model: SemanticModel, case: dict[str, Any]) -> dict[str, Any]:
     given = case.get("given", {})
     action = case["when"]["action"]
     if action == "compile":
-        return {"compilation": model.compilation_status()}
+        gates = model.compute_readiness_gates()
+        return {"compilation": gates["compilation"]}
 
     store = AccountStore({"person@example.com"} if given.get("accountExists", False) else set(), given.get("accountStore", "available") == "available")
     email_provider = EmailProvider(given.get("emailProvider", "available") == "available")

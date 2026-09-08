@@ -19,12 +19,6 @@ function resolveRateLimit(model: SemanticModel): SemanticModel {
   const next = JSON.parse(JSON.stringify(model.document));
   if (Array.isArray(next.unresolved)) {
     next.unresolved = next.unresolved.filter((item: unknown) => item !== "account.password-reset/uncertainty/rate-limit");
-  } else {
-    for (const obj of next.objects || []) {
-      if (obj.kind === "uncertainty" && obj.id === "account.password-reset/uncertainty/rate-limit") {
-        obj.status = "resolved";
-      }
-    }
   }
   return new SemanticModel(next);
 }
@@ -86,7 +80,7 @@ export function runDerivationProof(): Record<string, any> {
 
   const blockedCompilation = executeCase(blockedModel, blockedCase).compilation;
   const resolvedModel = resolveRateLimit(blockedModel);
-  const resolvedCompilation = resolvedModel.compilationStatus();
+  const resolvedCompilation = resolvedModel.computeReadinessGates().compilation;
   if (resolvedCompilation !== "eligible") {
     throw new Error(`resolved model should be eligible, got ${resolvedCompilation}`);
   }

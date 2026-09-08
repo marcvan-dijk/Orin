@@ -269,13 +269,17 @@ class SemanticModel:
                     if target_id not in identifiers:
                         diagnostics.append(Diagnostic("ORIN-E007", f"unknown reference: {target_id}", source_id))
 
-        kinds = {obj.get("id"): obj.get("kind") for obj in objects if isinstance(obj, dict)}
+        kinds = {
+            obj.get("id"): self._kind_of(obj)
+            for obj in objects
+            if isinstance(obj, dict)
+        }
         objects_by_id = {obj.get("id"): obj for obj in objects if isinstance(obj, dict)}
         for obj in objects:
             if not isinstance(obj, dict):
                 continue
             source_id = obj.get("id")
-            kind = obj.get("kind")
+            kind = self._kind_of(obj)
             if kind not in DECLARATION_KINDS:
                 diagnostics.append(Diagnostic("ORIN-E008", f"unsupported declaration kind: {kind}", source_id))
             if kind == "entity-type":
@@ -292,7 +296,7 @@ class SemanticModel:
         for obj in objects:
             if (
                 isinstance(obj, dict)
-                and obj.get("kind") == "uncertainty"
+                and self._kind_of(obj) == "uncertainty"
                 and obj.get("consequential") is True
                 and self._is_unresolved_uncertainty(obj, unresolved_uncertainty_ids)
             ):
@@ -406,7 +410,7 @@ class SemanticModel:
             readiness_diagnostics.extend(
                 self._collect_optional_default_readiness(obj, reverse_references)
             )
-            if obj.get("kind") == "uncertainty" and self._is_unresolved_uncertainty(obj, unresolved_uncertainty_ids):
+            if self._kind_of(obj) == "uncertainty" and self._is_unresolved_uncertainty(obj, unresolved_uncertainty_ids):
                 readiness_diagnostics.append(
                     self._collect_uncertainty_readiness(obj, reverse_references, True)
                 )
@@ -762,18 +766,37 @@ class SemanticModel:
                         )
 
     def compilation_status(self) -> str:
+        return self.compute_readiness_gates()["compilation"]
+
+    def has_unresolved_consequential(self) -> bool:
+        return bool(self.compute_readiness_gates()["blockingUnresolved"])
+
+    def compute_readiness_gates(self) -> dict[str, Any]:
         objects = self.document.get("objects", [])
         unresolved_uncertainty_ids = self._unresolved_uncertainty_ids(objects if isinstance(objects, list) else [])
-        if isinstance(objects, list) and any(
-            isinstance(obj, dict)
-            and obj.get("kind") == "uncertainty"
-            and obj.get("consequential") is True
-            and self._is_unresolved_uncertainty(obj, unresolved_uncertainty_ids)
-            for obj in objects
-        ):
-            return "blocked"
+        blocking_unresolved = []
+        if isinstance(objects, list):
+            blocking_unresolved = [
+                obj["id"]
+                for obj in objects
+                if isinstance(obj, dict)
+                and self._kind_of(obj) == "uncertainty"
+                and obj.get("consequential") is True
+                and self._is_unresolved_uncertainty(obj, unresolved_uncertainty_ids)
+                and isinstance(obj.get("id"), str)
+            ]
+        if blocking_unresolved:
+            return {
+                "compilation": "blocked",
+                "hasUnresolvedConsequential": True,
+                "blockingUnresolved": sorted(blocking_unresolved),
+            }
         diagnostics = self.diagnostics()
-        return "fail" if diagnostics else "eligible"
+        return {
+            "compilation": "fail" if diagnostics else "eligible",
+            "hasUnresolvedConsequential": False,
+            "blockingUnresolved": [],
+        }
 
     @staticmethod
     def _has_declared_value(value: Any) -> bool:
@@ -1056,7 +1079,7 @@ class SemanticModel:
             obj.get("id")
             for obj in objects
             if isinstance(obj, dict)
-            and obj.get("kind") == "uncertainty"
+            and self._kind_of(obj) == "uncertainty"
             and isinstance(obj.get("id"), str)
             and obj.get("status") == "unresolved"
         }
@@ -1065,6 +1088,19 @@ class SemanticModel:
     def _is_unresolved_uncertainty(obj: dict[str, Any], unresolved_uncertainty_ids: set[str]) -> bool:
         object_id = obj.get("id")
         return isinstance(object_id, str) and object_id in unresolved_uncertainty_ids
+
+    @staticmethod
+    def _kind_of(obj: dict[str, Any]) -> str | None:
+        kind = obj.get("kind")
+        if isinstance(kind, str):
+            return kind
+        object_id = obj.get("id")
+        if not isinstance(object_id, str):
+            return None
+        parts = object_id.split("/")
+        if len(parts) < 3:
+            return None
+        return parts[-2]
 
     def _get_module_implementation_policies(self) -> dict[str, Any]:
         module = self.document.get("module")

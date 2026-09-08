@@ -23,11 +23,16 @@ You do not need to read Python or TypeScript first. The beginner path is to insp
 ## Required checks for a conforming implementation
 
 1. Load `password-reset.model.json` as semantic meaning.
-2. Report compile/readiness status as `blocked` while unresolved consequential `rate-limit` remains.
+2. Compute compile/readiness status from unresolved consequential uncertainties and report `blocked` while unresolved `rate-limit` remains.
 3. Execute `password-reset.cases.json` deterministically.
 4. Preserve semantic identities and references.
 5. Produce equivalent canonical meaning from alternative frontends.
 6. Demonstrate policy/lowering variation without semantic behavior drift.
+
+Workflow step strings are implementation guidance and are not semantically
+asserted as required runtime sequencing by conformance checks.
+Readiness/blocking is computed from unresolved consequential uncertainties (for
+example `model.unresolved`), not read from stored compilation state.
 
 `password-reset.policies.json` provides lowering-policy variants. A conforming implementation may produce different artifact strategies, but must preserve the same canonical semantics and observable required behavior.
 
