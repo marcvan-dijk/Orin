@@ -29,6 +29,23 @@ class SemanticModelTests(unittest.TestCase):
         self.assertEqual(model.compilation_status(), "blocked")
         self.assertEqual([item.code for item in model.diagnostics()], ["ORIN-E041"])
 
+    def test_unresolved_list_drives_uncertainty_blocking(self):
+        document = {
+            "module": {"id": "account.password-reset/module", "kind": "module", "name": "account.password-reset", "status": "accepted"},
+            "objects": [
+                {
+                    "id": "account.password-reset/uncertainty/rate-limit",
+                    "kind": "uncertainty",
+                    "name": "rate-limit",
+                    "consequential": True,
+                }
+            ],
+            "unresolved": ["account.password-reset/uncertainty/rate-limit"],
+        }
+
+        self.assertEqual(SemanticModel(document).compilation_status(), "blocked")
+        self.assertEqual([item.code for item in SemanticModel(document).diagnostics()], ["ORIN-E041"])
+
     def test_canonicalization_ignores_order(self):
         model = SemanticModel.from_json_file(FIXTURE)
         shuffled = json.loads(json.dumps(model.document))

@@ -234,6 +234,7 @@ class SemanticModel:
         objects = self.document.get("objects", [])
         if not isinstance(objects, list):
             return [Diagnostic("ORIN-E001", "objects must be a list")]
+        unresolved_uncertainty_ids = self._unresolved_uncertainty_ids(objects)
 
         identifiers: set[str] = set()
         for obj in objects:
@@ -293,7 +294,7 @@ class SemanticModel:
                 isinstance(obj, dict)
                 and obj.get("kind") == "uncertainty"
                 and obj.get("consequential") is True
-                and obj.get("status") == "unresolved"
+                and self._is_unresolved_uncertainty(obj, unresolved_uncertainty_ids)
             ):
                 diagnostics.append(
                     Diagnostic(
@@ -306,11 +307,12 @@ class SemanticModel:
         state_references = self._collect_readiness_state_references(objects)
         capability_readiness_enabled = self._capability_readiness_enabled(objects, kinds)
         relation_readiness_enabled = self._relation_readiness_enabled(objects, kinds)
+        effect_reference_validation_enabled = self._effect_reference_validation_enabled(objects)
         for obj in objects:
             if not isinstance(obj, dict) or obj.get("kind") != "effect":
                 continue
             object_id = obj.get("id")
-            if isinstance(object_id, str) and object_id not in readiness_references:
+            if effect_reference_validation_enabled and isinstance(object_id, str) and object_id not in readiness_references:
                 diagnostics.append(
                     Diagnostic(
                         "ORIN-E042",
@@ -377,6 +379,7 @@ class SemanticModel:
             )
 
         reverse_references = self._build_reverse_reference_graph(objects)
+        unresolved_uncertainty_ids = self._unresolved_uncertainty_ids(objects)
         objects_by_id = {
             obj.get("id"): obj
             for obj in objects
@@ -403,9 +406,9 @@ class SemanticModel:
             readiness_diagnostics.extend(
                 self._collect_optional_default_readiness(obj, reverse_references)
             )
-            if obj.get("kind") == "uncertainty" and obj.get("status") == "unresolved":
+            if obj.get("kind") == "uncertainty" and self._is_unresolved_uncertainty(obj, unresolved_uncertainty_ids):
                 readiness_diagnostics.append(
-                    self._collect_uncertainty_readiness(obj, reverse_references)
+                    self._collect_uncertainty_readiness(obj, reverse_references, True)
                 )
 
         readiness_diagnostics.extend(
@@ -479,6 +482,14 @@ class SemanticModel:
                     for capability_id in required_capabilities:
                         if isinstance(capability_id, str):
                             references.add(capability_id)
+        for obj in objects:
+            if not isinstance(obj, dict) or obj.get("kind") != "effect":
+                continue
+            required_capabilities = obj.get("requires", [])
+            if isinstance(required_capabilities, list):
+                for capability_id in required_capabilities:
+                    if isinstance(capability_id, str):
+                        references.add(capability_id)
         return references
 
     @staticmethod
@@ -751,9 +762,17 @@ class SemanticModel:
                         )
 
     def compilation_status(self) -> str:
-        diagnostics = self.diagnostics()
-        if any(diagnostic.code == "ORIN-E041" for diagnostic in diagnostics):
+        objects = self.document.get("objects", [])
+        unresolved_uncertainty_ids = self._unresolved_uncertainty_ids(objects if isinstance(objects, list) else [])
+        if isinstance(objects, list) and any(
+            isinstance(obj, dict)
+            and obj.get("kind") == "uncertainty"
+            and obj.get("consequential") is True
+            and self._is_unresolved_uncertainty(obj, unresolved_uncertainty_ids)
+            for obj in objects
+        ):
             return "blocked"
+        diagnostics = self.diagnostics()
         return "fail" if diagnostics else "eligible"
 
     @staticmethod
@@ -960,6 +979,7 @@ class SemanticModel:
         cls,
         obj: dict[str, Any],
         reverse_references: dict[str, set[str]],
+        unresolved: bool,
     ) -> ReadinessDiagnostic:
         object_id = obj.get("id")
         if not isinstance(object_id, str):
@@ -975,10 +995,8 @@ class SemanticModel:
         if object_id is not None:
             affected_ids.add(object_id)
         question = obj.get("question") or obj.get("name") or object_id or "unresolved assumption"
-        blocking = obj.get("status") == "unresolved" and obj.get("consequential") is True
+        blocking = unresolved and obj.get("consequential") is True
         severity = "blocked" if blocking else "warning"
-        if obj.get("status") != "unresolved":
-            severity = "info"
         return ReadinessDiagnostic(
             code="ORIN-R201",
             category="unresolved-assumption",
@@ -1020,6 +1038,33 @@ class SemanticModel:
                 )
             )
         return diagnostics
+
+    @staticmethod
+    def _effect_reference_validation_enabled(objects: list[Any]) -> bool:
+        return any(
+            isinstance(obj, dict)
+            and obj.get("kind") == "workflow"
+            and isinstance(obj.get("uses"), list)
+            for obj in objects
+        )
+
+    def _unresolved_uncertainty_ids(self, objects: list[Any]) -> set[str]:
+        unresolved = self.document.get("unresolved")
+        if isinstance(unresolved, list):
+            return {item for item in unresolved if isinstance(item, str)}
+        return {
+            obj.get("id")
+            for obj in objects
+            if isinstance(obj, dict)
+            and obj.get("kind") == "uncertainty"
+            and isinstance(obj.get("id"), str)
+            and obj.get("status") == "unresolved"
+        }
+
+    @staticmethod
+    def _is_unresolved_uncertainty(obj: dict[str, Any], unresolved_uncertainty_ids: set[str]) -> bool:
+        object_id = obj.get("id")
+        return isinstance(object_id, str) and object_id in unresolved_uncertainty_ids
 
     def _get_module_implementation_policies(self) -> dict[str, Any]:
         module = self.document.get("module")

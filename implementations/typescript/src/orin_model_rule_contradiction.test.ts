@@ -41,3 +41,21 @@ test("rule multi-contradiction diagnostic entries are deterministic", () => {
   ]);
   assert.equal(model.compilationStatus(), "fail");
 });
+
+test("unresolved list drives consequential uncertainty blocking", () => {
+  const model = new SemanticModel({
+    module: { id: "account.password-reset/module", kind: "module", name: "account.password-reset", status: "accepted" },
+    objects: [
+      {
+        id: "account.password-reset/uncertainty/rate-limit",
+        kind: "uncertainty",
+        name: "rate-limit",
+        consequential: true,
+      },
+    ],
+    unresolved: ["account.password-reset/uncertainty/rate-limit"],
+  });
+
+  assert.equal(model.compilationStatus(), "blocked");
+  assert.deepEqual(model.diagnostics().map((diagnostic) => diagnostic.code), ["ORIN-E041"]);
+});

@@ -785,6 +785,18 @@ capture important decisions and which parts add unnecessary friction.
     Exact next step: check the root README with a first-time visitor and trim
     only any remaining duplication that still distracts from the current
     password-reset proof path.
+54. [done] Separate durable password-reset meaning from readiness workflow
+    metadata by removing stored compile-gate state from the canonical model and
+    computing readiness from unresolved consequential uncertainties. Refactored
+    `tests/conformance/password-reset.model.json` to drop object-level status
+    metadata (except module), dependency-only workflow fields, rule categories,
+    and redundant blocked-evidence/compilation objects; added root
+    `unresolved`. Updated Python and TypeScript semantic-model logic and proof
+    runners to derive blocked/eligible status from unresolved consequential
+    uncertainty IDs, with targeted tests/docs updated to match.
+    Exact next step: migrate remaining legacy fixtures/parsers to root
+    `unresolved` lists (with compatibility fallback retained) so uncertainty
+    readiness is represented consistently across all conformance artifacts.
 
 ### Current status after reevaluation
 
@@ -797,10 +809,11 @@ capture important decisions and which parts add unnecessary friction.
   for the same gate; items 48-49 tightened fixture-local newcomer evidence
   mapping and root proof quickstart discoverability; items 50-52 then trimmed
   primary-path documentation and parked broader material in a deferred backlog;
-  item 53 restored a fuller visitor-facing root README).
-- **Exact next step:** check the root README and linked beginner path with a
-  real first-time reader and patch only any wording or navigation friction that
-  blocks the current password-reset proof path before any post-MVP work.
+  item 53 restored a fuller visitor-facing root README; item 54 completed
+  password-reset semantic/readiness boundary cleanup).
+- **Exact next step:** migrate remaining legacy fixtures/parsers to root
+  `unresolved` lists while preserving current proof behavior and cross-language
+  conformance parity.
 
 ## Test strategy
 
