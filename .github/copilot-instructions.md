@@ -17,3 +17,22 @@
   increment.
 - When continuing the implementation plan, mark finished tasks as `[done]` and
   add new tasks when the work reveals additional required steps.
+- Orin is not a replacement for Spec Kit, OpenSpec, BMAD, or any other
+  planning/workflow system.
+- Keep Orin's scope on durable project meaning, not on AI process, planning,
+  task decomposition, or implementation workflow.
+- Before adding new syntax, metadata, model fields, workflow states, or
+  documents, ask whether they represent durable project meaning rather than
+  planning, task tracking, or implementation guidance.
+- Reject anything that reads like a requirements process, project-management
+  system, AI prompt framework, execution tracker, or workflow engine when the
+  information is not part of the project's enduring meaning.
+- Preserve the distinction:
+  - Spec Kit / OpenSpec / workflow tools: process, specs, plans, tasks,
+    implementation guidance
+  - Orin: rules, guarantees, domain concepts, accepted decisions, constraints,
+    observable behaviour, unresolved ambiguities
+- If a proposed concept would primarily support AI collaboration, workflow
+  orchestration, execution provenance, or planning, it should not become part of
+  Orin's canonical core unless it clearly describes durable meaning that must
+  survive implementation changes.
