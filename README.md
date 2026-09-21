@@ -147,6 +147,47 @@ The important distinction is:
 
 ---
 
+## Orin's boundary
+
+Orin is not a process system.
+
+It is not Spec Kit. It is not OpenSpec. It is not BMAD. It is not a task planner, workflow engine, prompt framework, or AI collaboration harness.
+
+Orin is the durable layer of meaning that survives implementation churn.
+
+It preserves:
+- rules
+- guarantees
+- observable behavior
+- accepted decisions
+- domain concepts
+- constraints
+- consequential ambiguities
+
+It does not prescribe:
+- plans
+- tasks
+- implementation steps
+- workflow stages
+- prompts
+- agent coordination
+- execution tracking
+- timestamps
+- provenance metadata
+- temporary reasoning
+
+The test for every new concept is simple:
+
+> If the entire implementation, language, framework, architecture, and development process were replaced, would this still need to survive?
+
+If yes, it may belong in Orin.
+If no, it belongs in a workflow tool, planning system, or implementation layer outside Orin.
+
+Orin does not ask, "How should this be built?"
+It asks, "What must remain true about this software, no matter how it is built?"
+
+---
+
 ## Start here
 
 You do not need to understand the Python or TypeScript implementation to
@@ -200,6 +241,9 @@ Orin is **not** currently intended to be:
 - a prompt wrapper around an AI coding assistant
 - a low-code application builder
 - a system where generated code becomes the only source of truth
+- a replacement for Spec Kit, OpenSpec, or another SDD/process framework
+- a project-management, task-planning, or workflow-engine system
+- a compliance or audit-trail system for regulated delivery processes
 
 The experiment is whether humans can increasingly focus on:
 
