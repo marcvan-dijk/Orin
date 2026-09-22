@@ -59,3 +59,21 @@ test("unresolved list drives consequential uncertainty blocking", () => {
   assert.equal(model.compilationStatus(), "blocked");
   assert.deepEqual(model.diagnostics().map((diagnostic) => diagnostic.code), ["ORIN-E041"]);
 });
+
+test("legacy unresolved status fallback is retained for compatibility", () => {
+  const model = new SemanticModel({
+    module: { id: "account.password-reset/module", kind: "module", name: "account.password-reset", status: "accepted" },
+    objects: [
+      {
+        id: "account.password-reset/uncertainty/rate-limit",
+        kind: "uncertainty",
+        name: "rate-limit",
+        status: "unresolved",
+        consequential: true,
+      },
+    ],
+  });
+
+  assert.equal(model.compilationStatus(), "blocked");
+  assert.deepEqual(model.computeReadinessGates().blockingUnresolved, ["account.password-reset/uncertainty/rate-limit"]);
+});

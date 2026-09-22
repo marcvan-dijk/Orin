@@ -59,6 +59,25 @@ class SemanticModelTests(unittest.TestCase):
         self.assertFalse(model.has_unresolved_consequential())
         self.assertEqual(model.compute_readiness_gates()["compilation"], "eligible")
 
+    def test_legacy_unresolved_status_fallback_is_retained_for_compatibility(self):
+        document = {
+            "module": {"id": "account.password-reset/module", "name": "account.password-reset"},
+            "objects": [
+                {
+                    "id": "account.password-reset/uncertainty/rate-limit",
+                    "kind": "uncertainty",
+                    "name": "rate-limit",
+                    "status": "unresolved",
+                    "consequential": True,
+                }
+            ],
+        }
+
+        model = SemanticModel(document)
+
+        self.assertEqual(model.compute_readiness_gates()["blockingUnresolved"], ["account.password-reset/uncertainty/rate-limit"])
+        self.assertEqual(model.compilation_status(), "blocked")
+
     def test_canonicalization_ignores_order(self):
         model = SemanticModel.from_json_file(FIXTURE)
         shuffled = json.loads(json.dumps(model.document))
@@ -667,6 +686,14 @@ class FrontendEquivalenceTests(unittest.TestCase):
         structured_model = StructuredOrinFrontend().parse_file(PASSWORD_RESET_STRUCTURED)
 
         self.assertEqual(orin_model.canonical(), structured_model.canonical())
+
+    def test_structured_frontend_preserves_root_unresolved_list(self):
+        structured_model = StructuredOrinFrontend().parse_file(PASSWORD_RESET_STRUCTURED)
+
+        self.assertEqual(
+            structured_model.compute_readiness_gates()["blockingUnresolved"],
+            ["account.password-reset/uncertainty/rate-limit"],
+        )
 
 class GeneratedConformanceTests(unittest.TestCase):
     def test_cases_generated_from_language_neutral_fixture(self):
