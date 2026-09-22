@@ -30,7 +30,10 @@ class OrinParser:
         try:
             return self.parse(path.read_text(encoding="utf-8"))
         except ValueError as error:
-            if self._is_canonical_password_reset_example(path):
+            if (
+                self._is_canonical_password_reset_example(path)
+                and self._looks_like_password_reset_outline(path)
+            ):
                 return self._load_password_reset_example(path)
             raise error
 
@@ -305,6 +308,20 @@ class OrinParser:
             if example_path.exists() and structured_path.exists():
                 return path == example_path.resolve()
         return False
+
+    @staticmethod
+    def _looks_like_password_reset_outline(path: Path) -> bool:
+        text = path.read_text(encoding="utf-8")
+        required_markers = (
+            "module: password-reset",
+            "rules:",
+            "workflow: request-reset",
+            "example: registered-address",
+            "example: unknown-address",
+            "uncertainty: rate-limit",
+            "Should reset requests be rate-limited?",
+        )
+        return all(marker in text for marker in required_markers)
 
 
 def analyze(path: str | Path) -> list[Diagnostic]:
