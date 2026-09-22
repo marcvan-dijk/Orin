@@ -25,6 +25,9 @@ and broader future material is kept out of the primary path.
   the current outline syntax.
 - [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md) —
   active execution tracker and implementation log.
+- [`ORIN-AGENT-WORKFLOW-LANGUAGE-IMPROVEMENT.md`](./ORIN-AGENT-WORKFLOW-LANGUAGE-IMPROVEMENT.md) —
+  single tracker-first workflow for language changes, fixture-first semantic
+  updates, and Python/TypeScript parity.
 
 ## Deferred later
 
