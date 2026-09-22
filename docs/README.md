@@ -23,6 +23,9 @@ and broader future material is kept out of the primary path.
   5-minute walkthrough for the current proof path.
 - [`ORIN-SYNTAX-GUIDE.md`](./ORIN-SYNTAX-GUIDE.md) — concise help for reading
   the current outline syntax.
+- [`../tooling/python/README.md`](../tooling/python/README.md) — offline Orin
+  agent vertical slice for inspecting unresolved decisions and applying an
+  explicit password-reset rate-limit choice.
 - [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md) —
   active execution tracker and implementation log.
 

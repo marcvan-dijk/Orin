@@ -638,15 +638,19 @@ class OrinParserTests(unittest.TestCase):
         self.assertEqual(model.compilation_status(), "blocked")
         self.assertEqual(len(analyze(Path(__file__).parents[2] / "examples" / "password-reset.orin")), 1)
 
-    def test_parser_preserves_imports_and_source_locations(self):
+    def test_parser_normalizes_password_reset_source_with_expected_semantic_context(self):
         source_path = Path(__file__).parents[2] / "examples" / "password-reset.orin"
         model = OrinParser().parse_file(source_path)
-        expected_type_line = next(
-            index for index, line in enumerate(source_path.read_text(encoding="utf-8").splitlines(), 1) if line.strip() == "type email"
+        expected_uncertainty_line = next(
+            index for index, line in enumerate(source_path.read_text(encoding="utf-8").splitlines(), 1) if line.strip() == "uncertainty: rate-limit"
+        )
+        uncertainty = next(
+            item for item in model.document["objects"]
+            if item["id"] == "account.password-reset/uncertainty/rate-limit"
         )
 
         self.assertEqual(model.document["module"]["imports"], ["account-store", "email-provider"])
-        self.assertEqual(model.document["objects"][0]["source"]["line"], expected_type_line)
+        self.assertEqual(uncertainty["source"]["line"], expected_uncertainty_line)
         self.assertEqual(model.document["module"]["context"]["risk"], "Account enumeration and reset-token abuse")
         self.assertEqual(model.document["module"]["implementationPolicies"]["optimize-for"], "low-latency")
         self.assertEqual(model.document["module"]["implementationPolicies"]["deploy-to"], "existing-infrastructure")

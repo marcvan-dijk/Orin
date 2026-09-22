@@ -810,6 +810,18 @@ capture important decisions and which parts add unnecessary friction.
     Exact next step: apply the same subtraction audit to shared-tasks fixtures
     behind a separate post-MVP decision so advanced diagnostics remain explicit
     while the canonical core stays minimal.
+56. [done] Implement the first offline Orin agent vertical slice as a focused
+    authoring/decision-support tool for the password-reset `rate-limit`
+    uncertainty. Added `tooling/python/orin_agent.py` and
+    `tooling/python/test_orin_agent.py` to inspect the current password-reset
+    source or semantic artifact, explain the unresolved consequential decision,
+    present deterministic options, refuse silent/default resolution, and apply
+    an explicit human choice to produce a revised semantic JSON artifact.
+    Documented usage/boundaries in `tooling/python/README.md` and linked the
+    tool from `docs/README.md`.
+    Exact next step: generalize `.orin` source-to-semantic loading beyond the
+    password-reset example so future agent-guided decisions can operate on more
+    than the current proof slice without falling back to fixture-backed loading.
 
 ### Current status after reevaluation
 
@@ -823,10 +835,11 @@ capture important decisions and which parts add unnecessary friction.
   mapping and root proof quickstart discoverability; items 50-52 then trimmed
   primary-path documentation and parked broader material in a deferred backlog;
   item 53 restored a fuller visitor-facing root README; item 54 completed
-  password-reset semantic/readiness boundary cleanup).
-- **Exact next step:** migrate remaining legacy fixtures/parsers to root
-  `unresolved` lists while preserving current proof behavior and cross-language
-  conformance parity.
+  password-reset semantic/readiness boundary cleanup; item 56 added the first
+  offline authoring/decision-support agent slice).
+- **Exact next step:** generalize `.orin` source-to-semantic loading beyond the
+  password-reset example while preserving current proof behavior and
+  cross-language conformance parity.
 
 ## Test strategy
 
