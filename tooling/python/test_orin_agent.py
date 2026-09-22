@@ -6,14 +6,14 @@ import unittest
 
 
 ROOT = Path(__file__).resolve().parents[2]
-TOOLING_PYTHON = ROOT / "tooling" / "python"
+if str(ROOT) not in sys.path:
+    sys.path.insert(0, str(ROOT))
 IMPLEMENTATIONS_PYTHON = ROOT / "implementations" / "python"
-for entry in (TOOLING_PYTHON, IMPLEMENTATIONS_PYTHON):
-    if str(entry) not in sys.path:
-        sys.path.insert(0, str(entry))
+if str(IMPLEMENTATIONS_PYTHON) not in sys.path:
+    sys.path.insert(0, str(IMPLEMENTATIONS_PYTHON))
 
 from conformance_runner import execute_case, expected_case_result, load_cases
-from orin_agent import (
+from implementations.python.orin_agent_core import (
     EXIT_ACCEPTED,
     EXIT_BLOCKED,
     EXIT_INVALID,
@@ -28,7 +28,7 @@ from orin_agent import (
 MODEL = ROOT / "tests" / "conformance" / "password-reset.model.json"
 SOURCE = ROOT / "examples" / "password-reset.orin"
 CASES = ROOT / "tests" / "conformance" / "password-reset.cases.json"
-AGENT = TOOLING_PYTHON / "orin_agent.py"
+AGENT = ["-m", "tooling.python.orin_agent"]
 
 
 class OrinDecisionAgentTests(unittest.TestCase):
@@ -103,7 +103,7 @@ class OrinDecisionAgentTests(unittest.TestCase):
 class OrinDecisionAgentCliTests(unittest.TestCase):
     def test_inspect_cli_reports_blocked_exit_code(self):
         completed = subprocess.run(
-            [sys.executable, str(AGENT), "inspect", str(SOURCE)],
+            [sys.executable, *AGENT, "inspect", str(SOURCE)],
             cwd=ROOT,
             capture_output=True,
             text=True,
@@ -120,7 +120,7 @@ class OrinDecisionAgentCliTests(unittest.TestCase):
             completed = subprocess.run(
                 [
                     sys.executable,
-                    str(AGENT),
+                    *AGENT,
                     "decide",
                     str(MODEL),
                     "--uncertainty",
@@ -144,7 +144,7 @@ class OrinDecisionAgentCliTests(unittest.TestCase):
         completed = subprocess.run(
             [
                 sys.executable,
-                str(AGENT),
+                *AGENT,
                 "decide",
                 str(MODEL),
                 "--uncertainty",

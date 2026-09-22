@@ -22,7 +22,7 @@ This folder contains the first offline Orin authoring/decision-support agent.
 From the repository root:
 
 ```bash
-python tooling/python/orin_agent.py inspect examples/password-reset.orin
+python -m tooling.python.orin_agent inspect examples/password-reset.orin
 ```
 
 Expected result: human-readable blocked output listing the unresolved
@@ -30,7 +30,7 @@ Expected result: human-readable blocked output listing the unresolved
 options. Exit code `2` means blocked.
 
 ```bash
-python tooling/python/orin_agent.py decide \
+python -m tooling.python.orin_agent decide \
   tests/conformance/password-reset.model.json \
   --uncertainty account.password-reset/uncertainty/rate-limit \
   --option five-per-15m-per-address-and-origin \

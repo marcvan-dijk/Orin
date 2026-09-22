@@ -4,7 +4,10 @@ import json
 from pathlib import Path
 from typing import Any
 
-from orin_model import SemanticModel
+try:
+    from .orin_model import SemanticModel
+except ImportError:  # pragma: no cover - direct script compatibility
+    from orin_model import SemanticModel
 
 
 class StructuredOrinFrontend:

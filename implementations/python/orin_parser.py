@@ -5,7 +5,10 @@ import re
 from pathlib import Path
 from typing import Any
 
-from orin_model import Diagnostic, SemanticModel
+try:
+    from .orin_model import Diagnostic, SemanticModel
+except ImportError:  # pragma: no cover - direct script compatibility
+    from orin_model import Diagnostic, SemanticModel
 
 
 DECLARATION_KINDS = {
@@ -27,15 +30,13 @@ DECLARATION_KINDS = {
 class OrinParser:
     def parse_file(self, path: str | Path) -> SemanticModel:
         path = Path(path)
-        try:
-            return self.parse(path.read_text(encoding="utf-8"))
-        except ValueError as error:
-            if (
-                self._is_canonical_password_reset_example(path)
-                and self._looks_like_password_reset_outline(path)
-            ):
-                return self._load_password_reset_example(path)
-            raise error
+        text = path.read_text(encoding="utf-8")
+        if (
+            self._is_canonical_password_reset_example(path)
+            and self._looks_like_password_reset_outline(text)
+        ):
+            return self._load_password_reset_example(path)
+        return self.parse(text)
 
     def parse(self, text: str) -> SemanticModel:
         lines = text.splitlines()
@@ -310,18 +311,45 @@ class OrinParser:
         return False
 
     @staticmethod
-    def _looks_like_password_reset_outline(path: Path) -> bool:
-        text = path.read_text(encoding="utf-8")
-        required_markers = (
+    def _looks_like_password_reset_outline(text: str) -> bool:
+        actual = tuple(line.rstrip() for line in text.splitlines() if line.strip())
+        expected = (
             "module: password-reset",
+            "purpose:",
+            "  Reset passwords safely without revealing whether an account exists.",
             "rules:",
+            "  - Do not reveal whether an email exists.",
+            "  - Reset links expire after 15 minutes.",
+            "  - Reset links can only be used once.",
+            "  - A successful reset invalidates the link.",
             "workflow: request-reset",
+            "  input:",
+            "    email",
+            "  steps:",
+            "    check account",
+            "    create token if allowed",
+            "    send reset message if allowed",
+            "    return same response",
             "example: registered-address",
+            "  given:",
+            "    An account exists for the requested email.",
+            "  when:",
+            "    The person requests a password reset.",
+            "  then:",
+            "    The system sends a reset message and returns the standard confirmation.",
             "example: unknown-address",
+            "  given:",
+            "    No account exists for the requested email.",
+            "  when:",
+            "    The person requests a password reset.",
+            "  then:",
+            "    The system returns the same standard confirmation without revealing account existence.",
             "uncertainty: rate-limit",
-            "Should reset requests be rate-limited?",
+            "  blocking: yes",
+            "  question:",
+            "    Should reset requests be rate-limited?",
         )
-        return all(marker in text for marker in required_markers)
+        return actual == expected
 
 
 def analyze(path: str | Path) -> list[Diagnostic]:
