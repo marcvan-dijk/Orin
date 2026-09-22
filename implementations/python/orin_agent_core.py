@@ -192,6 +192,10 @@ class OrinDecisionAgent:
     """Focused offline agent for unresolved consequential decisions."""
 
     def inspect(self, path: str | Path) -> InspectionResult:
+        _, inspection = self._load_and_inspect(path)
+        return inspection
+
+    def _load_and_inspect(self, path: str | Path) -> tuple[LoadedArtifact, InspectionResult]:
         artifact = self._load_artifact(path)
         report = artifact.model.readiness_report()
         decisions: list[DecisionNeed] = []
@@ -207,7 +211,7 @@ class OrinDecisionAgent:
                         diagnostic=diagnostic,
                     )
                 )
-        return InspectionResult(
+        inspection = InspectionResult(
             source_path=artifact.source_path,
             source_kind=artifact.source_kind,
             semantic_path=artifact.semantic_path,
@@ -216,6 +220,7 @@ class OrinDecisionAgent:
             decisions=tuple(decisions),
             diagnostics=report.diagnostics,
         )
+        return artifact, inspection
 
     def apply_decision(
         self,
@@ -223,7 +228,7 @@ class OrinDecisionAgent:
         uncertainty_id: str,
         option_id: str | None,
     ) -> DecisionApplicationResult:
-        inspection = self.inspect(path)
+        artifact, inspection = self._load_and_inspect(path)
         if not inspection.decisions:
             raise DecisionRequiredError(
                 "no blocking consequential decision is available for this artifact"
@@ -250,7 +255,6 @@ class OrinDecisionAgent:
                 f"option '{option_id}' keeps {uncertainty_id} unresolved; no semantic revision was produced"
             )
 
-        artifact = self._load_artifact(path)
         revised = deepcopy(artifact.model.document)
         unresolved = revised.get("unresolved")
         if isinstance(unresolved, list):
@@ -321,8 +325,6 @@ class OrinDecisionAgent:
                     model=model,
                 )
             except ValueError as error:
-                if source_path == PASSWORD_RESET_SOURCE.resolve():
-                    return self._load_password_reset_source(source_path)
                 raise InvalidInputError(
                     f"unsupported .orin source for this first slice: {error}"
                 ) from error

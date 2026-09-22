@@ -312,44 +312,24 @@ class OrinParser:
 
     @staticmethod
     def _looks_like_password_reset_outline(text: str) -> bool:
-        actual = tuple(line.rstrip() for line in text.splitlines() if line.strip())
-        expected = (
+        markers = (
             "module: password-reset",
-            "purpose:",
-            "  Reset passwords safely without revealing whether an account exists.",
-            "rules:",
-            "  - Do not reveal whether an email exists.",
-            "  - Reset links expire after 15 minutes.",
-            "  - Reset links can only be used once.",
-            "  - A successful reset invalidates the link.",
+            "- Do not reveal whether an email exists.",
+            "- Reset links expire after 15 minutes.",
+            "- Reset links can only be used once.",
             "workflow: request-reset",
-            "  input:",
-            "    email",
-            "  steps:",
-            "    check account",
-            "    create token if allowed",
-            "    send reset message if allowed",
-            "    return same response",
             "example: registered-address",
-            "  given:",
-            "    An account exists for the requested email.",
-            "  when:",
-            "    The person requests a password reset.",
-            "  then:",
-            "    The system sends a reset message and returns the standard confirmation.",
             "example: unknown-address",
-            "  given:",
-            "    No account exists for the requested email.",
-            "  when:",
-            "    The person requests a password reset.",
-            "  then:",
-            "    The system returns the same standard confirmation without revealing account existence.",
             "uncertainty: rate-limit",
-            "  blocking: yes",
-            "  question:",
-            "    Should reset requests be rate-limited?",
+            "Should reset requests be rate-limited?",
         )
-        return actual == expected
+        positions: list[int] = []
+        for marker in markers:
+            index = text.find(marker)
+            if index == -1:
+                return False
+            positions.append(index)
+        return positions == sorted(positions)
 
 
 def analyze(path: str | Path) -> list[Diagnostic]:
