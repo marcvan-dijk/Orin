@@ -11,7 +11,6 @@ import sys
 from typing import Any
 
 
-ROOT = Path(__file__).resolve().parents[2]
 from .orin_model import ReadinessDiagnostic, SemanticModel
 from .orin_parser import OrinParser
 from .orin_structured_frontend import StructuredOrinFrontend
@@ -22,8 +21,6 @@ EXIT_BLOCKED = 2
 EXIT_INVALID = 3
 EXIT_ACCEPTED = 4
 
-PASSWORD_RESET_SOURCE = ROOT / "examples" / "password-reset.orin"
-PASSWORD_RESET_STRUCTURED = ROOT / "tests" / "conformance" / "password-reset.structured.json"
 RATE_LIMIT_UNCERTAINTY_ID = "account.password-reset/uncertainty/rate-limit"
 RATE_LIMIT_RULE_ID = "account.password-reset/rule/reset-request-rate-limit"
 
@@ -179,6 +176,18 @@ DECISION_PROMPTS = {
 }
 
 
+def _repository_root() -> Path:
+    return Path(__file__).resolve().parents[2]
+
+
+def _password_reset_source_path() -> Path:
+    return _repository_root() / "examples" / "password-reset.orin"
+
+
+def _password_reset_structured_path() -> Path:
+    return _repository_root() / "tests" / "conformance" / "password-reset.structured.json"
+
+
 class OrinDecisionAgent:
     """Focused offline agent for unresolved consequential decisions."""
 
@@ -218,6 +227,14 @@ class OrinDecisionAgent:
         if not inspection.decisions:
             raise DecisionRequiredError(
                 "no blocking consequential decision is available for this artifact"
+            )
+        available_uncertainty_ids = {
+            decision.prompt.uncertainty_id
+            for decision in inspection.decisions
+        }
+        if uncertainty_id not in available_uncertainty_ids:
+            raise UnknownDecisionError(
+                f"artifact does not expose blocking uncertainty '{uncertainty_id}'"
             )
         prompt = DECISION_PROMPTS.get(uncertainty_id)
         if prompt is None:
@@ -293,7 +310,7 @@ class OrinDecisionAgent:
                 model=model,
             )
         if suffix == ".orin":
-            if source_path == PASSWORD_RESET_SOURCE.resolve():
+            if source_path == _password_reset_source_path().resolve():
                 return self._load_password_reset_source(source_path)
             try:
                 model = OrinParser().parse_file(source_path)
@@ -327,11 +344,12 @@ class OrinDecisionAgent:
                 "password-reset source no longer matches the first-slice example: missing "
                 + ", ".join(missing)
             )
-        model = StructuredOrinFrontend().parse_file(PASSWORD_RESET_STRUCTURED)
+        structured_path = _password_reset_structured_path()
+        model = StructuredOrinFrontend().parse_file(structured_path)
         return LoadedArtifact(
             source_path=source_path,
             source_kind="orin-source",
-            semantic_path=PASSWORD_RESET_STRUCTURED,
+            semantic_path=structured_path,
             model=model,
         )
 
