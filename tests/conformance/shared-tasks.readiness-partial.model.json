@@ -182,7 +182,6 @@
       "id": "shared-tasks/uncertainty/audit-retention",
       "kind": "uncertainty",
       "name": "audit-retention",
-      "status": "unresolved",
       "consequential": false,
       "question": "How long should audit records be retained for task completions?",
       "authority": "human",
@@ -195,5 +194,8 @@
         "shared-tasks/target/web-service"
       ]
     }
+  ],
+  "unresolved": [
+    "shared-tasks/uncertainty/audit-retention"
   ]
 }

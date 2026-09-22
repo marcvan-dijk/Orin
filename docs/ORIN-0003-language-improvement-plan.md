@@ -810,6 +810,17 @@ capture important decisions and which parts add unnecessary friction.
     Exact next step: apply the same subtraction audit to shared-tasks fixtures
     behind a separate post-MVP decision so advanced diagnostics remain explicit
     while the canonical core stays minimal.
+56. [done] Migrate the remaining legacy unresolved representations to root
+    `unresolved` lists while preserving current proof behavior and cross-language
+    conformance parity. Updated
+    `tests/conformance/password-reset.structured.json` and
+    `tests/conformance/shared-tasks.readiness-partial.model.json` to use root
+    `unresolved` arrays instead of uncertainty-local `"status": "unresolved"`,
+    and added focused Python/TypeScript compatibility tests to prove the legacy
+    fallback still works only where current code explicitly requires it.
+    Exact next step: if work continues beyond the MVP stop line, make a
+    separate post-MVP decision before applying the subtraction audit to the
+    advanced shared-tasks fixtures.
 
 ### Current status after reevaluation
 
@@ -823,10 +834,12 @@ capture important decisions and which parts add unnecessary friction.
   mapping and root proof quickstart discoverability; items 50-52 then trimmed
   primary-path documentation and parked broader material in a deferred backlog;
   item 53 restored a fuller visitor-facing root README; item 54 completed
-  password-reset semantic/readiness boundary cleanup).
-- **Exact next step:** migrate remaining legacy fixtures/parsers to root
-  `unresolved` lists while preserving current proof behavior and cross-language
-  conformance parity.
+  password-reset semantic/readiness boundary cleanup; item 56 migrated the
+  remaining legacy unresolved representations to root `unresolved` lists with
+  compatibility fallback coverage retained).
+- **Exact next step:** if work resumes past the MVP stop line, make a separate
+  post-MVP decision before applying the shared-tasks subtraction audit to
+  advanced fixtures/diagnostics.
 
 ## Test strategy
 
