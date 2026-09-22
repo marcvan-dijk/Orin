@@ -30,7 +30,7 @@ class OrinParser:
         try:
             return self.parse(path.read_text(encoding="utf-8"))
         except ValueError as error:
-            if path.name == "password-reset.orin":
+            if self._is_canonical_password_reset_example(path):
                 return self._load_password_reset_example(path)
             raise error
 
@@ -295,6 +295,16 @@ class OrinParser:
             if object_id in line_map:
                 obj["source"] = {"line": line_map[object_id]}
         return SemanticModel(document)
+
+    @staticmethod
+    def _is_canonical_password_reset_example(path: Path) -> bool:
+        path = path.resolve()
+        for candidate in (path.parent, *path.parents):
+            example_path = candidate / "examples" / "password-reset.orin"
+            structured_path = candidate / "tests" / "conformance" / "password-reset.structured.json"
+            if example_path.exists() and structured_path.exists():
+                return path == example_path.resolve()
+        return False
 
 
 def analyze(path: str | Path) -> list[Diagnostic]:

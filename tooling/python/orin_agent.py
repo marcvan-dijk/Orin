@@ -431,8 +431,14 @@ def main(argv: list[str] | None = None) -> int:
                 agent.write_model(write_path, result.model)
             print(_format_decision_result(result, write_path))
             return EXIT_ACCEPTED
-    except AgentError as error:
+    except InvalidInputError as error:
         print(f"invalid input: {error}", file=sys.stderr)
+        return EXIT_INVALID
+    except DecisionRequiredError as error:
+        print(f"decision required: {error}", file=sys.stderr)
+        return EXIT_INVALID
+    except UnknownDecisionError as error:
+        print(f"unknown decision: {error}", file=sys.stderr)
         return EXIT_INVALID
     raise AssertionError(f"unsupported command: {args.command}")
 
