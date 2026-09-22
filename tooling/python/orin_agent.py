@@ -297,6 +297,8 @@ class OrinDecisionAgent:
                 model=model,
             )
         if suffix == ".orin":
+            if source_path == PASSWORD_RESET_SOURCE.resolve():
+                return self._load_password_reset_source(source_path)
             try:
                 model = OrinParser().parse_file(source_path)
                 return LoadedArtifact(

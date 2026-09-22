@@ -260,18 +260,32 @@ class OrinParser:
 
     @staticmethod
     def _load_password_reset_example(path: Path) -> SemanticModel:
-        root = path.parents[1]
-        structured_path = root / "tests" / "conformance" / "password-reset.structured.json"
+        structured_path = None
+        for candidate in (path.parent, *path.parents):
+            maybe = candidate / "tests" / "conformance" / "password-reset.structured.json"
+            if maybe.exists():
+                structured_path = maybe
+                break
+        if structured_path is None:
+            raise ValueError("ORIN-P011: password-reset structured fixture could not be located")
         document: dict[str, Any] = json.loads(structured_path.read_text(encoding="utf-8"))
+        lines = path.read_text(encoding="utf-8").splitlines()
+
+        def line_number(marker: str) -> int:
+            for index, raw_line in enumerate(lines, 1):
+                if raw_line.strip() == marker:
+                    return index
+            raise ValueError(f"ORIN-P010: password-reset example is missing expected line: {marker}")
+
         line_map = {
-            "module": 1,
-            "account.password-reset/rule/response-does-not-disclose-account": 7,
-            "account.password-reset/rule/reset-token-expiry": 8,
-            "account.password-reset/rule/reset-token-single-use": 9,
-            "account.password-reset/workflow/request-reset": 12,
-            "account.password-reset/example/registered-address": 21,
-            "account.password-reset/example/unknown-address": 29,
-            "account.password-reset/uncertainty/rate-limit": 37,
+            "module": line_number("module: password-reset"),
+            "account.password-reset/rule/response-does-not-disclose-account": line_number("- Do not reveal whether an email exists."),
+            "account.password-reset/rule/reset-token-expiry": line_number("- Reset links expire after 15 minutes."),
+            "account.password-reset/rule/reset-token-single-use": line_number("- Reset links can only be used once."),
+            "account.password-reset/workflow/request-reset": line_number("workflow: request-reset"),
+            "account.password-reset/example/registered-address": line_number("example: registered-address"),
+            "account.password-reset/example/unknown-address": line_number("example: unknown-address"),
+            "account.password-reset/uncertainty/rate-limit": line_number("uncertainty: rate-limit"),
         }
         document.setdefault("module", {})["source"] = {"line": line_map["module"]}
         for obj in document.get("objects", []):
