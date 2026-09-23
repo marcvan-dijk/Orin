@@ -33,6 +33,9 @@ and broader future material is kept out of the primary path.
 
 - [`ORIN-0004-semantic-model.md`](./ORIN-0004-semantic-model.md) — deferred
   long-term foundational semantic specification, not current execution work.
+- [`SHARED-TASKS-SEMANTIC-BOUNDARY-AUDIT.md`](./SHARED-TASKS-SEMANTIC-BOUNDARY-AUDIT.md) —
+  docs-only deferred audit of retained shared-tasks fixtures/diagnostics; a
+  reference artifact, not part of the current execution path.
 - [`DEFERRED-EVALUATION-BACKLOG.md`](./DEFERRED-EVALUATION-BACKLOG.md) — parked
   future expansion, historical strategy, and gap-analysis material with source
   pointers.
