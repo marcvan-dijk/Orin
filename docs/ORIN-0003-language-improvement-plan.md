@@ -807,9 +807,9 @@ capture important decisions and which parts add unnecessary friction.
     readiness gates (`has_unresolved_consequential`,
     `compute_readiness_gates/computeReadinessGates`) rather than stored compile
     metadata.
-    Exact next step: apply the same subtraction audit to shared-tasks fixtures
-    behind a separate post-MVP decision so advanced diagnostics remain explicit
-    while the canonical core stays minimal.
+    Follow-on result: the separate post-MVP shared-tasks audit is now captured
+    in `docs/SHARED-TASKS-SEMANTIC-BOUNDARY-AUDIT.md` as a docs-only evaluation
+    artifact. That audit does not authorize implementation.
 56. [done] Implement the first offline Orin agent vertical slice as a focused
     authoring/decision-support tool for the password-reset `rate-limit`
     uncertainty. Added `tooling/python/orin_agent.py` and
@@ -819,27 +819,37 @@ capture important decisions and which parts add unnecessary friction.
     an explicit human choice to produce a revised semantic JSON artifact.
     Documented usage/boundaries in `tooling/python/README.md` and linked the
     tool from `docs/README.md`.
-    Exact next step: generalize `.orin` source-to-semantic loading beyond the
-    password-reset example so future agent-guided decisions can operate on more
-    than the current proof slice without falling back to fixture-backed loading.
+    Exact next step: no implementation follow-on is authorized from this item
+    until a project-manager decision reviews the Track B shared-tasks audit and
+    explicitly reactivates any post-MVP work in `ORIN-0003`.
+57. [done] Complete a docs-only Track B audit of the retained shared-tasks
+    fixtures and diagnostics using the password-reset semantic boundary as the
+    reference point. Added
+    `docs/SHARED-TASKS-SEMANTIC-BOUNDARY-AUDIT.md` to classify the current
+    shared-tasks material into durable project meaning, consequential accepted
+    decision, implementation freedom, or process/provenance/history; answer the
+    audit questions; and make a single non-authorizing recommendation.
+    Exact next step: project-manager review of the audit must decide whether
+    shared-tasks stays deferred evaluation material or is later reactivated
+    through a separate post-MVP authorization.
 
 ### Current status after reevaluation
 
 - **Current project scope (password-reset MVP):** complete.
 - **Remaining tasks in current project scope:** `0`.
-- **Open post-MVP backlog tasks in this sequence:** `0` (item 44 workstreams
-  44A-44E complete after reconciliation; item 45 documented the decision-
-  completion protocol addition in ORIN-0001; item 46 added a strict MVP
-  acceptance/stop governance gate; item 47 added an executable docs runbook
-  for the same gate; items 48-49 tightened fixture-local newcomer evidence
-  mapping and root proof quickstart discoverability; items 50-52 then trimmed
-  primary-path documentation and parked broader material in a deferred backlog;
-  item 53 restored a fuller visitor-facing root README; item 54 completed
-  password-reset semantic/readiness boundary cleanup; item 56 added the first
-  offline authoring/decision-support agent slice).
-- **Exact next step:** generalize `.orin` source-to-semantic loading beyond the
-  password-reset example while preserving current proof behavior and
-  cross-language conformance parity.
+- **Track B shared-tasks audit status:** complete as a docs-only evaluation
+  artifact in `docs/SHARED-TASKS-SEMANTIC-BOUNDARY-AUDIT.md`.
+- **Shared-tasks implementation status:** deferred. The audit does not activate
+  implementation, fixture reduction, loader generalization, or runtime/parser
+  expansion.
+- **Open post-MVP backlog tasks in this sequence:** `1` (project-manager review
+  of the new shared-tasks semantic-boundary audit to decide whether the
+  material remains deferred evaluation-only or whether a separate later
+  post-MVP authorization should reactivate any shared-tasks work).
+- **Exact next step:** review
+  `docs/SHARED-TASKS-SEMANTIC-BOUNDARY-AUDIT.md` and record a single
+  project-manager decision in `ORIN-0003` before starting any further
+  shared-tasks or loader-generalization implementation work.
 
 ## Test strategy
 
