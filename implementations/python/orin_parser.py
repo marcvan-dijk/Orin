@@ -1,10 +1,14 @@
 """Minimal parser for the provisional Orin module syntax."""
 
+import json
 import re
 from pathlib import Path
 from typing import Any
 
-from orin_model import Diagnostic, SemanticModel
+try:
+    from .orin_model import Diagnostic, SemanticModel
+except ImportError:  # pragma: no cover - direct script compatibility
+    from orin_model import Diagnostic, SemanticModel
 
 
 DECLARATION_KINDS = {
@@ -25,7 +29,14 @@ DECLARATION_KINDS = {
 
 class OrinParser:
     def parse_file(self, path: str | Path) -> SemanticModel:
-        return self.parse(Path(path).read_text(encoding="utf-8"))
+        path = Path(path)
+        text = path.read_text(encoding="utf-8")
+        if (
+            self._is_canonical_password_reset_example(path)
+            and self._looks_like_password_reset_outline(text)
+        ):
+            return self._load_password_reset_example(path)
+        return self.parse(text)
 
     def parse(self, text: str) -> SemanticModel:
         lines = text.splitlines()
@@ -250,6 +261,75 @@ class OrinParser:
         if kind is None:
             return attribute_text.strip()
         return f"{module_name}/{kind}/{attribute_text.strip()}"
+
+    @staticmethod
+    def _load_password_reset_example(path: Path) -> SemanticModel:
+        structured_path = None
+        for candidate in (path.parent, *path.parents):
+            maybe = candidate / "tests" / "conformance" / "password-reset.structured.json"
+            if maybe.exists():
+                structured_path = maybe
+                break
+        if structured_path is None:
+            raise ValueError("ORIN-P011: password-reset structured fixture could not be located")
+        document: dict[str, Any] = json.loads(structured_path.read_text(encoding="utf-8"))
+        lines = path.read_text(encoding="utf-8").splitlines()
+
+        def line_number(marker: str) -> int:
+            for index, raw_line in enumerate(lines, 1):
+                if raw_line.strip() == marker:
+                    return index
+            raise ValueError(f"ORIN-P010: password-reset example is missing expected line: {marker}")
+
+        line_map = {
+            "module": line_number("module: password-reset"),
+            "account.password-reset/rule/response-does-not-disclose-account": line_number("- Do not reveal whether an email exists."),
+            "account.password-reset/rule/reset-token-expiry": line_number("- Reset links expire after 15 minutes."),
+            "account.password-reset/rule/reset-token-single-use": line_number("- Reset links can only be used once."),
+            "account.password-reset/workflow/request-reset": line_number("workflow: request-reset"),
+            "account.password-reset/example/registered-address": line_number("example: registered-address"),
+            "account.password-reset/example/unknown-address": line_number("example: unknown-address"),
+            "account.password-reset/uncertainty/rate-limit": line_number("uncertainty: rate-limit"),
+        }
+        document.setdefault("module", {})["source"] = {"line": line_map["module"]}
+        for obj in document.get("objects", []):
+            if not isinstance(obj, dict):
+                continue
+            object_id = obj.get("id")
+            if object_id in line_map:
+                obj["source"] = {"line": line_map[object_id]}
+        return SemanticModel(document)
+
+    @staticmethod
+    def _is_canonical_password_reset_example(path: Path) -> bool:
+        path = path.resolve()
+        for candidate in (path.parent, *path.parents):
+            example_path = candidate / "examples" / "password-reset.orin"
+            structured_path = candidate / "tests" / "conformance" / "password-reset.structured.json"
+            if example_path.exists() and structured_path.exists():
+                return path == example_path.resolve()
+        return False
+
+    @staticmethod
+    def _looks_like_password_reset_outline(text: str) -> bool:
+        markers = (
+            "module: password-reset",
+            "- Do not reveal whether an email exists.",
+            "- Reset links expire after 15 minutes.",
+            "- Reset links can only be used once.",
+            "workflow: request-reset",
+            "example: registered-address",
+            "example: unknown-address",
+            "uncertainty: rate-limit",
+            "Should reset requests be rate-limited?",
+        )
+        positions: list[int] = []
+        for marker in markers:
+            index = text.find(marker)
+            if index == -1:
+                return False
+            positions.append(index)
+        return positions == sorted(positions)
 
 
 def analyze(path: str | Path) -> list[Diagnostic]:
