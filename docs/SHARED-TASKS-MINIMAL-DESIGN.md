@@ -77,11 +77,8 @@ To keep outcomes deterministic, `complete-task` evaluates checks in this order:
 1. task existence (`task-not-found`)
 2. task list existence (`list-not-found`)
 3. actor membership (`unauthorized`)
-4. task state terminality (`already-completed`)
-5. assignee match when assignee exists (`not-assigned`)
-
-`already-completed` is therefore defined for requests that already satisfy
-existence and membership checks.
+4. assignee match when assignee exists (`not-assigned`)
+5. task state terminality (`already-completed`)
 
 ## 5) Rules
 
