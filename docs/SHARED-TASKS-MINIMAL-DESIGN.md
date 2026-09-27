@@ -80,6 +80,9 @@ To keep outcomes deterministic, `complete-task` evaluates checks in this order:
 4. task state terminality (`already-completed`)
 5. assignee match when assignee exists (`not-assigned`)
 
+`already-completed` is therefore defined for requests that already satisfy
+existence and membership checks.
+
 ## 5) Rules
 
 ### Rule A: Only members can complete tasks
@@ -116,7 +119,7 @@ This keeps behavior deterministic and reviewable across implementations.
 
 ### Example 3: Terminal state — repeated completion fails
 1. Setup: task T is already `completed`; T still references an existing list; assignee is still a member of that list
-2. Action: assignee calls `complete-task(assignee, T)` again
+2. Action: authorized assignee calls `complete-task(assignee, T)` again
 3. Result: failure `already-completed`
 4. Follow-up observation: T remains `completed`
 
