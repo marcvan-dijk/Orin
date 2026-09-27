@@ -80,6 +80,9 @@ To keep outcomes deterministic, `complete-task` evaluates checks in this order:
 4. assignee match when assignee exists (`not-assigned`)
 5. task state terminality (`already-completed`)
 
+If checks 3 or 4 fail, the workflow returns `unauthorized`/`not-assigned` and
+does not evaluate terminality for that request.
+
 ## 5) Rules
 
 ### Rule A: Only members can complete tasks
