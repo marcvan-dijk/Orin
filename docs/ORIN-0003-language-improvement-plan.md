@@ -819,9 +819,9 @@ capture important decisions and which parts add unnecessary friction.
     an explicit human choice to produce a revised semantic JSON artifact.
     Documented usage/boundaries in `tooling/python/README.md` and linked the
     tool from `docs/README.md`.
-    Exact next step: no implementation follow-on is authorized from this item
-    until a project-manager decision reviews the Track B shared-tasks audit and
-    explicitly reactivates any post-MVP work in `ORIN-0003`.
+    Exact next step: this item does not itself authorize post-MVP expansion; the
+    later post-MVP activation is recorded separately in
+    `docs/ORIN-0006-next-evolution-roadmap.md`.
 57. [done] Complete a docs-only Track B audit of the retained shared-tasks
     fixtures and diagnostics using the password-reset semantic boundary as the
     reference point. Added
@@ -829,9 +829,9 @@ capture important decisions and which parts add unnecessary friction.
     shared-tasks material into durable project meaning, consequential accepted
     decision, implementation freedom, or process/provenance/history; answer the
     audit questions; and make a single non-authorizing recommendation.
-    Exact next step: project-manager review of the audit must decide whether
-    shared-tasks stays deferred evaluation material or is later reactivated
-    through a separate post-MVP authorization.
+    Follow-on result: the later post-MVP activation is now recorded separately
+    in `docs/ORIN-0006-next-evolution-roadmap.md`; the audit itself remains a
+    non-authorizing evaluation artifact.
 
 ### Current status after reevaluation
 
@@ -839,17 +839,19 @@ capture important decisions and which parts add unnecessary friction.
 - **Remaining tasks in current project scope:** `0`.
 - **Track B shared-tasks audit status:** complete as a docs-only evaluation
   artifact in `docs/SHARED-TASKS-SEMANTIC-BOUNDARY-AUDIT.md`.
-- **Shared-tasks implementation status:** deferred. The audit does not activate
-  implementation, fixture reduction, loader generalization, or runtime/parser
-  expansion.
-- **Open post-MVP backlog tasks in this sequence:** `1` (project-manager review
-  of the new shared-tasks semantic-boundary audit to decide whether the
-  material remains deferred evaluation-only or whether a separate later
-  post-MVP authorization should reactivate any shared-tasks work).
-- **Exact next step:** review
-  `docs/SHARED-TASKS-SEMANTIC-BOUNDARY-AUDIT.md` and record a single
-  project-manager decision in `ORIN-0003` before starting any further
-  shared-tasks or loader-generalization implementation work.
+- **Shared-tasks post-MVP status:** the audit remains non-authorizing, but a
+  separate active roadmap now exists in
+  `docs/ORIN-0006-next-evolution-roadmap.md`.
+- **Shared-tasks implementation status:** Phase 1.1 docs-only design work is
+  the active next step; runtime/parser/tooling implementation is still not
+  activated by the audit itself.
+- **Open post-MVP backlog tasks in this sequence:** `1` (ORIN-0006 Phase 1.1:
+  define the minimal shared-tasks design spec in
+  `docs/SHARED-TASKS-MINIMAL-DESIGN.md` while preserving the audit's semantic
+  boundary constraints).
+- **Exact next step:** follow `docs/ORIN-0006-next-evolution-roadmap.md` by
+  defining the minimal shared-tasks design spec, then return to `ORIN-0003` to
+  log what was completed and what should happen next.
 
 ## Test strategy
 

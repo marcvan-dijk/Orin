@@ -28,6 +28,8 @@ and broader future material is kept out of the primary path.
   explicit password-reset rate-limit choice.
 - [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md) —
   active execution tracker and implementation log.
+- [`ORIN-0006-next-evolution-roadmap.md`](./ORIN-0006-next-evolution-roadmap.md) —
+  active post-MVP roadmap starting from the Track B audit outcome.
 
 ## Deferred later
 

@@ -8,9 +8,13 @@ current execution.
 
 ## Audit scope and repository-state note
 
-The current repository state is still the password-reset MVP proof path.
-Shared-tasks material is retained only as deferred advanced material in
-`tests/conformance/` and deferred docs such as
+The current repository proof path is still the password-reset MVP slice.
+Shared-tasks fixture material remains retained advanced material in
+`tests/conformance/`, and the audit was produced before later post-MVP roadmap
+activation was recorded separately in
+[`ORIN-0006-next-evolution-roadmap.md`](./ORIN-0006-next-evolution-roadmap.md).
+At the time of this audit, the relevant supporting docs were the deferred notes
+such as
 [`ORIN-0005-first-complete-application.md`](./ORIN-0005-first-complete-application.md)
 and
 [`ORIN-0005-shared-tasks-to-ORIN-0004-alignment-brief.md`](./ORIN-0005-shared-tasks-to-ORIN-0004-alignment-brief.md).
@@ -187,6 +191,10 @@ an accepted consequential decision that must block silent AI choice.
 ## Recommended next step
 
 **The single smallest post-MVP change that would most improve conceptual clarity is: record an explicit project-manager decision in `docs/ORIN-0003-language-improvement-plan.md` choosing whether future shared-tasks work should remain a deferred evaluation artifact or be reactivated for a later, separately authorized semantic-minimization pass before any implementation work begins.**
+
+That recommendation has since been answered by the separate post-MVP activation
+recorded in
+[`ORIN-0006-next-evolution-roadmap.md`](./ORIN-0006-next-evolution-roadmap.md).
 
 ## Non-authorization statement
 
