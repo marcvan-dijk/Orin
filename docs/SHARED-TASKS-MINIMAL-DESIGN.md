@@ -115,7 +115,7 @@ This keeps behavior deterministic and reviewable across implementations.
 4. Follow-up observation: T remains `open`
 
 ### Example 3: Terminal state — repeated completion fails
-1. Setup: task T is already `completed`
+1. Setup: task T is already `completed`; T still references an existing list; assignee is still a member of that list
 2. Action: assignee calls `complete-task(assignee, T)` again
 3. Result: failure `already-completed`
 4. Follow-up observation: T remains `completed`
