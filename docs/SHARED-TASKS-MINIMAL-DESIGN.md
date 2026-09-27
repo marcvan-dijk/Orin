@@ -45,8 +45,10 @@ not introduce typed field catalogs, storage schema, or host-language metadata.
 
 ### contains(TaskList, Task)
 - Cardinality: one TaskList to many Tasks; each Task belongs to exactly one list
-- Observable constraint: a Task cannot exist without a TaskList
+- Observable constraint: task creation requires an existing TaskList
 - Terminal constraint: task-to-list binding is fixed in this slice (no moving)
+- Failure surface: if a referenced list is missing at execution time, the
+  workflow returns `list-not-found` and performs no state change
 
 ## 4) Workflow: complete-task
 
@@ -69,6 +71,14 @@ not introduce typed field catalogs, storage schema, or host-language metadata.
 - `already-completed` — task is already completed
 - `task-not-found` — referenced task does not exist
 - `list-not-found` — task’s list does not exist
+
+### Deterministic failure precedence
+To keep outcomes deterministic, `complete-task` evaluates checks in this order:
+1. task existence (`task-not-found`)
+2. task list existence (`list-not-found`)
+3. actor membership (`unauthorized`)
+4. task state terminality (`already-completed`)
+5. assignee match when assignee exists (`not-assigned`)
 
 ## 5) Rules
 
