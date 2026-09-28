@@ -20,6 +20,10 @@ reactivated through
   post-MVP shared-tasks stress-test application.
 - [`ORIN-0005-shared-tasks-to-ORIN-0004-alignment-brief.md`](./ORIN-0005-shared-tasks-to-ORIN-0004-alignment-brief.md) —
   alignment brief for the same deferred shared-tasks work.
+- [`SHARED-TASKS-SEMANTIC-BOUNDARY-AUDIT.md`](./SHARED-TASKS-SEMANTIC-BOUNDARY-AUDIT.md) —
+  docs-only post-MVP evaluation artifact that reduces the retained shared-tasks
+  fixtures/diagnostics to a smallest-semantic-slice audit. It is not active
+  implementation work and does not authorize implementation.
 
 ## Deferred gap analysis
 
