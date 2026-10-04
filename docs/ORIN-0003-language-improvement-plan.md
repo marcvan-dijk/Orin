@@ -833,6 +833,17 @@ capture important decisions and which parts add unnecessary friction.
     design as a language-neutral minimal semantic fixture
     (`tests/conformance/shared-tasks.minimal.model.json`) with matching
     deterministic acceptance coverage.
+58. [done] Implement ORIN-0006 Phase 1.2 fixture baseline by adding
+    `tests/conformance/shared-tasks.minimal.model.json` and
+    `tests/conformance/shared-tasks.minimal.cases.json`, then wiring
+    `shared-tasks.minimal.model.json` into
+    `tests/conformance/shared-tasks.validation-cases.json` as an eligible/no-
+    diagnostic conformance case. This preserves cross-language validation parity
+    via existing Python and TypeScript validation fixture runners while keeping
+    the slice language-neutral and docs-driven.
+    Exact next step: implement ORIN-0006 Phase 1.3 by executing the minimal
+    acceptance cases in the reference runtime (and mirrored TypeScript proof
+    checks) so the four documented outcomes are machine-verified end-to-end.
 
 ### Current status after reevaluation
 
@@ -848,11 +859,11 @@ capture important decisions and which parts add unnecessary friction.
   item 53 restored a fuller visitor-facing root README; item 54 completed
   password-reset semantic/readiness boundary cleanup; item 56 added the first
   offline authoring/decision-support agent slice; item 57 completed ORIN-0006
-  Phase 1.1 minimal shared-tasks design spec; Phase 1.2 is now active).
-- **Exact next step:** implement ORIN-0006 Phase 1.2 by authoring
-  `tests/conformance/shared-tasks.minimal.model.json` and deterministic
-  acceptance fixtures directly from
-  `docs/SHARED-TASKS-MINIMAL-DESIGN.md`.
+  Phase 1.1 minimal shared-tasks design spec; item 58 completed ORIN-0006 Phase
+  1.2 fixture baseline).
+- **Exact next step:** implement ORIN-0006 Phase 1.3 by running
+  `tests/conformance/shared-tasks.minimal.cases.json` through executable
+  reference-runtime checks and establishing mirrored TypeScript parity checks.
 
 ## Test strategy
 

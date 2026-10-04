@@ -40,6 +40,10 @@ example `model.unresolved`), not read from stored compilation state.
 
 `shared-tasks.model.json` and `shared-tasks.cases.json` are an advanced/secondary slice and should not replace password-reset as the primary MVP proof path.
 
+`shared-tasks.minimal.model.json` and `shared-tasks.minimal.cases.json` capture
+the ORIN-0006 Phase 1.2 minimal shared-tasks semantics and acceptance examples
+for the post-MVP next-step slice.
+
 `shared-tasks.validation-cases.json` adds advanced model-validation checks for actor-capability authorization contracts (including missing and invalid actor bindings), persistence durability contracts, and deterministic multi-contradiction `ORIN-E046` diagnostic entries (`code`, `objectId`, `message`) ordering.
 
 `shared-tasks.readiness-partial.model.json` is a language-neutral partial
