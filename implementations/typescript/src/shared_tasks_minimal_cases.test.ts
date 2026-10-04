@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { resolve } from "node:path";
+import { spawnSync } from "node:child_process";
 
 type RuntimeTask = { id: string; assignee: string; state: "open" | "completed" };
 
@@ -11,6 +12,24 @@ const MINIMAL_FIXTURE = resolve(ROOT, "tests/conformance/shared-tasks.minimal.ca
 
 function loadJson(path: string): Record<string, any> {
   return JSON.parse(readFileSync(path, "utf-8"));
+}
+
+function loadPythonMinimalActualByCase(): Record<string, Record<string, any>> {
+  const script = `
+import json
+import pathlib
+import sys
+
+root = pathlib.Path(sys.argv[1])
+sys.path.insert(0, str(root / "implementations" / "python"))
+from shared_tasks_conformance import run_minimal_fixture
+
+rows = run_minimal_fixture(root / "tests" / "conformance" / "shared-tasks.minimal.cases.json")
+print(json.dumps({case_id: actual for case_id, actual, _ in rows}, sort_keys=True))
+`;
+  const result = spawnSync("python", ["-c", script, ROOT], { encoding: "utf-8" });
+  assert.equal(result.status, 0, `python minimal fixture execution failed: ${result.stderr}`);
+  return JSON.parse(result.stdout);
 }
 
 function runMinimalCase(caseDoc: Record<string, any>): Record<string, any> {
@@ -54,9 +73,12 @@ function runMinimalCase(caseDoc: Record<string, any>): Record<string, any> {
 
 test("shared-tasks minimal fixture parity checks stay deterministic", async (t) => {
   const fixture = loadJson(MINIMAL_FIXTURE);
+  const pythonActualByCase = loadPythonMinimalActualByCase();
   for (const scenario of fixture.cases ?? []) {
     await t.test(scenario.id, () => {
-      assert.deepEqual(runMinimalCase(scenario), scenario.then);
+      const actual = runMinimalCase(scenario);
+      assert.deepEqual(actual, scenario.then);
+      assert.deepEqual(actual, pythonActualByCase[scenario.id]);
     });
   }
 });

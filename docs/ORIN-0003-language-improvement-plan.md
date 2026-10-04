@@ -854,6 +854,16 @@ capture important decisions and which parts add unnecessary friction.
     now machine-verifies all four minimal acceptance outcomes end-to-end.
     Exact next step: implement ORIN-0006 Phase 1.4 by tightening cross-language
     semantic equivalence evidence for the minimal shared-tasks executable slice.
+60. [done] Implement ORIN-0006 Phase 1.4 semantic-equivalence tightening by
+    adding TypeScript parity checks that execute
+    `tests/conformance/shared-tasks.minimal.cases.json` and assert each
+    minimal-case output both against fixture expectations and against live
+    Python execution output from `run_minimal_fixture`. This upgrades Phase 1.3
+    deterministic checks into direct cross-language evidence for identical
+    observable outcomes.
+    Exact next step: implement ORIN-0006 Phase 1.5 model-fit audit by
+    documenting whether the minimal shared-tasks executable slice stayed within
+    ORIN-0002 kinds without introducing new core concepts.
 
 ### Current status after reevaluation
 
@@ -871,10 +881,10 @@ capture important decisions and which parts add unnecessary friction.
   offline authoring/decision-support agent slice; item 57 completed ORIN-0006
   Phase 1.1 minimal shared-tasks design spec; item 58 completed ORIN-0006 Phase
   1.2 fixture baseline; item 59 completed ORIN-0006 Phase 1.3 executable case
-  verification).
-- **Exact next step:** implement ORIN-0006 Phase 1.4 semantic-equivalence
-  tightening for the minimal shared-tasks executable slice across Python and
-  TypeScript evidence paths.
+  verification; item 60 completed ORIN-0006 Phase 1.4 semantic-equivalence
+  tightening).
+- **Exact next step:** implement ORIN-0006 Phase 1.5 model-fit audit
+  documentation for the minimal shared-tasks executable slice.
 
 ## Test strategy
 
