@@ -844,6 +844,16 @@ capture important decisions and which parts add unnecessary friction.
     Exact next step: implement ORIN-0006 Phase 1.3 by executing the minimal
     acceptance cases in the reference runtime (and mirrored TypeScript proof
     checks) so the four documented outcomes are machine-verified end-to-end.
+59. [done] Implement ORIN-0006 Phase 1.3 executable case verification by adding
+    deterministic fixture execution for
+    `tests/conformance/shared-tasks.minimal.cases.json` in Python
+    (`run_minimal_case` / `run_minimal_fixture`) with direct assertions in
+    `implementations/python/test_shared_tasks.py`, plus mirrored TypeScript
+    parity checks in
+    `implementations/typescript/src/shared_tasks_minimal_cases.test.ts`. This
+    now machine-verifies all four minimal acceptance outcomes end-to-end.
+    Exact next step: implement ORIN-0006 Phase 1.4 by tightening cross-language
+    semantic equivalence evidence for the minimal shared-tasks executable slice.
 
 ### Current status after reevaluation
 
@@ -860,10 +870,11 @@ capture important decisions and which parts add unnecessary friction.
   password-reset semantic/readiness boundary cleanup; item 56 added the first
   offline authoring/decision-support agent slice; item 57 completed ORIN-0006
   Phase 1.1 minimal shared-tasks design spec; item 58 completed ORIN-0006 Phase
-  1.2 fixture baseline).
-- **Exact next step:** implement ORIN-0006 Phase 1.3 by running
-  `tests/conformance/shared-tasks.minimal.cases.json` through executable
-  reference-runtime checks and establishing mirrored TypeScript parity checks.
+  1.2 fixture baseline; item 59 completed ORIN-0006 Phase 1.3 executable case
+  verification).
+- **Exact next step:** implement ORIN-0006 Phase 1.4 semantic-equivalence
+  tightening for the minimal shared-tasks executable slice across Python and
+  TypeScript evidence paths.
 
 ## Test strategy
 

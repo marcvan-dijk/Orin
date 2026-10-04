@@ -43,6 +43,8 @@ example `model.unresolved`), not read from stored compilation state.
 `shared-tasks.minimal.model.json` and `shared-tasks.minimal.cases.json` capture
 the ORIN-0006 Phase 1.2 minimal shared-tasks semantics and acceptance examples
 for the post-MVP next-step slice.
+These cases are executed in host-language parity tests as the ORIN-0006 Phase
+1.3 proof of deterministic observable outcomes.
 
 `shared-tasks.validation-cases.json` adds advanced model-validation checks for actor-capability authorization contracts (including missing and invalid actor bindings), persistence durability contracts, and deterministic multi-contradiction `ORIN-E046` diagnostic entries (`code`, `objectId`, `message`) ordering.
 
