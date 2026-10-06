@@ -1,0 +1,96 @@
+{
+  "fixtureVersion": "0.1.0",
+  "model": "shared-tasks.minimal.model.json",
+  "cases": [
+    {
+      "id": "shared-tasks.minimal/case/happy-path-member-completes-assigned-task",
+      "setup": {
+        "owner": "person-a",
+        "members": ["person-b"],
+        "list": "list-x",
+        "task": {
+          "id": "task-t",
+          "list": "list-x",
+          "state": "open",
+          "assignee": "person-b"
+        }
+      },
+      "action": {
+        "workflow": "complete-task",
+        "actor": "person-b",
+        "task": "task-t"
+      },
+      "then": {
+        "ok": true,
+        "taskState": "completed",
+        "persisted": true
+      }
+    },
+    {
+      "id": "shared-tasks.minimal/case/authorization-failure-non-member",
+      "setup": {
+        "owner": "person-a",
+        "members": [],
+        "list": "list-x",
+        "task": {
+          "id": "task-t",
+          "list": "list-x",
+          "state": "open",
+          "assignee": "person-a"
+        }
+      },
+      "action": {
+        "workflow": "complete-task",
+        "actor": "person-c",
+        "task": "task-t"
+      },
+      "then": {
+        "ok": false,
+        "failure": "unauthorized",
+        "taskState": "open"
+      }
+    },
+    {
+      "id": "shared-tasks.minimal/case/terminal-state-repeated-completion",
+      "setup": {
+        "owner": "person-a",
+        "members": ["person-a"],
+        "list": "list-x",
+        "task": {
+          "id": "task-t",
+          "list": "list-x",
+          "state": "completed",
+          "assignee": "person-a"
+        }
+      },
+      "action": {
+        "workflow": "complete-task",
+        "actor": "person-a",
+        "task": "task-t"
+      },
+      "then": {
+        "ok": false,
+        "failure": "already-completed",
+        "taskState": "completed"
+      }
+    },
+    {
+      "id": "shared-tasks.minimal/case/missing-entity-task-not-found",
+      "setup": {
+        "owner": "person-a",
+        "members": ["person-a"],
+        "list": "list-x"
+      },
+      "action": {
+        "workflow": "complete-task",
+        "actor": "person-a",
+        "task": "task-missing"
+      },
+      "then": {
+        "ok": false,
+        "failure": "task-not-found",
+        "stateChanges": "none"
+      }
+    }
+  ]
+}

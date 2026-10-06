@@ -2,6 +2,14 @@
   "fixtureVersion": "0.1.0",
   "cases": [
     {
+      "id": "shared-tasks/validation/minimal-model-is-eligible",
+      "model": "shared-tasks.minimal.model.json",
+      "then": {
+        "compilation": "eligible",
+        "diagnostics": []
+      }
+    },
+    {
       "id": "shared-tasks/validation/unauthorized-actor-capability-binding",
       "model": "shared-tasks.unauthorized-actor.model.json",
       "then": {

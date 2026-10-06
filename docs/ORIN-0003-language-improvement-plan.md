@@ -822,12 +822,54 @@ capture important decisions and which parts add unnecessary friction.
     Exact next step: generalize `.orin` source-to-semantic loading beyond the
     password-reset example so future agent-guided decisions can operate on more
     than the current proof slice without falling back to fixture-backed loading.
+57. [done] Complete ORIN-0006 Phase 1.1 by defining the minimal shared-tasks
+    design slice in `docs/SHARED-TASKS-MINIMAL-DESIGN.md`. The design fixes the
+    smallest multi-entity proof scope (`Person`, `TaskList`, `Task`), three
+    observable relationships (`owns`, `member-of`, `contains`), one workflow
+    (`complete-task`), explicit pre/postconditions, deterministic failures, and
+    four acceptance examples, all constrained to existing ORIN-0002 kernel
+    kinds without new syntax or implementation detail.
+    Exact next step: implement ORIN-0006 Phase 1.2 by encoding this approved
+    design as a language-neutral minimal semantic fixture
+    (`tests/conformance/shared-tasks.minimal.model.json`) with matching
+    deterministic acceptance coverage.
+58. [done] Implement ORIN-0006 Phase 1.2 fixture baseline by adding
+    `tests/conformance/shared-tasks.minimal.model.json` and
+    `tests/conformance/shared-tasks.minimal.cases.json`, then wiring
+    `shared-tasks.minimal.model.json` into
+    `tests/conformance/shared-tasks.validation-cases.json` as an eligible/no-
+    diagnostic conformance case. This preserves cross-language validation parity
+    via existing Python and TypeScript validation fixture runners while keeping
+    the slice language-neutral and docs-driven.
+    Exact next step: implement ORIN-0006 Phase 1.3 by executing the minimal
+    acceptance cases in the reference runtime (and mirrored TypeScript proof
+    checks) so the four documented outcomes are machine-verified end-to-end.
+59. [done] Implement ORIN-0006 Phase 1.3 executable case verification by adding
+    deterministic fixture execution for
+    `tests/conformance/shared-tasks.minimal.cases.json` in Python
+    (`run_minimal_case` / `run_minimal_fixture`) with direct assertions in
+    `implementations/python/test_shared_tasks.py`, plus mirrored TypeScript
+    parity checks in
+    `implementations/typescript/src/shared_tasks_minimal_cases.test.ts`. This
+    now machine-verifies all four minimal acceptance outcomes end-to-end.
+    Exact next step: implement ORIN-0006 Phase 1.4 by tightening cross-language
+    semantic equivalence evidence for the minimal shared-tasks executable slice.
+60. [done] Implement ORIN-0006 Phase 1.4 semantic-equivalence tightening by
+    adding TypeScript parity checks that execute
+    `tests/conformance/shared-tasks.minimal.cases.json` and assert each
+    minimal-case output both against fixture expectations and against live
+    Python execution output from `run_minimal_fixture`. This upgrades Phase 1.3
+    deterministic checks into direct cross-language evidence for identical
+    observable outcomes.
+    Exact next step: implement ORIN-0006 Phase 1.5 model-fit audit by
+    documenting whether the minimal shared-tasks executable slice stayed within
+    ORIN-0002 kinds without introducing new core concepts.
 
 ### Current status after reevaluation
 
 - **Current project scope (password-reset MVP):** complete.
 - **Remaining tasks in current project scope:** `0`.
-- **Open post-MVP backlog tasks in this sequence:** `0` (item 44 workstreams
+- **Open post-MVP backlog tasks in this sequence:** `1` (item 44 workstreams
   44A-44E complete after reconciliation; item 45 documented the decision-
   completion protocol addition in ORIN-0001; item 46 added a strict MVP
   acceptance/stop governance gate; item 47 added an executable docs runbook
@@ -836,10 +878,13 @@ capture important decisions and which parts add unnecessary friction.
   primary-path documentation and parked broader material in a deferred backlog;
   item 53 restored a fuller visitor-facing root README; item 54 completed
   password-reset semantic/readiness boundary cleanup; item 56 added the first
-  offline authoring/decision-support agent slice).
-- **Exact next step:** generalize `.orin` source-to-semantic loading beyond the
-  password-reset example while preserving current proof behavior and
-  cross-language conformance parity.
+  offline authoring/decision-support agent slice; item 57 completed ORIN-0006
+  Phase 1.1 minimal shared-tasks design spec; item 58 completed ORIN-0006 Phase
+  1.2 fixture baseline; item 59 completed ORIN-0006 Phase 1.3 executable case
+  verification; item 60 completed ORIN-0006 Phase 1.4 semantic-equivalence
+  tightening).
+- **Exact next step:** implement ORIN-0006 Phase 1.5 model-fit audit
+  documentation for the minimal shared-tasks executable slice.
 
 ## Test strategy
 
