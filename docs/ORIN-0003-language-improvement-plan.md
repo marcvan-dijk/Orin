@@ -864,6 +864,15 @@ capture important decisions and which parts add unnecessary friction.
     Exact next step: implement ORIN-0006 Phase 1.5 model-fit audit by
     documenting whether the minimal shared-tasks executable slice stayed within
     ORIN-0002 kinds without introducing new core concepts.
+61. [done] Complete ORIN-0006 Phase 1.5 model-fit audit by adding
+    `docs/SHARED-TASKS-MODEL-VALIDATION.md`, confirming the minimal shared-tasks
+    executable slice used only existing ORIN-0002 kinds, required no new
+    top-level declarations, and maintained deterministic cross-language
+    behavior/evidence through Phase 1.4 parity checks.
+    Exact next step: start ORIN-0006 Phase 2.1 by expanding the offline
+    decision-support agent to inspect the minimal shared-tasks slice and surface
+    unresolved consequential decisions in the same explicit review loop used for
+    password-reset.
 
 ### Current status after reevaluation
 
@@ -882,9 +891,10 @@ capture important decisions and which parts add unnecessary friction.
   Phase 1.1 minimal shared-tasks design spec; item 58 completed ORIN-0006 Phase
   1.2 fixture baseline; item 59 completed ORIN-0006 Phase 1.3 executable case
   verification; item 60 completed ORIN-0006 Phase 1.4 semantic-equivalence
-  tightening).
-- **Exact next step:** implement ORIN-0006 Phase 1.5 model-fit audit
-  documentation for the minimal shared-tasks executable slice.
+  tightening; item 61 completed ORIN-0006 Phase 1.5 model-fit audit).
+- **Exact next step:** start ORIN-0006 Phase 2.1 by extending the offline
+  decision-support agent to inspect the minimal shared-tasks slice with explicit
+  consequential-decision prompting.
 
 ## Test strategy
 
