@@ -28,11 +28,16 @@ and broader future material is kept out of the primary path.
   explicit password-reset rate-limit choice.
 - [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md) —
   active execution tracker and implementation log.
+- [`ORIN-0006-next-evolution-roadmap.md`](./ORIN-0006-next-evolution-roadmap.md) —
+  active post-MVP roadmap starting from the Track B audit outcome.
 
 ## Deferred later
 
 - [`ORIN-0004-semantic-model.md`](./ORIN-0004-semantic-model.md) — deferred
   long-term foundational semantic specification, not current execution work.
+- [`SHARED-TASKS-SEMANTIC-BOUNDARY-AUDIT.md`](./SHARED-TASKS-SEMANTIC-BOUNDARY-AUDIT.md) —
+  docs-only deferred audit of retained shared-tasks fixtures/diagnostics; a
+  reference artifact, not part of the current execution path.
 - [`DEFERRED-EVALUATION-BACKLOG.md`](./DEFERRED-EVALUATION-BACKLOG.md) — parked
   future expansion, historical strategy, and gap-analysis material with source
   pointers.

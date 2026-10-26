@@ -807,9 +807,9 @@ capture important decisions and which parts add unnecessary friction.
     readiness gates (`has_unresolved_consequential`,
     `compute_readiness_gates/computeReadinessGates`) rather than stored compile
     metadata.
-    Exact next step: apply the same subtraction audit to shared-tasks fixtures
-    behind a separate post-MVP decision so advanced diagnostics remain explicit
-    while the canonical core stays minimal.
+    Follow-on result: the separate post-MVP shared-tasks audit is now captured
+    in `docs/SHARED-TASKS-SEMANTIC-BOUNDARY-AUDIT.md` as a docs-only evaluation
+    artifact. That audit does not authorize implementation.
 56. [done] Implement the first offline Orin agent vertical slice as a focused
     authoring/decision-support tool for the password-reset `rate-limit`
     uncertainty. Added `tooling/python/orin_agent.py` and
