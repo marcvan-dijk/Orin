@@ -2,7 +2,7 @@ import unittest
 from pathlib import Path
 
 from shared_tasks import SharedTasksRuntime
-from shared_tasks_conformance import run_fixture, run_validation_fixture
+from shared_tasks_conformance import run_fixture, run_minimal_fixture, run_validation_fixture
 
 
 class SharedTasksRuntimeTests(unittest.TestCase):
@@ -68,6 +68,13 @@ class SharedTasksConformanceTests(unittest.TestCase):
                 self.assertEqual(sorted(actual["diagnostics"]), sorted(expected["diagnostics"]))
                 if "diagnosticEntries" in expected:
                     self.assertEqual(actual["diagnosticEntries"], expected["diagnosticEntries"])
+
+    def test_minimal_phase_cases_drive_runtime(self):
+        fixture = Path(__file__).parents[2] / "tests" / "conformance" / "shared-tasks.minimal.cases.json"
+
+        for case_id, actual, expected in run_minimal_fixture(fixture):
+            with self.subTest(case=case_id):
+                self.assertEqual(actual, expected)
 
 
 if __name__ == "__main__":

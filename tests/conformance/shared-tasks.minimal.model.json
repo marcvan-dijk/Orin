@@ -1,0 +1,309 @@
+{
+  "modelVersion": "0.1.0",
+  "module": {
+    "id": "shared-tasks.minimal/module",
+    "kind": "module",
+    "name": "shared-tasks.minimal",
+    "status": "accepted",
+    "purpose": "Minimal shared-tasks semantic slice for post-MVP ORIN-0006 Phase 1.2."
+  },
+  "objects": [
+    {
+      "id": "shared-tasks.minimal/value-type/person-id",
+      "kind": "value-type",
+      "name": "person-id",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks.minimal/value-type/list-id",
+      "kind": "value-type",
+      "name": "list-id",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks.minimal/value-type/task-id",
+      "kind": "value-type",
+      "name": "task-id",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks.minimal/entity-type/person",
+      "kind": "entity-type",
+      "name": "person",
+      "status": "accepted",
+      "fields": [
+        {
+          "name": "id",
+          "type": "shared-tasks.minimal/value-type/person-id",
+          "identity": true
+        }
+      ]
+    },
+    {
+      "id": "shared-tasks.minimal/entity-type/task-list",
+      "kind": "entity-type",
+      "name": "task-list",
+      "status": "accepted",
+      "fields": [
+        {
+          "name": "id",
+          "type": "shared-tasks.minimal/value-type/list-id",
+          "identity": true
+        }
+      ]
+    },
+    {
+      "id": "shared-tasks.minimal/entity-type/task",
+      "kind": "entity-type",
+      "name": "task",
+      "status": "accepted",
+      "fields": [
+        {
+          "name": "id",
+          "type": "shared-tasks.minimal/value-type/task-id",
+          "identity": true
+        }
+      ]
+    },
+    {
+      "id": "shared-tasks.minimal/relation/owns",
+      "kind": "relation",
+      "name": "owns",
+      "status": "accepted",
+      "endpoints": [
+        {
+          "type": "shared-tasks.minimal/entity-type/person"
+        },
+        {
+          "type": "shared-tasks.minimal/entity-type/task-list"
+        }
+      ],
+      "cardinality": "one-to-many"
+    },
+    {
+      "id": "shared-tasks.minimal/relation/member-of",
+      "kind": "relation",
+      "name": "member-of",
+      "status": "accepted",
+      "endpoints": [
+        {
+          "type": "shared-tasks.minimal/entity-type/person"
+        },
+        {
+          "type": "shared-tasks.minimal/entity-type/task-list"
+        }
+      ],
+      "cardinality": "many-to-many"
+    },
+    {
+      "id": "shared-tasks.minimal/relation/contains",
+      "kind": "relation",
+      "name": "contains",
+      "status": "accepted",
+      "endpoints": [
+        {
+          "type": "shared-tasks.minimal/entity-type/task-list"
+        },
+        {
+          "type": "shared-tasks.minimal/entity-type/task"
+        }
+      ],
+      "cardinality": "one-to-many"
+    },
+    {
+      "id": "shared-tasks.minimal/relation/assigned-to",
+      "kind": "relation",
+      "name": "assigned-to",
+      "status": "accepted",
+      "endpoints": [
+        {
+          "type": "shared-tasks.minimal/entity-type/person"
+        },
+        {
+          "type": "shared-tasks.minimal/entity-type/task"
+        }
+      ],
+      "cardinality": "one-to-many"
+    },
+    {
+      "id": "shared-tasks.minimal/state/open",
+      "kind": "state",
+      "name": "open",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks.minimal/state/completed",
+      "kind": "state",
+      "name": "completed",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks.minimal/capability/complete-task",
+      "kind": "capability",
+      "name": "complete-task",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks.minimal/capability/write-task-state",
+      "kind": "capability",
+      "name": "write-task-state",
+      "status": "accepted"
+    },
+    {
+      "id": "shared-tasks.minimal/effect/persistent-entity-store.write.task-state",
+      "kind": "effect",
+      "name": "persistent-entity-store.write.task-state",
+      "status": "accepted",
+      "requires": [
+        "shared-tasks.minimal/capability/write-task-state"
+      ],
+      "durability": "strong"
+    },
+    {
+      "id": "shared-tasks.minimal/workflow/complete-task",
+      "kind": "workflow",
+      "name": "complete-task",
+      "status": "accepted",
+      "inputs": [
+        {
+          "name": "actor",
+          "type": "shared-tasks.minimal/entity-type/person"
+        },
+        {
+          "name": "task",
+          "type": "shared-tasks.minimal/entity-type/task"
+        }
+      ],
+      "outputs": [
+        {
+          "name": "task",
+          "type": "shared-tasks.minimal/entity-type/task"
+        }
+      ],
+      "actor": "actor",
+      "requires": [
+        "shared-tasks.minimal/capability/complete-task"
+      ],
+      "uses": [
+        "shared-tasks.minimal/effect/persistent-entity-store.write.task-state"
+      ],
+      "actorCapabilities": [
+        {
+          "actor": "actor",
+          "capability": "shared-tasks.minimal/capability/complete-task"
+        },
+        {
+          "actor": "actor",
+          "capability": "shared-tasks.minimal/capability/write-task-state"
+        }
+      ],
+      "transitions": [
+        {
+          "from": "shared-tasks.minimal/state/open",
+          "to": "shared-tasks.minimal/state/completed"
+        }
+      ]
+    },
+    {
+      "id": "shared-tasks.minimal/rule/only-members-can-complete-tasks",
+      "kind": "rule",
+      "name": "only-members-can-complete-tasks",
+      "status": "accepted",
+      "requires": [
+        "shared-tasks.minimal/relation/member-of",
+        "shared-tasks.minimal/relation/assigned-to",
+        "shared-tasks.minimal/workflow/complete-task"
+      ],
+      "claims": [
+        "Non-members attempting completion fail with unauthorized.",
+        "If task has an assignee, actor must match assignee or fail with not-assigned."
+      ]
+    },
+    {
+      "id": "shared-tasks.minimal/rule/completion-is-terminal",
+      "kind": "rule",
+      "name": "completion-is-terminal",
+      "status": "accepted",
+      "requires": [
+        "shared-tasks.minimal/state/completed",
+        "shared-tasks.minimal/workflow/complete-task"
+      ],
+      "claims": [
+        "Completed tasks do not transition back to open.",
+        "Repeated completion attempts fail with already-completed."
+      ]
+    },
+    {
+      "id": "shared-tasks.minimal/rule/relationship-constraints",
+      "kind": "rule",
+      "name": "relationship-constraints",
+      "status": "accepted",
+      "requires": [
+        "shared-tasks.minimal/relation/owns",
+        "shared-tasks.minimal/relation/member-of",
+        "shared-tasks.minimal/relation/contains",
+        "shared-tasks.minimal/relation/assigned-to"
+      ],
+      "claims": [
+        "Task-list ownership is single-owner and non-empty.",
+        "Owners are implicit members of their lists.",
+        "Tasks are created in exactly one list and cannot be moved in this slice."
+      ]
+    },
+    {
+      "id": "shared-tasks.minimal/example/happy-path-member-completes-assigned-task",
+      "kind": "example",
+      "name": "happy-path-member-completes-assigned-task",
+      "status": "accepted",
+      "requires": [
+        "shared-tasks.minimal/workflow/complete-task",
+        "shared-tasks.minimal/rule/only-members-can-complete-tasks"
+      ],
+      "expects": [
+        "task.state = completed",
+        "result remains observable in subsequent queries"
+      ]
+    },
+    {
+      "id": "shared-tasks.minimal/example/authorization-failure-non-member",
+      "kind": "example",
+      "name": "authorization-failure-non-member",
+      "status": "accepted",
+      "requires": [
+        "shared-tasks.minimal/workflow/complete-task",
+        "shared-tasks.minimal/rule/only-members-can-complete-tasks"
+      ],
+      "expects": [
+        "failure = unauthorized",
+        "task.state remains open"
+      ]
+    },
+    {
+      "id": "shared-tasks.minimal/example/terminal-state-repeated-completion",
+      "kind": "example",
+      "name": "terminal-state-repeated-completion",
+      "status": "accepted",
+      "requires": [
+        "shared-tasks.minimal/workflow/complete-task",
+        "shared-tasks.minimal/rule/completion-is-terminal"
+      ],
+      "expects": [
+        "failure = already-completed",
+        "task.state remains completed"
+      ]
+    },
+    {
+      "id": "shared-tasks.minimal/example/missing-entity-task-not-found",
+      "kind": "example",
+      "name": "missing-entity-task-not-found",
+      "status": "accepted",
+      "requires": [
+        "shared-tasks.minimal/workflow/complete-task"
+      ],
+      "expects": [
+        "failure = task-not-found",
+        "no state changes occur"
+      ]
+    }
+  ]
+}
