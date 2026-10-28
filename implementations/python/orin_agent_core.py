@@ -24,6 +24,11 @@ EXIT_ACCEPTED = 4
 RATE_LIMIT_UNCERTAINTY_ID = "account.password-reset/uncertainty/rate-limit"
 RATE_LIMIT_RULE_ID = "account.password-reset/rule/reset-request-rate-limit"
 
+SHARED_TASKS_MODULE_ID = "shared-tasks.minimal/module"
+NON_MEMBER_UNCERTAINTY_ID = "shared-tasks.minimal/uncertainty/non-member-assignee-completion"
+NON_MEMBER_RULE_ID = "shared-tasks.minimal/rule/non-member-assignee-completion"
+COMPLETE_TASK_WORKFLOW_ID = "shared-tasks.minimal/workflow/complete-task"
+
 
 class AgentError(ValueError):
     """Base class for deterministic agent failures."""
@@ -49,6 +54,8 @@ class DecisionOption:
     effects: tuple[str, ...]
     compilation: str
     rule_claims: tuple[str, ...]
+    impact: tuple[str, ...] = ()
+    examples: tuple[dict[str, Any], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -58,6 +65,8 @@ class DecisionPrompt:
     why_it_matters: str
     affected_objects: tuple[str, ...]
     options: tuple[DecisionOption, ...]
+    rule_id: str = RATE_LIMIT_RULE_ID
+    rule_name: str = "reset-request-rate-limit"
 
     def option(self, option_id: str) -> DecisionOption:
         for option in self.options:
@@ -171,9 +180,130 @@ RATE_LIMIT_PROMPT = DecisionPrompt(
     ),
 )
 
+NON_MEMBER_PROMPT = DecisionPrompt(
+    uncertainty_id=NON_MEMBER_UNCERTAINTY_ID,
+    question=(
+        "What happens when a task's assignee is not a member of the list and"
+        " tries to complete it?"
+    ),
+    why_it_matters=(
+        "The membership rule says non-members fail with unauthorized, while the"
+        " assignment rule lets the assignee complete; the model does not say which"
+        " wins when they disagree."
+    ),
+    affected_objects=(
+        COMPLETE_TASK_WORKFLOW_ID,
+        "shared-tasks.minimal/rule/only-members-can-complete-tasks",
+        "shared-tasks.minimal/example/authorization-failure-non-member",
+    ),
+    rule_id=NON_MEMBER_RULE_ID,
+    rule_name="non-member-assignee-completion",
+    options=(
+        DecisionOption(
+            id="membership-required",
+            label="Reject: completion always requires list membership.",
+            explanation=(
+                "Keeps the list's member boundary absolute; assignment never"
+                " grants access."
+            ),
+            effects=("non-member assignees fail with unauthorized",),
+            compilation="eligible-after-acceptance",
+            rule_claims=(
+                "Completion requires list membership even when the actor is the task assignee.",
+                "A non-member assignee attempting completion fails with unauthorized.",
+            ),
+            impact=(
+                "tightens only-members-can-complete-tasks; no existing example changes",
+                "tasks can become stuck when an assignee leaves the list until reassigned",
+                "adds one authorization-failure example",
+            ),
+            examples=(
+                {
+                    "id": "shared-tasks.minimal/example/authorization-failure-non-member-assignee",
+                    "kind": "example",
+                    "name": "authorization-failure-non-member-assignee",
+                    "status": "accepted",
+                    "requires": [
+                        COMPLETE_TASK_WORKFLOW_ID,
+                        NON_MEMBER_RULE_ID,
+                    ],
+                    "expects": ["failure = unauthorized", "task.state remains open"],
+                },
+            ),
+        ),
+        DecisionOption(
+            id="assignee-may-complete",
+            label="Allow: an assignee may complete the task even if no longer a member.",
+            explanation=(
+                "Lets assigned work finish after membership changes, at the cost of"
+                " access outside the member boundary."
+            ),
+            effects=("non-member assignees complete tasks successfully",),
+            compilation="eligible-after-acceptance",
+            rule_claims=(
+                "A task assignee may complete the task even when not a member of its list.",
+                "Non-assignee non-members attempting completion still fail with unauthorized.",
+            ),
+            impact=(
+                "narrows only-members-can-complete-tasks: membership is no longer sufficient to define access",
+                "widens who can write task state beyond list members",
+                "adds one success example",
+            ),
+            examples=(
+                {
+                    "id": "shared-tasks.minimal/example/non-member-assignee-completes-task",
+                    "kind": "example",
+                    "name": "non-member-assignee-completes-task",
+                    "status": "accepted",
+                    "requires": [
+                        COMPLETE_TASK_WORKFLOW_ID,
+                        NON_MEMBER_RULE_ID,
+                    ],
+                    "expects": ["task.state = completed"],
+                },
+            ),
+        ),
+        DecisionOption(
+            id="defer",
+            label="Defer the non-member assignee decision and keep compilation blocked.",
+            explanation="Useful only when the access policy is not ready to be chosen.",
+            effects=("leaves the consequential uncertainty unresolved",),
+            compilation="blocked",
+            rule_claims=(),
+            impact=("no model change; complete-task stays ambiguous",),
+        ),
+    ),
+)
+
 DECISION_PROMPTS = {
     RATE_LIMIT_UNCERTAINTY_ID: RATE_LIMIT_PROMPT,
+    NON_MEMBER_UNCERTAINTY_ID: NON_MEMBER_PROMPT,
 }
+
+
+def _surface_latent_decisions(document: dict[str, Any]) -> None:
+    """Add unresolved decisions the shared-tasks model leaves implicit."""
+    module = document.get("module")
+    objects = document.get("objects")
+    if (
+        not isinstance(module, dict)
+        or module.get("id") != SHARED_TASKS_MODULE_ID
+        or not isinstance(objects, list)
+    ):
+        return
+    ids = {obj.get("id") for obj in objects if isinstance(obj, dict)}
+    if COMPLETE_TASK_WORKFLOW_ID not in ids or NON_MEMBER_RULE_ID in ids or NON_MEMBER_UNCERTAINTY_ID in ids:
+        return
+    objects.append({
+        "id": NON_MEMBER_UNCERTAINTY_ID,
+        "kind": "uncertainty",
+        "name": "non-member-assignee-completion",
+        "status": "unresolved",
+        "claims": [NON_MEMBER_PROMPT.question],
+        "consequential": True,
+        "authority": "human",
+        "requires": [COMPLETE_TASK_WORKFLOW_ID],
+    })
 
 
 def _repository_root() -> Path:
@@ -271,20 +401,24 @@ class OrinDecisionAgent:
                 obj["status"] = "accepted"
 
         updated_rule = {
-            "id": RATE_LIMIT_RULE_ID,
+            "id": prompt.rule_id,
             "kind": "rule",
-            "name": "reset-request-rate-limit",
+            "name": prompt.rule_name,
             "status": "accepted",
             "claims": list(option.rule_claims),
         }
         replaced = False
         for index, obj in enumerate(objects):
-            if isinstance(obj, dict) and obj.get("id") == RATE_LIMIT_RULE_ID:
+            if isinstance(obj, dict) and obj.get("id") == prompt.rule_id:
                 objects[index] = updated_rule
                 replaced = True
                 break
         if not replaced:
             objects.append(updated_rule)
+        existing_ids = {obj.get("id") for obj in objects if isinstance(obj, dict)}
+        for example in option.examples:
+            if example["id"] not in existing_ids:
+                objects.append(deepcopy(example))
 
         model = SemanticModel(revised)
         return DecisionApplicationResult(
@@ -307,6 +441,10 @@ class OrinDecisionAgent:
         suffix = source_path.suffix.lower()
         if suffix == ".json":
             model = StructuredOrinFrontend().parse_file(source_path)
+            document = deepcopy(model.document)
+            _surface_latent_decisions(document)
+            if document != model.document:
+                model = SemanticModel(document)
             return LoadedArtifact(
                 source_path=source_path,
                 source_kind="semantic-document",
@@ -388,6 +526,8 @@ def _format_inspection(result: InspectionResult) -> str:
             lines.append(f"   - {option.id}: {option.label}")
             lines.append(f"     Why choose it: {option.explanation}")
             lines.append(f"     Compilation: {option.compilation}")
+            for item in option.impact:
+                lines.append(f"     Impact: {item}")
     return "\n".join(lines)
 
 

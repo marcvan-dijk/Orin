@@ -19,6 +19,8 @@ and broader future material is kept out of the primary path.
 
 ## Execution now
 
+- [`ONBOARDING.md`](./ONBOARDING.md) — 10-minute first-user walkthrough
+  (demo video script: [`ONBOARDING-DEMO-SCRIPT.md`](./ONBOARDING-DEMO-SCRIPT.md)).
 - [`PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`](./PASSWORD-RESET-MVP-DEMO-RUNBOOK.md) —
   5-minute walkthrough for the current proof path.
 - [`ORIN-SYNTAX-GUIDE.md`](./ORIN-SYNTAX-GUIDE.md) — concise help for reading

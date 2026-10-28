@@ -7,7 +7,7 @@ This folder contains the first offline Orin authoring/decision-support agent.
 - inspects an Orin source or semantic JSON artifact
 - reports blocking consequential decisions in human-readable form
 - presents deterministic decision options for the current password-reset
-  `rate-limit` question
+  `rate-limit` question and the shared-tasks non-member assignee question
 - applies an explicit human choice and emits a revised semantic JSON artifact
 
 ## What it does not do
@@ -40,6 +40,23 @@ python -m tooling.python.orin_agent decide \
 Expected result: writes a revised semantic artifact to
 `/tmp/password-reset.resolved.json`, clears the unresolved blocker, and returns
 exit code `4`.
+
+### Shared-tasks decision (ORIN-0006 Phase 2.1)
+
+```bash
+python -m tooling.python.orin_agent inspect tests/conformance/shared-tasks.minimal.model.json
+python -m tooling.python.orin_agent decide \
+  tests/conformance/shared-tasks.minimal.model.json \
+  --uncertainty shared-tasks.minimal/uncertainty/non-member-assignee-completion \
+  --option membership-required \
+  --write shared-tasks.resolved.json
+```
+
+The agent surfaces the unresolved question of what happens when a non-member
+assignee completes a task, lists each option with impact analysis, and on an
+explicit choice adds a rule and example to the revised model, then
+re-validates it (`eligible`; re-inspecting the output reports ready).
+Options: `membership-required`, `assignee-may-complete` (`defer` stays blocked).
 
 ## Exit codes
 

@@ -874,6 +874,24 @@ capture important decisions and which parts add unnecessary friction.
     unresolved consequential decisions in the same explicit review loop used for
     password-reset.
 
+62. [done] Complete ORIN-0006 Phase 2.1: the offline agent loads the minimal
+    shared-tasks model, surfaces `non-member-assignee-completion` with impact
+    analysis, applies a chosen option, and re-validates the revised model.
+63. [done] ORIN-0006 Phase 2.2 (partial): improved `.orin` syntax highlighting,
+    plus outline, workflow hover, and "Inspect with Orin Agent" command in the
+    VS Code extension. Extension TypeScript is not yet compiled in CI
+    (`node_modules` not installed); `orin.pythonPath` is not yet declared in
+    `package.json`.
+64. [done] ORIN-0006 Phase 2.3: added `docs/ONBOARDING.md` and
+    `docs/ONBOARDING-DEMO-SCRIPT.md`. No general code generator exists, so the
+    "generate backend" step runs the existing two-plan proof.
+65. [done] ORIN-0006 Phase 2.4 prototype: proposal/accept/reject flow in
+    `implementations/python/orin_proposal.py` with tests and
+    `docs/COLLABORATIVE-AUTHORING-PROTOTYPE.md`.
+    Exact next step: finish Phase 2.2 (declare `orin.pythonPath`, install deps
+    and compile the extension), then run the onboarding walkthrough with a real
+    first-time user to decide the Phase 2 go/no-go.
+
 ### Current status after reevaluation
 
 - **Current project scope (password-reset MVP):** complete.
@@ -892,9 +910,9 @@ capture important decisions and which parts add unnecessary friction.
   1.2 fixture baseline; item 59 completed ORIN-0006 Phase 1.3 executable case
   verification; item 60 completed ORIN-0006 Phase 1.4 semantic-equivalence
   tightening; item 61 completed ORIN-0006 Phase 1.5 model-fit audit).
-- **Exact next step:** start ORIN-0006 Phase 2.1 by extending the offline
-  decision-support agent to inspect the minimal shared-tasks slice with explicit
-  consequential-decision prompting.
+- **Exact next step:** finish ORIN-0006 Phase 2.2 (declare `orin.pythonPath`,
+  compile the extension), then run the onboarding walkthrough with a real
+  first-time user for the Phase 2 go/no-go.
 
 ## Test strategy
 
