@@ -6,6 +6,24 @@ Current scope:
 
 - `.orin` syntax highlighting
 - **Orin: Analyze Current File** command backed by the optional Python reference checker
+- **Orin: Inspect with Orin Agent** command and status bar item
+- Problems-panel warnings for each unresolved decision reported by `python -m tooling.python.orin_agent inspect <file>` (refreshed on open and save), anchored to the matching `uncertainty:` block
+- Quick fix **Show decision options** on those warnings, listing the agent's options (selecting one does not edit the file)
+
+## Settings
+
+- `orin.pythonPath` (default `python`): Python executable used to run the agent from the repository root.
+
+## Develop
+
+```
+cd tooling/vscode-extension
+npm ci
+npm run compile
+npm test
+```
+
+`node_modules/` and `out/` are git-ignored.
 
 ## Try it
 

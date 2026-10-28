@@ -1,0 +1,60 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m unittest discover -s implementations/python -t .
+      - run: python -m unittest discover -s tooling/python -t .
+
+  typescript:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: node --test --experimental-strip-types implementations/typescript/src/*.test.ts implementations/typescript/src/codegen/*.test.ts
+      - run: python implementations/python/parity_check.py
+
+  vscode-extension:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: tooling/vscode-extension
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: tooling/vscode-extension/package-lock.json
+      - run: npm ci
+      - run: npm test
+
+  password-reset-proof:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: python implementations/python/password_reset_proof.py
+      - run: python implementations/python/test_orin_model.py PasswordResetProofRunTests.test_password_reset_end_to_end_derivation_proof
+      - run: node --experimental-strip-types implementations/typescript/src/password_reset_proof.ts
+      - run: node --test --experimental-strip-types implementations/typescript/src/password_reset_proof.test.ts

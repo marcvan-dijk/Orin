@@ -1,0 +1,52 @@
+module book-lending {
+  purpose "Let a small club lend its books to members and know who has what."
+
+  type member-name
+  type book-title
+
+  entity book {
+    field title book-title identity
+  }
+  entity member {
+    field name member-name identity
+  }
+  relation borrowed-by {
+    from book
+    to member
+    cardinality many-to-one
+  }
+
+  rule one-borrower-at-a-time {
+    guarantee "A book that is on loan cannot be lent to another member."
+  }
+  rule limit-of-three-books {
+    guarantee "A member can have at most 3 books on loan at once."
+  }
+  rule return-frees-book {
+    guarantee "Returning a book makes it available to lend again."
+  }
+
+  workflow lend-book {
+    input book-title
+    input member-name
+    outcome "The book is recorded as on loan to the member, or the person is told why not."
+  }
+
+  example lend-available-book {
+    given "The book is available and the member has 2 books."
+    when "The member borrows the book."
+    then "The book is recorded as on loan to the member."
+  }
+  example lend-fourth-book {
+    given "The member already has 3 books on loan."
+    when "The member borrows another book."
+    then "The system refuses and says the limit of 3 has been reached."
+  }
+
+  uncertainty overdue-books {
+    question "Should there be a due date, and what happens when a book is late?"
+  }
+  uncertainty who-can-record {
+    question "Can any member record loans, or only a librarian?"
+  }
+}

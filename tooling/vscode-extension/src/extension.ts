@@ -2,7 +2,10 @@ import * as path from "node:path";
 import { execFile } from "node:child_process";
 import * as vscode from "vscode";
 import {
+  AgentDecision,
+  findUncertaintyLine,
   findWorkflowAt,
+  parseDecisions,
   parseAgentOutput,
   parseOutline,
   workflowHover,
@@ -18,7 +21,121 @@ const SYMBOL_KINDS: Record<string, vscode.SymbolKind> = {
 
 type OrinDiagnostic = { code: string; message: string; line?: number };
 
+const decisionStore = new Map<string, AgentDecision[]>();
+
+function inspectFile(
+  context: vscode.ExtensionContext,
+  file: string,
+  callback: (error: Error | null, stdout: string, stderr: string) => void,
+): void {
+  const repository = path.resolve(context.extensionPath, "..", "..");
+  const python = vscode.workspace
+    .getConfiguration("orin")
+    .get<string>("pythonPath", "python");
+  execFile(
+    python,
+    ["-m", "tooling.python.orin_agent", "inspect", file],
+    { cwd: repository },
+    (error, stdout, stderr) => callback(error, stdout, stderr),
+  );
+}
+
+function refreshDecisionDiagnostics(
+  context: vscode.ExtensionContext,
+  document: vscode.TextDocument,
+  collection: vscode.DiagnosticCollection,
+): void {
+  if (document.languageId !== "orin" || document.uri.scheme !== "file") return;
+  inspectFile(context, document.uri.fsPath, (error, stdout) => {
+    if (error && !stdout) return;
+    const decisions = parseDecisions(stdout);
+    decisionStore.set(document.uri.toString(), decisions);
+    const text = document.getText();
+    collection.set(
+      document.uri,
+      decisions.map((decision) => {
+        const line = Math.min(
+          findUncertaintyLine(text, decision.id),
+          document.lineCount - 1,
+        );
+        const diagnostic = new vscode.Diagnostic(
+          document.lineAt(line).range,
+          `Unresolved decision: ${decision.question}`,
+          vscode.DiagnosticSeverity.Warning,
+        );
+        diagnostic.source = "orin-agent";
+        diagnostic.code = decision.id;
+        return diagnostic;
+      }),
+    );
+  });
+}
+
 export function activate(context: vscode.ExtensionContext): void {
+  const decisionDiagnostics =
+    vscode.languages.createDiagnosticCollection("orin-decisions");
+  context.subscriptions.push(decisionDiagnostics);
+  const refresh = (document: vscode.TextDocument) =>
+    refreshDecisionDiagnostics(context, document, decisionDiagnostics);
+  context.subscriptions.push(
+    vscode.workspace.onDidOpenTextDocument(refresh),
+    vscode.workspace.onDidSaveTextDocument(refresh),
+    vscode.workspace.onDidCloseTextDocument((d) => {
+      decisionDiagnostics.delete(d.uri);
+      decisionStore.delete(d.uri.toString());
+    }),
+  );
+  vscode.workspace.textDocuments.forEach(refresh);
+
+  const showOptions = vscode.commands.registerCommand(
+    "orin.showDecisionOptions",
+    async (uri: vscode.Uri, decisionId: string) => {
+      const decision = decisionStore
+        .get(uri.toString())
+        ?.find((d) => d.id === decisionId);
+      if (!decision) return;
+      const picked = await vscode.window.showQuickPick(
+        decision.options.map((o) => ({
+          label: o.id,
+          description: o.compilation,
+          detail: [o.description, o.whyChoose].filter(Boolean).join(" — "),
+        })),
+        { title: decision.question, placeHolder: decision.whyItMatters },
+      );
+      if (picked) {
+        void vscode.window.showInformationMessage(
+          `Selected "${picked.label}". Record the accepted decision in the .orin file.`,
+        );
+      }
+    },
+  );
+  context.subscriptions.push(
+    showOptions,
+    vscode.languages.registerCodeActionsProvider(
+      { language: "orin" },
+      {
+        provideCodeActions(document, _range, ctx) {
+          return ctx.diagnostics
+            .filter((d) => d.source === "orin-agent")
+            .map((d) => {
+              const action = new vscode.CodeAction(
+                "Show decision options",
+                vscode.CodeActionKind.QuickFix,
+              );
+              action.diagnostics = [d];
+              action.command = {
+                command: "orin.showDecisionOptions",
+                title: "Show decision options",
+                arguments: [document.uri, String(d.code)],
+              };
+              return action;
+            });
+        },
+      },
+      { providedCodeActionKinds: [vscode.CodeActionKind.QuickFix] },
+    ),
+  );
+
   const diagnostics = vscode.languages.createDiagnosticCollection("orin");
   context.subscriptions.push(diagnostics);
 

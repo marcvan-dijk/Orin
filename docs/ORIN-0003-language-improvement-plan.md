@@ -888,9 +888,21 @@ capture important decisions and which parts add unnecessary friction.
 65. [done] ORIN-0006 Phase 2.4 prototype: proposal/accept/reject flow in
     `implementations/python/orin_proposal.py` with tests and
     `docs/COLLABORATIVE-AUTHORING-PROTOTYPE.md`.
-    Exact next step: finish Phase 2.2 (declare `orin.pythonPath`, install deps
-    and compile the extension), then run the onboarding walkthrough with a real
-    first-time user to decide the Phase 2 go/no-go.
+66. [done] Usability push: unified `orin_cli` (check/readiness/inspect/decide/
+    examples); Python and TypeScript password-reset code generators with
+    blocked-model refusal; CI workflow; Python/TypeScript parity check (also
+    aligned the ORIN-E044 message); `.orin` parse errors with line, column and
+    fix hints; VS Code extension finished (setting, diagnostics, quick fix);
+    expense-approval example; `docs/AUTHORING-WITH-AI.md`; and
+    `docs/LANGUAGE-REFERENCE.md`.
+    Gaps found: (a) the `.orin` loader only reads outline style
+    (`module: name`) for password-reset, so `examples/expense-approval.orin` does
+    not parse; (b) the agent hardcodes decision prompts per module, so it
+    reports expense-approval as ready although the model is blocked;
+    (c) the generated Python module has no rate limit.
+    Exact next step: generalize the `.orin` loader to outline style and make
+    agent decision prompts data-driven, then run the onboarding walkthrough
+    with a real first-time user for the Phase 2 go/no-go.
 
 ### Current status after reevaluation
 
@@ -910,9 +922,9 @@ capture important decisions and which parts add unnecessary friction.
   1.2 fixture baseline; item 59 completed ORIN-0006 Phase 1.3 executable case
   verification; item 60 completed ORIN-0006 Phase 1.4 semantic-equivalence
   tightening; item 61 completed ORIN-0006 Phase 1.5 model-fit audit).
-- **Exact next step:** finish ORIN-0006 Phase 2.2 (declare `orin.pythonPath`,
-  compile the extension), then run the onboarding walkthrough with a real
-  first-time user for the Phase 2 go/no-go.
+- **Exact next step:** generalize the `.orin` loader to outline style and make
+  agent decision prompts data-driven (see item 66), then run the onboarding
+  walkthrough with a real first-time user for the Phase 2 go/no-go.
 
 ## Test strategy
 

@@ -75,3 +75,25 @@ This first slice is intentionally narrow:
   artifact for deterministic offline analysis
 - new uncertainty families can be added by registering new decision prompts and
   semantic patch handlers without rewriting the CLI
+
+## Orin CLI (`orin_cli`)
+
+One entry point for novices; stdlib only.
+
+```bash
+python -m tooling.python.orin_cli check tests/conformance/shared-tasks.model.json
+python -m tooling.python.orin_cli readiness examples/password-reset.orin [--json]
+python -m tooling.python.orin_cli inspect examples/password-reset.orin
+python -m tooling.python.orin_cli decide <file> --uncertainty <id> --option <id>
+python -m tooling.python.orin_cli examples tests/conformance/shared-tasks.model.json
+```
+
+- `check` validates a `.orin` or model `.json` and lists diagnostics with IDs.
+- `readiness` says READY or BLOCKED and lists the required decisions.
+- `inspect` / `decide` delegate to `implementations/python/orin_agent_core.py`.
+- `examples` runs the matching `tests/conformance/<name>.cases.json`, if any.
+
+Exit codes: `0` ok/ready, `1` problems or failing examples, `2` blocked
+(decisions required), `3` invalid input or usage.
+
+Test: `python -m unittest tooling.python.test_orin_cli`

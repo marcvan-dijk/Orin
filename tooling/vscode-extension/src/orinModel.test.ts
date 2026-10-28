@@ -1,7 +1,7 @@
 import * as assert from "node:assert";
 import * as fs from "node:fs";
 import * as path from "node:path";
-import { parseOutline, workflowHover, findWorkflowAt, parseAgentOutput } from "./orinModel";
+import { parseOutline, workflowHover, findWorkflowAt, parseAgentOutput, parseDecisions, findUncertaintyLine } from "./orinModel";
 
 const src = fs.readFileSync(path.resolve(__dirname, "..", "..", "..", "examples", "password-reset.orin"), "utf8");
 const outline = parseOutline(src);
@@ -18,4 +18,8 @@ assert.strictEqual(o.symbols[0].purpose, "Do it");
 const s = parseAgentOutput("Compilation: blocked\nValidation: blocked\n\n1. a/b\n   Question: Why?\n");
 assert.deepStrictEqual(s, { status: "blocked", decisions: ["a/b: Why?"] });
 assert.strictEqual(parseAgentOutput("Compilation: ready\nValidation: ready").status, "ready");
+const d = parseDecisions("1. a/uncertainty/rate-limit\n   Question: Why?\n   Options:\n   - x: Do x.\n     Why choose it: Because.\n     Compilation: blocked\n   - defer: Later.\n");
+assert.strictEqual(d[0].options.length, 2);
+assert.deepStrictEqual(d[0].options[0], { id: "x", description: "Do x.", whyChoose: "Because.", compilation: "blocked" });
+assert.strictEqual(findUncertaintyLine(src, "account.password-reset/uncertainty/rate-limit"), 36);
 console.log("orinModel tests passed");

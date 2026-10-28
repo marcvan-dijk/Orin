@@ -356,7 +356,7 @@ class SemanticModel:
                 diagnostics.append(
                     Diagnostic(
                         "ORIN-E044",
-                        "state declaration is not referenced by any workflow transition",
+                        "state declaration is not referenced by any workflow/rule/example",
                         object_id,
                     )
                 )

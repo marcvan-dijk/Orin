@@ -1,0 +1,38 @@
+module tip-calculator {
+  purpose "Help a diner split a restaurant bill fairly, including a tip."
+
+  rule tip-is-percentage-of-bill {
+    guarantee "The tip is the chosen percentage of the bill before tip."
+  }
+  rule total-is-shared-equally {
+    guarantee "Each person pays the bill plus tip divided by the number of people."
+  }
+  rule amounts-shown-in-cents {
+    guarantee "Money amounts are shown with exactly two decimal places."
+  }
+  rule people-count-at-least-one {
+    guarantee "The number of people must be a whole number of at least 1."
+  }
+
+  workflow split-bill {
+    input bill-amount
+    input tip-percent
+    input people
+    outcome "The person sees the tip, the total, and the amount each person pays."
+  }
+
+  example even-split {
+    given "A bill of 80.00, a tip of 10 percent, and 4 people."
+    when "The person asks for the split."
+    then "The tip is 8.00, the total is 88.00, and each person pays 22.00."
+  }
+  example invalid-people {
+    given "A bill of 80.00 and 0 people."
+    when "The person asks for the split."
+    then "The system explains that at least 1 person is needed and shows no result."
+  }
+
+  uncertainty rounding {
+    question "When the total does not divide evenly, who pays the extra cent?"
+  }
+}

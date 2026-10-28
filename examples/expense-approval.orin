@@ -1,0 +1,56 @@
+module: expense-approval
+
+purpose:
+  Let people claim work expenses that are approved by someone with sufficient authority and never by the claimant.
+
+rules:
+  - An expense is approved only by an approver whose limit covers its amount.
+  - A person cannot approve or reject their own expense.
+  - A decided expense cannot be decided again.
+  - A rejection records a reason visible to the submitter.
+
+workflow: submit-expense
+  input:
+    amount
+    description
+  steps:
+    record expense as submitted
+    route to an eligible approver
+    record the approver's decision
+
+example: within-limit
+  given:
+    An approver with a limit of 500 and an expense of 120 from someone else.
+  when:
+    The approver approves the expense.
+  then:
+    The expense becomes approved.
+
+example: over-limit
+  given:
+    An approver with a limit of 500 and an expense of 900.
+  when:
+    The approver tries to approve the expense.
+  then:
+    The approval is refused and the expense stays submitted.
+
+example: self-approval
+  given:
+    An approver with a sufficient limit who submitted the expense.
+  when:
+    The approver tries to approve the expense.
+  then:
+    The approval is refused.
+
+example: rejection
+  given:
+    A submitted expense and an eligible approver.
+  when:
+    The approver rejects it with a reason.
+  then:
+    The expense becomes rejected and the submitter can see the reason.
+
+uncertainty: no-eligible-approver
+  blocking: yes
+  question:
+    What happens when no one other than the submitter has a limit covering the amount?

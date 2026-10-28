@@ -35,7 +35,27 @@
         "path": "./syntaxes/orin.tmLanguage.json"
       }
     ],
+    "configuration": {
+      "title": "Orin",
+      "properties": {
+        "orin.pythonPath": {
+          "type": "string",
+          "default": "python",
+          "description": "Python executable used to run the Orin agent (python -m tooling.python.orin_agent)."
+        }
+      }
+    },
+    "menus": {
+      "commandPalette": [
+        { "command": "orin.showDecisionOptions", "when": "false" }
+      ]
+    },
     "commands": [
+      {
+        "command": "orin.showDecisionOptions",
+        "title": "Show decision options",
+        "category": "Orin"
+      },
       {
         "command": "orin.analyzeCurrentFile",
         "title": "Orin: Analyze Current File",

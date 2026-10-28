@@ -27,18 +27,81 @@ DECLARATION_KINDS = {
 }
 
 
+SOURCE_ERROR_HINTS = {
+    "ORIN-P001": ("The file has no module declaration.", 'Start the file with a line like: module my-app {'),
+    "ORIN-P002": ("This line is not valid Orin syntax.", 'Check the spelling of the keyword (for example type, entity, rule, example) and that blocks use "{" and "}".'),
+    "ORIN-P003": ("A block was opened with \"{\" but never closed.", 'Add a closing "}" on its own line after the last line of the block.'),
+    "ORIN-P004": ("A quoted piece of text is missing.", 'Put the text in double quotes, for example: purpose "Let people reset passwords"'),
+    "ORIN-P005": ("This line is not allowed inside this declaration.", "Remove the line or use an attribute this kind of declaration supports."),
+    "ORIN-P006": ("This line is not allowed in a context block.", 'Use only: repository "..." or risk "..."'),
+    "ORIN-P007": ("This line is not an allowed implementation policy.", 'Use optimize-for, prefer, require or deploy-to followed by a quoted value, e.g. prefer "python"'),
+    "ORIN-P008": ("A field needs both a name and a type.", "Write it as: field name type  (for example: field email text)"),
+    "ORIN-P009": ("This field modifier is not recognised.", 'The only modifier is "identity", e.g. field id text identity'),
+}
+
+
+class OrinSourceError(ValueError):
+    """A syntax or structure problem in .orin source, with its location."""
+
+    def __init__(self, code: str, problem: str, hint: str, file: str | None, line: int, column: int, source_line: str = "") -> None:
+        self.code = code
+        self.problem = problem
+        self.hint = hint
+        self.file = file
+        self.line = line
+        self.column = column
+        self.source_line = source_line
+        super().__init__(self._format())
+
+    def _format(self) -> str:
+        text = f"{self.file or '<source>'}:{self.line}:{self.column}: error {self.code}: {self.problem}"
+        if self.source_line:
+            text += f"\n    {self.source_line}\n    {' ' * (self.column - 1)}^"
+        return text + f"\n  Suggested fix: {self.hint}"
+
+    def with_file(self, file: str) -> "OrinSourceError":
+        return OrinSourceError(self.code, self.problem, self.hint, file, self.line, self.column, self.source_line)
+
+
 class OrinParser:
     def parse_file(self, path: str | Path) -> SemanticModel:
         path = Path(path)
-        text = path.read_text(encoding="utf-8")
+        try:
+            text = path.read_text(encoding="utf-8")
+        except FileNotFoundError:
+            raise OrinSourceError("ORIN-P012", "The file does not exist.", "Check the path and spelling.", str(path), 1, 1) from None
+        except UnicodeDecodeError as error:
+            raise OrinSourceError("ORIN-P013", "The file is not valid UTF-8 text.", "Save the file as UTF-8.", str(path), 1, 1) from error
         if (
             self._is_canonical_password_reset_example(path)
             and self._looks_like_password_reset_outline(text)
         ):
             return self._load_password_reset_example(path)
-        return self.parse(text)
+        try:
+            return self.parse(text)
+        except OrinSourceError as error:
+            raise error.with_file(str(path)) from None
 
     def parse(self, text: str) -> SemanticModel:
+        self._current_line = 1
+        self._block_start = 1
+        try:
+            return self._parse(text)
+        except OrinSourceError:
+            raise
+        except ValueError as error:
+            match = re.match(r"(ORIN-P\d+): ", str(error))
+            if match is None or match.group(1) not in SOURCE_ERROR_HINTS:
+                raise
+            code = match.group(1)
+            lines = text.splitlines()
+            line = 1 if code == "ORIN-P001" else self._block_start if code == "ORIN-P003" else self._current_line
+            source = lines[line - 1] if 0 < line <= len(lines) else ""
+            column = len(source) - len(source.lstrip()) + 1 if source else 1
+            problem, hint = SOURCE_ERROR_HINTS[code]
+            raise OrinSourceError(code, problem, hint, None, line, column, source.strip() and source.rstrip()) from None
+
+    def _parse(self, text: str) -> SemanticModel:
         lines = text.splitlines()
         module_match = next((re.match(r"^module\s+([\w.-]+)\s*\{", line.strip()) for line in lines), None)
         if module_match is None:
@@ -60,6 +123,7 @@ class OrinParser:
 
         for line_number, raw_line in enumerate(lines, 1):
             line = raw_line.strip()
+            self._current_line = line_number
             if not line or line.startswith("//"):
                 continue
             if context_depth:
@@ -109,6 +173,7 @@ class OrinParser:
             declaration = re.match(r"^(entity|relation|rule|workflow|example|uncertainty|target|effect)\s+([\w.-]+)\s*\{\s*$", line)
             if declaration:
                 active = self._new_object(module_name, DECLARATION_KINDS[declaration.group(1)], declaration.group(2), line_number)
+                self._block_start = line_number
                 depth += 1
                 continue
             declaration = re.match(r"^evidence\s+(\w+)\s+(.+)$", line)

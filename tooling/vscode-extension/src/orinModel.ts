@@ -115,3 +115,57 @@ export function parseAgentOutput(output: string): AgentSummary {
   while ((m = re.exec(output))) decisions.push(`${m[1]}: ${m[2]}`);
   return { status, decisions };
 }
+
+export interface AgentOption {
+  id: string;
+  description: string;
+  whyChoose?: string;
+  compilation?: string;
+}
+
+export interface AgentDecision {
+  id: string;
+  question: string;
+  whyItMatters?: string;
+  options: AgentOption[];
+}
+
+// Parses the numbered decision blocks of `orin_agent inspect` text output.
+export function parseDecisions(output: string): AgentDecision[] {
+  const decisions: AgentDecision[] = [];
+  let decision: AgentDecision | undefined;
+  let option: AgentOption | undefined;
+  let inOptions = false;
+  for (const line of output.split(/\r?\n/)) {
+    const head = /^\d+\.\s+(\S+)\s*$/.exec(line);
+    if (head) {
+      decision = { id: head[1], question: "", options: [] };
+      decisions.push(decision);
+      option = undefined;
+      inOptions = false;
+      continue;
+    }
+    if (!decision) continue;
+    let m: RegExpExecArray | null;
+    if ((m = /^\s{3}Question:\s*(.*)$/.exec(line))) decision.question = m[1];
+    else if ((m = /^\s{3}Why it matters:\s*(.*)$/.exec(line))) decision.whyItMatters = m[1];
+    else if (/^\s{3}Options:\s*$/.test(line)) inOptions = true;
+    else if (inOptions && (m = /^\s{3}-\s+(\S+?):\s*(.*)$/.exec(line))) {
+      option = { id: m[1], description: m[2] };
+      decision.options.push(option);
+    } else if (inOptions && option && (m = /^\s{5}Why choose it:\s*(.*)$/.exec(line))) {
+      option.whyChoose = m[1];
+    } else if (inOptions && option && (m = /^\s{5}Compilation:\s*(.*)$/.exec(line))) {
+      option.compilation = m[1];
+    }
+  }
+  return decisions;
+}
+
+// Finds the line of the `uncertainty: <name>` block a decision id refers to.
+export function findUncertaintyLine(source: string, decisionId: string): number {
+  const name = decisionId.split("/").pop() ?? decisionId;
+  const lines = source.split(/\r?\n/);
+  const index = lines.findIndex((l) => l.trim() === `uncertainty: ${name}`);
+  return index >= 0 ? index : 0;
+}
