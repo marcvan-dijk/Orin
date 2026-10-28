@@ -1,0 +1,21 @@
+import * as assert from "node:assert";
+import * as fs from "node:fs";
+import * as path from "node:path";
+import { parseOutline, workflowHover, findWorkflowAt, parseAgentOutput } from "./orinModel";
+
+const src = fs.readFileSync(path.resolve(__dirname, "..", "..", "..", "examples", "password-reset.orin"), "utf8");
+const outline = parseOutline(src);
+const kinds = outline.symbols.map((s) => s.kind);
+assert.strictEqual(kinds.filter((k) => k === "rule").length, 4);
+assert.strictEqual(kinds.filter((k) => k === "workflow").length, 1);
+assert.strictEqual(kinds.filter((k) => k === "example").length, 2);
+const wf = outline.symbols.find((s) => s.kind === "workflow")!;
+assert.ok(findWorkflowAt(outline, wf.startLine + 2));
+assert.ok(workflowHover(outline, wf).includes("Reset passwords safely"));
+const o = parseOutline("workflow: a\n  actor: Admin\n  purpose:\n    Do it\n  steps:\n    x\n");
+assert.strictEqual(o.symbols[0].actor, "Admin");
+assert.strictEqual(o.symbols[0].purpose, "Do it");
+const s = parseAgentOutput("Compilation: blocked\nValidation: blocked\n\n1. a/b\n   Question: Why?\n");
+assert.deepStrictEqual(s, { status: "blocked", decisions: ["a/b: Why?"] });
+assert.strictEqual(parseAgentOutput("Compilation: ready\nValidation: ready").status, "ready");
+console.log("orinModel tests passed");

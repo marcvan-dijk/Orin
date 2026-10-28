@@ -40,11 +40,17 @@
         "command": "orin.analyzeCurrentFile",
         "title": "Orin: Analyze Current File",
         "category": "Orin"
+      },
+      {
+        "command": "orin.inspectWithAgent",
+        "title": "Orin: Inspect with Orin Agent",
+        "category": "Orin"
       }
     ]
   },
   "scripts": {
     "compile": "tsc -p ./",
+    "test": "tsc -p ./ && node out/orinModel.test.js",
     "vscode:prepublish": "npm run compile"
   },
   "devDependencies": {

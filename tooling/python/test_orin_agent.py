@@ -17,6 +17,8 @@ from implementations.python.orin_agent_core import (
     EXIT_ACCEPTED,
     EXIT_BLOCKED,
     EXIT_INVALID,
+    NON_MEMBER_RULE_ID,
+    NON_MEMBER_UNCERTAINTY_ID,
     RATE_LIMIT_RULE_ID,
     RATE_LIMIT_UNCERTAINTY_ID,
     DecisionRequiredError,
@@ -27,6 +29,7 @@ from implementations.python.orin_agent_core import (
 
 MODEL = ROOT / "tests" / "conformance" / "password-reset.model.json"
 SOURCE = ROOT / "examples" / "password-reset.orin"
+SHARED_TASKS = ROOT / "tests" / "conformance" / "shared-tasks.minimal.model.json"
 CASES = ROOT / "tests" / "conformance" / "password-reset.cases.json"
 AGENT = ["-m", "tooling.python.orin_agent"]
 
@@ -98,6 +101,44 @@ class OrinDecisionAgentTests(unittest.TestCase):
                 actual = execute_case(result.model, case)
                 for key, expected in expected_case_result(case).items():
                     self.assertEqual(actual[key], expected)
+
+
+class SharedTasksDecisionTests(unittest.TestCase):
+    def test_surfaces_non_member_decision_with_impact(self):
+        inspection = OrinDecisionAgent().inspect(SHARED_TASKS)
+
+        self.assertEqual(inspection.status, "blocked")
+        prompt = inspection.decisions[0].prompt
+        self.assertEqual(prompt.uncertainty_id, NON_MEMBER_UNCERTAINTY_ID)
+        for option in prompt.options:
+            self.assertTrue(option.impact)
+
+    def test_chosen_option_revises_and_revalidates(self):
+        agent = OrinDecisionAgent()
+        for option_id, example in (
+            ("membership-required", "authorization-failure-non-member-assignee"),
+            ("assignee-may-complete", "non-member-assignee-completes-task"),
+        ):
+            with self.subTest(option=option_id):
+                result = agent.apply_decision(SHARED_TASKS, NON_MEMBER_UNCERTAINTY_ID, option_id)
+                names = {o.get("name") for o in result.model.document["objects"]}
+                ids = {o.get("id") for o in result.model.document["objects"]}
+                self.assertEqual(result.model.compilation_status(), "eligible")
+                self.assertIn(NON_MEMBER_RULE_ID, ids)
+                self.assertIn(example, names)
+
+    def test_revised_model_is_ready_when_reinspected(self):
+        result = OrinDecisionAgent().apply_decision(
+            SHARED_TASKS, NON_MEMBER_UNCERTAINTY_ID, "membership-required"
+        )
+        with tempfile.TemporaryDirectory() as temp_dir:
+            out = Path(temp_dir) / "revised.json"
+            OrinDecisionAgent.write_model(out, result.model)
+            self.assertEqual(OrinDecisionAgent().inspect(out).status, "ready")
+
+    def test_shared_tasks_requires_explicit_decision(self):
+        with self.assertRaises(DecisionRequiredError):
+            OrinDecisionAgent().apply_decision(SHARED_TASKS, NON_MEMBER_UNCERTAINTY_ID, "defer")
 
 
 class OrinDecisionAgentCliTests(unittest.TestCase):
