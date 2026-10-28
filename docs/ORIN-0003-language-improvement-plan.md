@@ -903,6 +903,26 @@ capture important decisions and which parts add unnecessary friction.
     Exact next step: generalize the `.orin` loader to outline style and make
     agent decision prompts data-driven, then run the onboarding walkthrough
     with a real first-time user for the Phase 2 go/no-go.
+67. [done] Closed item 66 gaps with 15 parallel workstreams: outline-style
+    `.orin` loading for any file; data-driven agent decision prompts (options on
+    the uncertainty or `<name>.decisions.json`), fixing expense-approval being
+    reported ready; Python codegen enforces the rate limit and supports
+    expense-approval; TypeScript codegen CLI and expense-approval; resolved
+    expense-approval fixtures and decision doc; CLI `new` and `generate`; VS Code
+    quick fix applies the decision; proposal flow connected to agent options with
+    JSON decision records; source-error conformance fixtures; extra authoring
+    examples; onboarding doc test; end-to-end novice demo. Security review
+    fixes: `orin.pythonPath` is machine-scoped; generated TypeScript sanitizes
+    the module id.
+    Remaining gaps: (a) outline parser relies on `.structured.json` fixtures
+    for password-reset/expense-approval and cannot yet build full models from
+    `examples/shared-tasks.minimal.orin` (expected-failure test records what
+    is missing); (b) `generate` for Python ignores `--decision`; (c) the
+    onboarding doc has an `<owner>` clone placeholder; (d) demo substitutes the
+    full conformance model because the `.orin`-derived model lacks one rule.
+    Exact next step: make the outline parser build full models without a
+    fixture (start with shared-tasks), then run the onboarding walkthrough with
+    a real first-time user for the Phase 2 go/no-go.
 
 ### Current status after reevaluation
 
@@ -922,9 +942,9 @@ capture important decisions and which parts add unnecessary friction.
   1.2 fixture baseline; item 59 completed ORIN-0006 Phase 1.3 executable case
   verification; item 60 completed ORIN-0006 Phase 1.4 semantic-equivalence
   tightening; item 61 completed ORIN-0006 Phase 1.5 model-fit audit).
-- **Exact next step:** generalize the `.orin` loader to outline style and make
-  agent decision prompts data-driven (see item 66), then run the onboarding
-  walkthrough with a real first-time user for the Phase 2 go/no-go.
+- **Exact next step:** make the outline parser build full models without a
+  fixture (start with shared-tasks), then run the onboarding walkthrough with a
+  real first-time user for the Phase 2 go/no-go (see item 67).
 
 ## Test strategy
 

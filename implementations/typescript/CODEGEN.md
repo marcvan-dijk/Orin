@@ -25,3 +25,23 @@ node --test --experimental-strip-types implementations/typescript/src/codegen/
 ```
 
 Optional host-language code; it does not change `.ori` semantics or fixtures.
+
+## CLI
+
+```bash
+node --experimental-strip-types implementations/typescript/src/codegen/cli.ts \
+  <model.json> <decision.json> <outdir>
+```
+
+Dispatches on `module.id` and writes `password_reset.generated.ts` or
+`expense_approval.generated.ts` into `<outdir>` (printing the path).
+
+Decision files:
+
+- password-reset: `{ "maxRequests": 5, "windowSeconds": 3600 }`
+- expense-approval: `{ "noEligibleApprover": "stay-submitted" }` (resolves
+  `no-eligible-approver`; the expense stays submitted and approval is refused)
+
+Exit codes: `0` generated, `1` generation refused (blocked model or invalid
+decision), `2` usage, unreadable/invalid input, or unsupported module.
+The expense module exports `Expense` (`approve(approver)`, `reject(approver, reason)`).

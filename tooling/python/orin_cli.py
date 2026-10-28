@@ -8,7 +8,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 from pathlib import Path
+import re
+import shutil
+import subprocess
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
@@ -143,6 +147,91 @@ def cmd_examples(args) -> int:
     return EXIT_PROBLEMS if failed else EXIT_OK
 
 
+_NAME_RE = re.compile(r"^[a-z][a-z0-9]*(-[a-z0-9]+)*$")
+
+_SKELETON = """module {name} {{
+  purpose "Describe what {name} is for and who it serves."
+
+  rule first-guarantee {{
+    guarantee "State one thing that must always be true about {name}."
+  }}
+
+  workflow main-flow {{
+    input request
+    outcome "The person receives a clear result for their request."
+  }}
+
+  example typical-use {{
+    given "A person with a valid request."
+    when "They submit the request."
+    then "They see a clear result."
+  }}
+
+  uncertainty first-open-question {{
+    question "What should happen in the most consequential case not yet decided?"
+  }}
+}}
+"""
+
+
+def cmd_new(args) -> int:
+    if not _NAME_RE.match(args.name):
+        print("invalid input: name must be lowercase words joined by hyphens, e.g. my-app",
+              file=sys.stderr)
+        return EXIT_INVALID
+    target = Path(args.out or ".") / f"{args.name}.orin"
+    if target.exists():
+        print(f"invalid input: {target} already exists", file=sys.stderr)
+        return EXIT_INVALID
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(_SKELETON.format(name=args.name), encoding="utf-8", newline="\n")
+    print(f"Created {target}. Edit it, then run: orin_cli check {target}")
+    return EXIT_OK
+
+
+def _unavailable(what: str) -> int:
+    print(f"error: {what} is not available", file=sys.stderr)
+    return EXIT_INVALID
+
+
+def cmd_generate(args) -> int:
+    model = Path(args.model)
+    if not model.is_file():
+        print(f"invalid input: model file not found: {model}", file=sys.stderr)
+        return EXIT_INVALID
+    if model.suffix != ".json":
+        print("invalid input: generate needs a semantic model .json file", file=sys.stderr)
+        return EXIT_INVALID
+    decision = Path(args.decision) if args.decision else None
+    if args.target == "python":
+        module = IMPL / "codegen" / "generate.py"
+        if not module.is_file():
+            return _unavailable("python code generation")
+        # The Python generator reads accepted decisions from the model itself.
+        cmd = [sys.executable, "-m", "implementations.python.codegen.generate",
+               str(model), args.out]
+    else:
+        cli = ROOT / "implementations" / "typescript" / "src" / "codegen" / "cli.ts"
+        if not cli.is_file():
+            return _unavailable("typescript code generation (cli.ts not found)")
+        node = shutil.which("node")
+        if node is None:
+            return _unavailable("typescript code generation (node is not installed)")
+        if decision is None or not decision.is_file():
+            print("invalid input: typescript generation needs --decision <decision.json file>",
+                  file=sys.stderr)
+            return EXIT_INVALID
+        cmd = [node, "--experimental-strip-types", str(cli), str(model), str(decision), args.out]
+    env = dict(os.environ, PYTHONPATH=os.pathsep.join(
+        [str(ROOT)] + ([os.environ["PYTHONPATH"]] if os.environ.get("PYTHONPATH") else [])))
+    result = subprocess.run(cmd, cwd=ROOT, env=env, capture_output=True, text=True)
+    sys.stdout.write(result.stdout)
+    sys.stderr.write(result.stderr)
+    if result.returncode == 0:
+        return EXIT_OK
+    return EXIT_PROBLEMS if result.returncode == 1 else EXIT_INVALID
+
+
 def _build_parser() -> argparse.ArgumentParser:
     parser = _Parser(prog="orin_cli", description="Check and inspect Orin programs.")
     sub = parser.add_subparsers(dest="command", required=True, parser_class=_Parser)
@@ -151,6 +240,14 @@ def _build_parser() -> argparse.ArgumentParser:
     ready.add_argument("file")
     ready.add_argument("--json", action="store_true", help="emit the readiness report as JSON")
     sub.add_parser("examples", help="run matching conformance cases").add_argument("file")
+    new = sub.add_parser("new", help="scaffold a minimal valid .orin file")
+    new.add_argument("name")
+    new.add_argument("--out", help="directory to write into (default: current)")
+    gen = sub.add_parser("generate", help="generate an implementation from a model and decision")
+    gen.add_argument("model")
+    gen.add_argument("--decision", help="decision id or decision .json file")
+    gen.add_argument("--target", required=True, choices=["python", "typescript"])
+    gen.add_argument("--out", required=True, help="output directory")
     for name, text in (("inspect", "inspect decisions (see orin_agent_core)"),
                        ("decide", "apply a human decision (see orin_agent_core)")):
         sub.add_parser(name, help=text, add_help=False)
@@ -168,7 +265,8 @@ def main(argv: list[str] | None = None) -> int:
         args = _build_parser().parse_args(argv)
     except SystemExit as exit_:
         return exit_.code if isinstance(exit_.code, int) else EXIT_OK
-    handler = {"check": cmd_check, "readiness": cmd_readiness, "examples": cmd_examples}[args.command]
+    handler = {"check": cmd_check, "readiness": cmd_readiness, "examples": cmd_examples,
+               "new": cmd_new, "generate": cmd_generate}[args.command]
     try:
         return handler(args)
     except core.AgentError as error:

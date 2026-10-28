@@ -1,0 +1,180 @@
+{
+  "fixtureVersion": "0.1.0",
+  "workflow": "finance.expense-approval/workflow/submit-expense",
+  "cases": [
+    {
+      "id": "finance.expense-approval/case/within-limit",
+      "given": {
+        "approverLimit": 500,
+        "amount": 120,
+        "approverIsSubmitter": false
+      },
+      "when": {
+        "action": "approve"
+      },
+      "then": {
+        "expense": "approved"
+      }
+    },
+    {
+      "id": "finance.expense-approval/case/at-limit",
+      "given": {
+        "approverLimit": 500,
+        "amount": 500,
+        "approverIsSubmitter": false
+      },
+      "when": {
+        "action": "approve"
+      },
+      "then": {
+        "expense": "approved"
+      }
+    },
+    {
+      "id": "finance.expense-approval/case/over-limit",
+      "given": {
+        "approverLimit": 500,
+        "amount": 900,
+        "approverIsSubmitter": false
+      },
+      "when": {
+        "action": "approve"
+      },
+      "then": {
+        "approval": "refused",
+        "expense": "submitted"
+      }
+    },
+    {
+      "id": "finance.expense-approval/case/self-approval",
+      "given": {
+        "approverLimit": 5000,
+        "amount": 120,
+        "approverIsSubmitter": true
+      },
+      "when": {
+        "action": "approve"
+      },
+      "then": {
+        "approval": "refused",
+        "expense": "submitted"
+      }
+    },
+    {
+      "id": "finance.expense-approval/case/self-rejection",
+      "given": {
+        "approverLimit": 5000,
+        "amount": 120,
+        "approverIsSubmitter": true
+      },
+      "when": {
+        "action": "reject",
+        "reason": "changed my mind"
+      },
+      "then": {
+        "rejection": "refused",
+        "expense": "submitted"
+      }
+    },
+    {
+      "id": "finance.expense-approval/case/rejection",
+      "given": {
+        "approverLimit": 500,
+        "amount": 120,
+        "approverIsSubmitter": false
+      },
+      "when": {
+        "action": "reject",
+        "reason": "missing receipt"
+      },
+      "then": {
+        "expense": "rejected",
+        "reasonVisibleToSubmitter": true
+      }
+    },
+    {
+      "id": "finance.expense-approval/case/decide-twice",
+      "given": {
+        "expense": "approved",
+        "approverLimit": 500,
+        "amount": 120,
+        "approverIsSubmitter": false
+      },
+      "when": {
+        "action": "reject",
+        "reason": "second thoughts"
+      },
+      "then": {
+        "rejection": "refused",
+        "expense": "approved"
+      }
+    },
+    {
+      "id": "finance.expense-approval/case/no-eligible-approver-only-submitter-covers",
+      "given": {
+        "approverLimit": 5000,
+        "amount": 3000,
+        "approverIsSubmitter": true,
+        "otherApproverLimits": [
+          100,
+          500
+        ]
+      },
+      "when": {
+        "action": "approve"
+      },
+      "then": {
+        "approval": "refused",
+        "expense": "submitted"
+      }
+    },
+    {
+      "id": "finance.expense-approval/case/no-eligible-approver-is-not-rejected",
+      "given": {
+        "amount": 3000,
+        "submitterLimit": 5000,
+        "otherApproverLimits": [
+          100,
+          500
+        ]
+      },
+      "when": {
+        "action": "route"
+      },
+      "then": {
+        "expense": "submitted",
+        "routedTo": null
+      }
+    },
+    {
+      "id": "finance.expense-approval/case/eligible-approver-appears",
+      "given": {
+        "amount": 3000,
+        "submitterLimit": 5000,
+        "otherApproverLimits": [
+          100,
+          3000
+        ]
+      },
+      "when": {
+        "action": "route"
+      },
+      "then": {
+        "expense": "submitted",
+        "routedTo": "approver-limit-3000"
+      }
+    },
+    {
+      "id": "finance.expense-approval/case/resolved-compile",
+      "given": {
+        "uncertainty": "finance.expense-approval/uncertainty/no-eligible-approver"
+      },
+      "when": {
+        "action": "compile"
+      },
+      "then": {
+        "compilation": "eligible"
+      }
+    }
+  ]
+}

@@ -1,0 +1,53 @@
+module document-access {
+  purpose "Decide who in a small company may see, change and share its documents."
+
+  type document-name
+  type person-name
+
+  entity document {
+    field name document-name identity
+  }
+  entity person {
+    field name person-name identity
+  }
+
+  rule owner-has-full-access {
+    guarantee "The owner of a document can always view, edit, share and delete it."
+  }
+  rule editors-can-edit {
+    guarantee "A person given edit access can view and edit a document but cannot share or delete it."
+  }
+  rule viewers-read-only {
+    guarantee "A person given view access can read a document and nothing else."
+  }
+  rule default-is-no-access {
+    guarantee "A person with no access cannot see that the document exists."
+  }
+  rule only-owner-grants {
+    guarantee "Only the owner can give or take away access."
+  }
+
+  workflow open-document {
+    input document-name
+    input person-name
+    outcome "The person sees the document, or is told it cannot be found."
+  }
+
+  example viewer-edits {
+    given "A person with view access to a document."
+    when "The person tries to edit it."
+    then "The system refuses and the document is unchanged."
+  }
+  example stranger-opens {
+    given "A person with no access to a document."
+    when "The person asks to open it."
+    then "The system says the document cannot be found."
+  }
+
+  uncertainty leaving-owner {
+    question "Who owns a document when its owner leaves the company?"
+  }
+  uncertainty everyone-access {
+    question "Can a document be shared with the whole company at once, and by whom?"
+  }
+}

@@ -169,3 +169,32 @@ export function findUncertaintyLine(source: string, decisionId: string): number 
   const index = lines.findIndex((l) => l.trim() === `uncertainty: ${name}`);
   return index >= 0 ? index : 0;
 }
+
+// The agent writes a semantic JSON artifact, so the default output is `<name>.resolved.json`.
+export function defaultResolvedPath(source: string): string {
+  const slash = Math.max(source.lastIndexOf("/"), source.lastIndexOf("\\"));
+  const dir = source.slice(0, slash + 1);
+  const file = source.slice(slash + 1);
+  const dot = file.lastIndexOf(".");
+  const base = dot > 0 ? file.slice(0, dot) : file;
+  return `${dir}${base}.resolved.json`;
+}
+
+export function buildDecideArgs(
+  source: string,
+  uncertainty: string,
+  option: string,
+  writePath: string,
+): string[] {
+  return [
+    "-m", "tooling.python.orin_agent", "decide", source,
+    "--uncertainty", uncertainty,
+    "--option", option,
+    "--write", writePath,
+  ];
+}
+
+// `decide` exits 4 when the decision was accepted and a revised artifact written.
+export function decideSucceeded(exitCode: number | null | undefined): boolean {
+  return exitCode === 4;
+}

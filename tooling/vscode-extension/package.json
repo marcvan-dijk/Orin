@@ -41,6 +41,7 @@
         "orin.pythonPath": {
           "type": "string",
           "default": "python",
+          "scope": "machine",
           "description": "Python executable used to run the Orin agent (python -m tooling.python.orin_agent)."
         }
       }

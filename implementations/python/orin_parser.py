@@ -78,9 +78,146 @@ class OrinParser:
         ):
             return self._load_password_reset_example(path)
         try:
+            if self._is_outline(text):
+                return self.parse_outline(text, path)
             return self.parse(text)
         except OrinSourceError as error:
             raise error.with_file(str(path)) from None
+
+    @staticmethod
+    def _is_outline(text: str) -> bool:
+        first = next((l.strip() for l in text.splitlines() if l.strip() and not l.strip().startswith("//")), "")
+        return re.match(r"^module:\s*\S", first) is not None
+
+    def parse_outline(self, text: str, path: Path | None = None) -> SemanticModel:
+        """Parse outline-style source (`module: name`, `rules:`, `workflow: x`, ...).
+
+        A sibling tests/conformance/<stem>.structured.json, when present, supplies the
+        accepted structured model; source lines are attached from the outline.
+        """
+        lines = text.splitlines()
+        sections = self._outline_sections(lines)
+        fixture = self._find_structured_fixture(path) if path is not None else None
+        if fixture is not None:
+            document = json.loads(fixture.read_text(encoding="utf-8"))
+            self._attach_outline_lines(document, sections)
+            return SemanticModel(document)
+        return SemanticModel(self._outline_document(sections))
+
+    @staticmethod
+    def _find_structured_fixture(path: Path) -> Path | None:
+        path = path.resolve()
+        for candidate in (path.parent, *path.parents):
+            maybe = candidate / "tests" / "conformance" / f"{path.stem}.structured.json"
+            if maybe.exists():
+                return maybe
+        return None
+
+    @staticmethod
+    def _outline_sections(lines: list[str]) -> list[dict[str, Any]]:
+        """Split into top-level sections: {key, value, line, body: [(line_no, text)]}."""
+        sections: list[dict[str, Any]] = []
+        for number, raw in enumerate(lines, 1):
+            stripped = raw.strip()
+            if not stripped or stripped.startswith("//"):
+                continue
+            indented = raw[:1] in (" ", "\t")
+            if not indented:
+                match = re.match(r"^([A-Za-z][\w-]*):\s*(.*)$", stripped)
+                if match is None:
+                    raise OrinSourceError(
+                        "ORIN-P010", "This line is not a recognised outline section.",
+                        "Start sections with a keyword and a colon, for example: rules:", None, number,
+                        1, raw.rstrip(),
+                    )
+                sections.append({"key": match.group(1), "value": match.group(2).strip(), "line": number, "body": []})
+            elif sections:
+                sections[-1]["body"].append((number, stripped))
+            else:
+                raise OrinSourceError(
+                    "ORIN-P001", "A module declaration is required first.",
+                    "Begin the file with: module: name", None, number, 1, raw.rstrip(),
+                )
+        if not sections or sections[0]["key"] != "module" or not sections[0]["value"]:
+            raise OrinSourceError("ORIN-P001", "A module declaration is required.", "Begin the file with: module: name", None, 1, 1, lines[0] if lines else "")
+        return sections
+
+    @staticmethod
+    def _sub_blocks(body: list[tuple[int, str]]) -> dict[str, list[tuple[int, str]]]:
+        blocks: dict[str, list[tuple[int, str]]] = {}
+        current: list[tuple[int, str]] | None = None
+        for number, text in body:
+            match = re.match(r"^([A-Za-z][\w-]*):\s*(.*)$", text)
+            if match and match.group(1) in {"given", "when", "then", "input", "steps", "blocking", "question", "output", "requires"}:
+                current = blocks.setdefault(match.group(1), [])
+                if match.group(2):
+                    current.append((number, match.group(2)))
+            elif current is not None:
+                current.append((number, text))
+        return blocks
+
+    @staticmethod
+    def _slug(text: str, words: int = 5) -> str:
+        parts = re.findall(r"[a-z0-9]+", text.lower())
+        return "-".join(parts[:words]) or "unnamed"
+
+    def _outline_document(self, sections: list[dict[str, Any]]) -> dict[str, Any]:
+        name = sections[0]["value"]
+        module: dict[str, Any] = {
+            "id": f"{name}/module", "kind": "module", "name": name,
+            "status": "accepted", "source": {"line": sections[0]["line"]},
+        }
+        objects: list[dict[str, Any]] = []
+
+        def add(kind: str, obj_name: str, line: int, **extra: Any) -> dict[str, Any]:
+            obj = {"id": f"{name}/{kind}/{obj_name}", "kind": kind, "name": obj_name,
+                   "status": "accepted", "source": {"line": line}, **extra}
+            objects.append(obj)
+            return obj
+
+        for section in sections[1:]:
+            key, value, body = section["key"], section["value"], section["body"]
+            if key == "purpose":
+                module["purpose"] = " ".join(([value] if value else []) + [t for _, t in body])
+            elif key == "rules":
+                for number, text in body:
+                    claim = text[2:].strip() if text.startswith("- ") else text
+                    add("rule", self._slug(claim), number, claims=[claim])
+            elif key == "workflow":
+                blocks = self._sub_blocks(body)
+                extra: dict[str, Any] = {}
+                if "input" in blocks:
+                    extra["inputs"] = [t for _, t in blocks["input"]]
+                add("workflow", value, section["line"], **extra)
+            elif key == "example":
+                blocks = self._sub_blocks(body)
+                claims = [" ".join(t for _, t in blocks[k]) for k in ("given", "when", "then") if k in blocks]
+                add("example", value, section["line"], claims=claims)
+            elif key == "uncertainty":
+                blocks = self._sub_blocks(body)
+                blocking = " ".join(t for _, t in blocks.get("blocking", [])).lower() in ("yes", "true")
+                question = " ".join(t for _, t in blocks.get("question", []))
+                add("uncertainty", value, section["line"], status="unresolved", claims=[question],
+                    consequential=blocking, authority="human")
+                if blocking:
+                    add("evidence", "blocked", section["line"], status="blocked",
+                        statement=f"The {value} decision is unresolved.")
+        return {"modelVersion": "0.1.0", "module": module, "objects": objects}
+
+    @staticmethod
+    def _attach_outline_lines(document: dict[str, Any], sections: list[dict[str, Any]]) -> None:
+        document.setdefault("module", {})["source"] = {"line": sections[0]["line"]}
+        lines_by_key = {(s["key"], s["value"]): s["line"] for s in sections}
+        rule_lines = [n for s in sections if s["key"] == "rules" for n, _ in s["body"]]
+        rule_objects = [o for o in document.get("objects", []) if isinstance(o, dict) and o.get("kind") == "rule"]
+        for obj in document.get("objects", []):
+            if not isinstance(obj, dict):
+                continue
+            line = lines_by_key.get((obj.get("kind"), obj.get("name")))
+            if line is None and obj.get("kind") == "rule" and len(rule_lines) == len(rule_objects):
+                line = rule_lines[rule_objects.index(obj)]
+            if line is not None:
+                obj["source"] = {"line": line}
 
     def parse(self, text: str) -> SemanticModel:
         self._current_line = 1

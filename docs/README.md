@@ -23,6 +23,22 @@ and broader future material is kept out of the primary path.
   (demo video script: [`ONBOARDING-DEMO-SCRIPT.md`](./ONBOARDING-DEMO-SCRIPT.md)).
 - [`PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`](./PASSWORD-RESET-MVP-DEMO-RUNBOOK.md) —
   5-minute walkthrough for the current proof path.
+- [`LANGUAGE-REFERENCE.md`](./LANGUAGE-REFERENCE.md) — language reference.
+- [`AUTHORING-WITH-AI.md`](./AUTHORING-WITH-AI.md) — how to write Orin with an AI
+  while keeping important decisions human-made.
+- [`COLLABORATIVE-AUTHORING-PROTOTYPE.md`](./COLLABORATIVE-AUTHORING-PROTOTYPE.md) —
+  prototype for several people authoring one program.
+- [`../examples/expense-approval.orin`](../examples/expense-approval.orin) —
+  supporting example (notes: [`EXAMPLE-EXPENSE-APPROVAL.md`](./EXAMPLE-EXPENSE-APPROVAL.md)).
+- [`../tooling/python/orin_cli.py`](../tooling/python/orin_cli.py) — CLI:
+  `check`, `readiness`, `examples`, `inspect`, `decide`.
+- Code generators: [`../implementations/python/codegen/`](../implementations/python/codegen/README.md)
+  and [`../implementations/typescript/src/codegen/`](../implementations/typescript/src/codegen/).
+- [`../implementations/python/parity_check.py`](../implementations/python/parity_check.py) —
+  checks Python and TypeScript agree on shared fixtures.
+- [`../tooling/vscode-extension/`](../tooling/vscode-extension/README.md) — VS Code
+  extension (supporting tooling).
+- [`../.github/workflows/ci.yml`](../.github/workflows/ci.yml) — CI.
 - [`ORIN-SYNTAX-GUIDE.md`](./ORIN-SYNTAX-GUIDE.md) — concise help for reading
   the current outline syntax.
 - [`../tooling/python/README.md`](../tooling/python/README.md) — offline Orin

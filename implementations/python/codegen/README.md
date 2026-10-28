@@ -17,3 +17,10 @@ stderr) until a human resolves that decision (e.g. via `orin_agent_core.py`).
 Tests: `python -m unittest implementations.python.codegen.test_codegen`
 (generates from a rate-limit-resolved copy and replays
 `password-reset.cases.json` against the generated module).
+
+The generated password-reset module enforces the accepted
+`reset-request-rate-limit` rule (count, window and per-origin scope are parsed
+from its claims; `request_reset(..., origin=)`). Models with module
+`finance.expense-approval/module` generate `expense_approval_generated.py`
+(submit/approve/reject, limit, no-self-decision, final decisions, rejection
+reason). Both refuse models that are not ready.

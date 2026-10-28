@@ -104,3 +104,38 @@ class Review:
     def reject(self, rationale):
         self._record("rejected", rationale)
         return self.model
+
+
+def proposal_from_decision_option(model, prompt, option, rationale=None):
+    """Turn an agent decision option into a Proposal against `model`.
+
+    `prompt`/`option` are duck-typed (orin_agent_core DecisionPrompt/DecisionOption).
+    A blocked option (e.g. "defer") yields no change, so it cannot be proposed:
+    simply not deciding keeps the uncertainty open.
+    """
+    if option.compilation == "blocked" or not option.rule_claims:
+        raise ValueError(f"option '{option.id}' keeps {prompt.uncertainty_id} unresolved; nothing to propose")
+    objs = _index(model)
+    changes = []
+    if prompt.uncertainty_id in objs:
+        resolved = dict(objs[prompt.uncertainty_id], status="accepted")
+        changes.append(Change("replace", prompt.uncertainty_id, resolved))
+    rule = {
+        "id": prompt.rule_id, "kind": "rule", "name": prompt.rule_name,
+        "status": "accepted", "claims": list(option.rule_claims),
+    }
+    changes.append(Change("replace" if prompt.rule_id in objs else "add", prompt.rule_id, rule))
+    for example in option.examples:
+        if example["id"] not in objs:
+            changes.append(Change("add", example["id"], copy.deepcopy(example)))
+    return Proposal(changes, rationale or f"{option.label} {option.explanation}")
+
+
+def save_decisions(path, decisions):
+    """Persist decision records as a plain JSON list."""
+    Path(path).write_text(json.dumps(decisions, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+
+
+def load_decisions(path):
+    p = Path(path)
+    return json.loads(p.read_text(encoding="utf-8")) if p.exists() else []

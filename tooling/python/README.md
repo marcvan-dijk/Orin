@@ -58,6 +58,26 @@ explicit choice adds a rule and example to the revised model, then
 re-validates it (`eligible`; re-inspecting the output reports ready).
 Options: `membership-required`, `assignee-may-complete` (`defer` stays blocked).
 
+### Data-driven decisions
+
+Any model's blocking, consequential uncertainty can carry its own decision
+data; password-reset and shared-tasks keep built-in fallbacks. Data is read
+from the uncertainty object itself (`why_it_matters`, `affected_objects`,
+`options`, optional `rule: {id, name}`) and from a sidecar file found by
+convention next to the model: `<name>.decisions.json` (for
+`expense-approval.model.json`, `expense-approval.decisions.json`). Inline data
+wins over the sidecar, which wins over built-ins. Sidecar shape:
+
+```json
+{"decisions": {"<uncertainty-id>": {"why_it_matters": "...",
+  "options": [{"id": "...", "label": "...", "impact": ["..."],
+    "rule_claims": ["..."], "examples": [{"id": "...", "kind": "example"}]}]}}}
+```
+
+An option with `"compilation": "blocked"` (e.g. `defer`) keeps the decision
+unresolved. A blocking uncertainty with no options is still reported as blocked
+(exit `2`).
+
 ## Exit codes
 
 - `0`: ready, no blocking consequential decisions remain
@@ -86,12 +106,16 @@ python -m tooling.python.orin_cli readiness examples/password-reset.orin [--json
 python -m tooling.python.orin_cli inspect examples/password-reset.orin
 python -m tooling.python.orin_cli decide <file> --uncertainty <id> --option <id>
 python -m tooling.python.orin_cli examples tests/conformance/shared-tasks.model.json
+python -m tooling.python.orin_cli new my-app [--out dir]
+python -m tooling.python.orin_cli generate model.json --decision decision.json --target python|typescript --out dir
 ```
 
 - `check` validates a `.orin` or model `.json` and lists diagnostics with IDs.
 - `readiness` says READY or BLOCKED and lists the required decisions.
 - `inspect` / `decide` delegate to `implementations/python/orin_agent_core.py`.
 - `examples` runs the matching `tests/conformance/<name>.cases.json`, if any.
+- `new` writes a minimal valid `<name>.orin` (one rule, workflow, example, open uncertainty).
+- `generate` shells out to `implementations/python/codegen` or `implementations/typescript/src/codegen/cli.ts` (needs `node`; typescript needs a decision `.json` file). Reports "not available" if missing.
 
 Exit codes: `0` ok/ready, `1` problems or failing examples, `2` blocked
 (decisions required), `3` invalid input or usage.

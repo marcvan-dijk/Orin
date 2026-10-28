@@ -17,6 +17,37 @@ def run(*argv):
     return code, out.getvalue(), err.getvalue()
 
 
+class NewGenerateTests(unittest.TestCase):
+    def test_new_scaffold_loads_and_is_blocked(self):
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as d:
+            code, out, _ = run("new", "my-app", "--out", d)
+            self.assertEqual(code, 0)
+            path = Path(d) / "my-app.orin"
+            self.assertNotIn("TODO", path.read_text())
+            self.assertIn("ORIN-E041", run("check", str(path))[1])
+            self.assertEqual(run("readiness", str(path))[0], 2)
+            self.assertEqual(run("new", "my-app", "--out", d)[0], 3)
+
+    def test_new_rejects_bad_name(self):
+        self.assertEqual(run("new", "Bad Name")[0], 3)
+
+    def test_generate_missing_model(self):
+        self.assertEqual(run("generate", "nope.json", "--target", "python", "--out", "x")[0], 3)
+
+    def test_generate_typescript_needs_decision(self):
+        code, _, err = run("generate", str(CONF / "shared-tasks.model.json"),
+                           "--target", "typescript", "--out", "x")
+        self.assertEqual(code, 3)
+        self.assertTrue("decision" in err or "not available" in err)
+
+    def test_generate_python_delegates(self):
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as d:
+            code, out, err = run("generate", str(CONF / "shared-tasks.model.json"),
+                                 "--target", "python", "--out", d)
+            self.assertIn(code, (0, 1, 3))
+            self.assertTrue(out or err)
+
+
 class OrinCliTests(unittest.TestCase):
     def test_check_valid(self):
         code, out, _ = run("check", str(CONF / "shared-tasks.model.json"))

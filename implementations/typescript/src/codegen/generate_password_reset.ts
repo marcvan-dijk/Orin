@@ -27,7 +27,7 @@ export function generatePasswordReset(model: SemanticModel, decision: RateLimitD
       `model is ${gates.compilation}; unresolved: ${gates.blockingUnresolved.join(", ") || "none"}`,
     );
   }
-  const moduleId = String(model.document.module?.id ?? "unknown");
+  const moduleId = String(model.document.module?.id ?? "unknown").replace(/[^A-Za-z0-9._/-]/g, "_");
   return `// Generated from ${moduleId}. Do not edit.
 // Resolved ${RATE_LIMIT_UNCERTAINTY}: ${decision.maxRequests} requests per ${decision.windowSeconds}s per address.
 

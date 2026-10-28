@@ -8,7 +8,7 @@ Current scope:
 - **Orin: Analyze Current File** command backed by the optional Python reference checker
 - **Orin: Inspect with Orin Agent** command and status bar item
 - Problems-panel warnings for each unresolved decision reported by `python -m tooling.python.orin_agent inspect <file>` (refreshed on open and save), anchored to the matching `uncertainty:` block
-- Quick fix **Show decision options** on those warnings, listing the agent's options (selecting one does not edit the file)
+- Quick fix **Show decision options** on those warnings, listing the agent's options ; selecting one runs `orin_agent decide`, writes the revised model (default `<name>.resolved.json`, chosen via a save dialog), opens it, and refreshes diagnostics and the ready/blocked status bar
 
 ## Settings
 

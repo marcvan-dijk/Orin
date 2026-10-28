@@ -3,7 +3,7 @@
 Each example is a plain-English request and the `.orin` file an AI should
 write from it. See `../AUTHORING-WITH-AI.md` for the method.
 
-Both files load with `implementations/python/orin_parser.py`
+All files load with `implementations/python/orin_parser.py`
 (`OrinParser().parse_file(path)`). The only diagnostics are `ORIN-E041`,
 one per open uncertainty. That is intended: the AI did not guess.
 
@@ -32,6 +32,36 @@ What to notice:
   `uncertainty`, not a silent choice.
 - Names like `member-name` are plain `type` declarations; the AI did not
   invent storage, screens or technology.
+
+## 3. Support tickets → `support-ticket.orin`
+
+> We handle customer problems by email. I want each one tracked from when it
+> comes in until it is fixed, and nothing should get lost.
+
+Shape: a state machine. States and allowed moves are rules; skipping a step
+is an example. Reopening a ticket is an `uncertainty`.
+
+## 4. Document access → `document-access.orin`
+
+> People in our company keep documents. Owners decide who can look at or
+> change them. Others should not see what they have no right to.
+
+Shape: access control. "Cannot see it exists" is a stated rule. Orphaned
+documents and company-wide sharing are `uncertainty` items.
+
+## 5. Invoice reminders → `invoice-reminders.orin`
+
+> If a customer hasn't paid an invoice a week after it's due, remind them,
+> but don't spam them.
+
+Shape: time-based. Day counts and limits are rules; examples use concrete
+dates. Time zone and weekends are `uncertainty` items.
+
+## Test
+
+`python implementations/python/test_authoring_examples.py` (from that folder)
+parses every example and checks the only diagnostics are `ORIN-E041`, one per
+`uncertainty`.
 
 ## Note on syntax
 

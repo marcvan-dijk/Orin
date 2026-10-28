@@ -5,7 +5,8 @@ implementations decide **how** it is built. The Orin file stays the source of
 truth when the code changes.
 
 You need only `git`, and `python` (3.10 or newer) for steps 4 to 6. Step 7 also
-uses `node` (22.6 or newer). All commands run from the repository root.
+uses `node` (22.6 or newer). All commands run from the repository root. If `python` is not found, use
+`python3`.
 
 ## 1. Clone (1 minute)
 
@@ -103,7 +104,7 @@ python -m tooling.python.orin_agent decide \
   --write out/three.json
 ```
 
-Compare the two results:
+Compare the two results (`diff` exits `1` when files differ; that is normal):
 
 ```bash
 diff out/five.json out/three.json
