@@ -1,6 +1,7 @@
 import contextlib
 import io
 from pathlib import Path
+import shutil
 import tempfile
 import unittest
 
@@ -38,7 +39,7 @@ class NewGenerateTests(unittest.TestCase):
         code, _, err = run("generate", str(CONF / "shared-tasks.model.json"),
                            "--target", "typescript", "--out", "x")
         self.assertEqual(code, 3)
-        self.assertTrue("decision" in err or "not available" in err)
+        self.assertTrue(err)
 
     def test_generate_python_delegates(self):
         with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as d:
@@ -46,6 +47,62 @@ class NewGenerateTests(unittest.TestCase):
                                  "--target", "python", "--out", d)
             self.assertIn(code, (0, 1, 3))
             self.assertTrue(out or err)
+
+
+PR = str(CONF / "password-reset.model.json")
+EX = str(CONF / "expense-approval.model.json")
+NODE = shutil.which("node")
+
+
+class GenerateDecisionTests(unittest.TestCase):
+    def _out(self):
+        d = tempfile.TemporaryDirectory(dir=Path(__file__).parent)
+        self.addCleanup(d.cleanup)
+        return d.name
+
+    def test_blocked_without_decision_lists_options(self):
+        for target in ("python", "typescript"):
+            code, out, _ = run("generate", PR, "--target", target, "--out", self._out())
+            self.assertEqual(code, 2)
+            self.assertIn("three-per-hour-per-address", out)
+
+    def test_python_password_reset(self):
+        d = self._out()
+        code, out, err = run("generate", PR, "--decision", "three-per-hour-per-address",
+                             "--target", "python", "--out", d)
+        self.assertEqual(code, 0, err)
+        self.assertTrue((Path(d) / "password_reset_generated.py").is_file())
+
+    def test_python_decision_file(self):
+        d = self._out()
+        f = Path(d) / "dec.json"
+        f.write_text('{"option": "five-per-15m-per-address-and-origin"}')
+        self.assertEqual(run("generate", PR, "--decision", str(f), "--target", "python",
+                             "--out", d)[0], 0)
+
+    def test_python_expense_approval(self):
+        d = self._out()
+        code, _, err = run("generate", EX, "--decision", "reject-as-unapprovable",
+                           "--target", "python", "--out", d)
+        self.assertEqual(code, 0, err)
+        self.assertTrue((Path(d) / "expense_approval_generated.py").is_file())
+
+    def test_unknown_option(self):
+        self.assertEqual(run("generate", PR, "--decision", "nope", "--target", "python",
+                             "--out", self._out())[0], 3)
+
+    @unittest.skipUnless(NODE, "node not installed")
+    def test_typescript_password_reset_and_expense(self):
+        d = self._out()
+        code, _, err = run("generate", PR, "--decision", "three-per-hour-per-address",
+                           "--target", "typescript", "--out", d)
+        self.assertEqual(code, 0, err)
+        self.assertTrue((Path(d) / "password_reset.generated.ts").is_file())
+        self.assertFalse((Path(d) / ".orin-decision.json").exists())
+        code, _, err = run("generate", EX, "--decision", "stay-submitted",
+                           "--target", "typescript", "--out", d)
+        self.assertEqual(code, 0, err)
+        self.assertTrue((Path(d) / "expense_approval.generated.ts").is_file())
 
 
 class OrinCliTests(unittest.TestCase):

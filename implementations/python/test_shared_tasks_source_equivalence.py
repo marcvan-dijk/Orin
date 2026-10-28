@@ -20,7 +20,6 @@ def _strip(value):
 
 
 class SharedTasksSourceEquivalenceTests(unittest.TestCase):
-    @unittest.expectedFailure  # the outline parser does not yet read this file
     def test_source_matches_json_model_plus_open_question(self):
         loaded = _strip(OrinParser().parse_file(SOURCE).document)
         expected = _strip(json.loads(MODEL.read_text(encoding="utf-8")))

@@ -194,6 +194,44 @@ def _unavailable(what: str) -> int:
     return EXIT_INVALID
 
 
+# Decision option ids -> the decision JSON the TypeScript generator expects.
+_TS_DECISIONS = {
+    "five-per-15m-per-address-and-origin": {"maxRequests": 5, "windowSeconds": 900},
+    "three-per-hour-per-address": {"maxRequests": 3, "windowSeconds": 3600},
+    "stay-submitted": {"noEligibleApprover": "stay-submitted"},
+}
+
+
+def _read_decision(spec: str) -> tuple[str | None, str]:
+    """Return (uncertainty id or None, option id) from an option id or a decision file."""
+    path = Path(spec)
+    if not path.is_file():
+        return None, spec
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        raise ValueError(f"decision file is not valid JSON: {error}")
+    if isinstance(data, dict) and isinstance(data.get("option"), str):
+        uncertainty = data.get("uncertainty")
+        return (uncertainty if isinstance(uncertainty, str) else None), data["option"]
+    for option_id, payload in _TS_DECISIONS.items():
+        if data == payload:
+            return None, option_id
+    raise ValueError('decision file must look like {"option": "<option-id>"} '
+                     '(optionally with "uncertainty")')
+
+
+def _print_open_decisions(model: Path, inspection) -> None:
+    print(f"BLOCKED: {model} needs {len(inspection.decisions)} decision(s) before generation.")
+    for need in inspection.decisions:
+        prompt = need.prompt
+        print(f"  {prompt.uncertainty_id}: {prompt.question}")
+        for option in prompt.options:
+            note = " (keeps blocked)" if option.compilation == "blocked" else ""
+            print(f"    - {option.id}: {option.label}{note}")
+    print("Re-run with --decision <option-id> (or a decision .json file).")
+
+
 def cmd_generate(args) -> int:
     model = Path(args.model)
     if not model.is_file():
@@ -202,29 +240,72 @@ def cmd_generate(args) -> int:
     if model.suffix != ".json":
         print("invalid input: generate needs a semantic model .json file", file=sys.stderr)
         return EXIT_INVALID
-    decision = Path(args.decision) if args.decision else None
-    if args.target == "python":
-        module = IMPL / "codegen" / "generate.py"
-        if not module.is_file():
-            return _unavailable("python code generation")
-        # The Python generator reads accepted decisions from the model itself.
-        cmd = [sys.executable, "-m", "implementations.python.codegen.generate",
-               str(model), args.out]
-    else:
-        cli = ROOT / "implementations" / "typescript" / "src" / "codegen" / "cli.ts"
-        if not cli.is_file():
-            return _unavailable("typescript code generation (cli.ts not found)")
-        node = shutil.which("node")
-        if node is None:
-            return _unavailable("typescript code generation (node is not installed)")
-        if decision is None or not decision.is_file():
-            print("invalid input: typescript generation needs --decision <decision.json file>",
-                  file=sys.stderr)
+    agent = core.OrinDecisionAgent()
+    inspection = agent.inspect(model)
+    blocked = bool(inspection.decisions)
+    uncertainty, option_id = (None, None)
+    if args.decision:
+        uncertainty, option_id = _read_decision(args.decision)
+        if not option_id:
+            print("invalid input: unsupported decision values", file=sys.stderr)
             return EXIT_INVALID
-        cmd = [node, "--experimental-strip-types", str(cli), str(model), str(decision), args.out]
-    env = dict(os.environ, PYTHONPATH=os.pathsep.join(
-        [str(ROOT)] + ([os.environ["PYTHONPATH"]] if os.environ.get("PYTHONPATH") else [])))
-    result = subprocess.run(cmd, cwd=ROOT, env=env, capture_output=True, text=True)
+    elif blocked:
+        _print_open_decisions(model, inspection)
+        return EXIT_BLOCKED
+
+    out = Path(args.out)
+    cleanup: list[Path] = []
+    try:
+        if args.target == "python":
+            module = IMPL / "codegen" / "generate.py"
+            if not module.is_file():
+                return _unavailable("python code generation")
+            source = model
+            if blocked:
+                needs = {n.prompt.uncertainty_id: n for n in inspection.decisions}
+                target_id = uncertainty or next(
+                    (u for u, n in needs.items()
+                     if any(o.id == option_id for o in n.prompt.options)), None)
+                if target_id is None:
+                    print(f"invalid input: no open decision offers option '{option_id}'",
+                          file=sys.stderr)
+                    _print_open_decisions(model, inspection)
+                    return EXIT_INVALID
+                result = agent.apply_decision(model, target_id, option_id)
+                out.mkdir(parents=True, exist_ok=True)
+                source = out / f"{model.stem}.resolved.json"
+                agent.write_model(source, result.model)
+                if agent.inspect(source).decisions:
+                    print("BLOCKED: decisions remain after applying the option.", file=sys.stderr)
+                    return EXIT_BLOCKED
+            cmd = [sys.executable, "-m", "implementations.python.codegen.generate",
+                   str(source), str(out)]
+        else:
+            cli = ROOT / "implementations" / "typescript" / "src" / "codegen" / "cli.ts"
+            if not cli.is_file():
+                return _unavailable("typescript code generation (cli.ts not found)")
+            node = shutil.which("node")
+            if node is None:
+                return _unavailable("typescript code generation (node is not installed)")
+            payload = {}
+            if option_id is not None:
+                if option_id not in _TS_DECISIONS:
+                    print(f"invalid input: typescript generation has no mapping for option "
+                          f"'{option_id}'; supported: {', '.join(_TS_DECISIONS)}", file=sys.stderr)
+                    return EXIT_INVALID
+                payload = _TS_DECISIONS[option_id]
+            out.mkdir(parents=True, exist_ok=True)
+            decision_file = out / ".orin-decision.json"
+            decision_file.write_text(json.dumps(payload), encoding="utf-8")
+            cleanup.append(decision_file)
+            cmd = [node, "--experimental-strip-types", str(cli), str(model),
+                   str(decision_file), str(out)]
+        env = dict(os.environ, PYTHONPATH=os.pathsep.join(
+            [str(ROOT)] + ([os.environ["PYTHONPATH"]] if os.environ.get("PYTHONPATH") else [])))
+        result = subprocess.run(cmd, cwd=ROOT, env=env, capture_output=True, text=True)
+    finally:
+        for path in cleanup:
+            path.unlink(missing_ok=True)
     sys.stdout.write(result.stdout)
     sys.stderr.write(result.stderr)
     if result.returncode == 0:
@@ -245,7 +326,7 @@ def _build_parser() -> argparse.ArgumentParser:
     new.add_argument("--out", help="directory to write into (default: current)")
     gen = sub.add_parser("generate", help="generate an implementation from a model and decision")
     gen.add_argument("model")
-    gen.add_argument("--decision", help="decision id or decision .json file")
+    gen.add_argument("--decision", help="decision option id, or a .json file like {\"option\": \"<id>\"}")
     gen.add_argument("--target", required=True, choices=["python", "typescript"])
     gen.add_argument("--out", required=True, help="output directory")
     for name, text in (("inspect", "inspect decisions (see orin_agent_core)"),

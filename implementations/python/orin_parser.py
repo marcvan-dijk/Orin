@@ -97,6 +97,8 @@ class OrinParser:
         """
         lines = text.splitlines()
         sections = self._outline_sections(lines)
+        if any(s["key"] in ("type", "entity", "relation", "state", "capability", "effect", "rule") for s in sections[1:]):
+            return SemanticModel(self._full_document(sections))
         fixture = self._find_structured_fixture(path) if path is not None else None
         if fixture is not None:
             document = json.loads(fixture.read_text(encoding="utf-8"))
@@ -202,6 +204,102 @@ class OrinParser:
                 if blocking:
                     add("evidence", "blocked", section["line"], status="blocked",
                         statement=f"The {value} decision is unresolved.")
+        return {"modelVersion": "0.1.0", "module": module, "objects": objects}
+
+    _FULL_KEYS = {
+        "identity", "between", "cardinality", "requires", "durability", "actor", "input", "output",
+        "uses", "actor-capabilities", "transitions", "claims", "then", "blocking", "question",
+    }
+    _REF_ORDER = ("rule", "workflow", "relation", "state", "capability", "effect", "entity-type", "value-type")
+
+    def _full_blocks(self, body: list[tuple[int, str]]) -> dict[str, list[str]]:
+        blocks: dict[str, list[str]] = {}
+        current: list[str] | None = None
+        for _, text in body:
+            match = re.match(r"^([A-Za-z][\w-]*):\s*(.*)$", text)
+            if match and match.group(1) in self._FULL_KEYS:
+                current = blocks.setdefault(match.group(1), [])
+                if match.group(2):
+                    current.append(match.group(2))
+            elif current is not None:
+                current.append(text[2:].strip() if text.startswith("- ") else text)
+        return blocks
+
+    def _full_document(self, sections: list[dict[str, Any]]) -> dict[str, Any]:
+        name = sections[0]["value"]
+        module: dict[str, Any] = {
+            "id": f"{name}/module", "kind": "module", "name": name,
+            "status": "accepted", "source": {"line": sections[0]["line"]},
+        }
+        names: dict[str, dict[str, str]] = {}
+        for section in sections[1:]:
+            kind = DECLARATION_KINDS.get(section["key"], section["key"])
+            if section["key"] in DECLARATION_KINDS or section["key"] in ("workflow", "rule"):
+                names.setdefault(kind, {})[section["value"]] = f"{name}/{kind}/{section['value']}"
+
+        def ref(text: str, kinds: tuple[str, ...]) -> str:
+            for kind in kinds:
+                if text in names.get(kind, {}):
+                    return names[kind][text]
+            return text
+
+        objects: list[dict[str, Any]] = []
+        for section in sections[1:]:
+            key, value, body = section["key"], section["value"], section["body"]
+            line = section["line"]
+            if key == "purpose":
+                module["purpose"] = " ".join(([value] if value else []) + [t for _, t in body])
+                continue
+            kind = DECLARATION_KINDS.get(key, key)
+            if kind not in ("value-type", "entity-type", "relation", "state", "capability", "effect",
+                            "workflow", "rule", "example", "uncertainty"):
+                continue
+            blocks = self._full_blocks(body)
+            obj: dict[str, Any] = {"id": f"{name}/{kind}/{value}", "kind": kind, "name": value,
+                                   "status": "accepted", "source": {"line": line}}
+            if kind == "entity-type" and "identity" in blocks:
+                obj["fields"] = [
+                    {"name": f.split()[0], "type": ref(f.split()[1], ("value-type",)), "identity": True}
+                    for f in blocks["identity"] if len(f.split()) == 2
+                ]
+            elif kind == "relation":
+                if "between" in blocks:
+                    obj["endpoints"] = [{"type": ref(t, ("entity-type",))} for t in blocks["between"]]
+                if "cardinality" in blocks:
+                    obj["cardinality"] = " ".join(blocks["cardinality"])
+            elif kind == "effect":
+                obj["requires"] = [ref(t, ("capability",)) for t in blocks.get("requires", [])]
+                if "durability" in blocks:
+                    obj["durability"] = " ".join(blocks["durability"])
+            elif kind == "workflow":
+                def params(items: list[str]) -> list[dict[str, str]]:
+                    return [{"name": i.split()[0], "type": ref(i.split()[1], ("entity-type", "value-type"))}
+                            for i in items if len(i.split()) == 2]
+                obj["inputs"] = params(blocks.get("input", []))
+                obj["outputs"] = params(blocks.get("output", []))
+                if "actor" in blocks:
+                    obj["actor"] = " ".join(blocks["actor"])
+                obj["requires"] = [ref(t, ("capability",)) for t in blocks.get("requires", [])]
+                obj["uses"] = [ref(t, ("effect",)) for t in blocks.get("uses", [])]
+                obj["actorCapabilities"] = [
+                    {"actor": i.split()[0], "capability": ref(i.split()[1], ("capability",))}
+                    for i in blocks.get("actor-capabilities", []) if len(i.split()) == 2
+                ]
+                obj["transitions"] = [
+                    {"from": ref(a.strip(), ("state",)), "to": ref(b.strip(), ("state",))}
+                    for a, b in (i.split("->", 1) for i in blocks.get("transitions", []) if "->" in i)
+                ]
+            elif kind == "rule":
+                obj["requires"] = [ref(t, self._REF_ORDER) for t in blocks.get("requires", [])]
+                obj["claims"] = blocks.get("claims", [])
+            elif kind == "example":
+                obj["requires"] = [ref(t, self._REF_ORDER) for t in blocks.get("requires", [])]
+                obj["expects"] = blocks.get("then", [])
+            elif kind == "uncertainty":
+                blocking = " ".join(blocks.get("blocking", [])).lower() in ("yes", "true")
+                obj.update(status="unresolved", claims=[" ".join(blocks.get("question", []))],
+                           consequential=blocking, authority="human")
+            objects.append(obj)
         return {"modelVersion": "0.1.0", "module": module, "objects": objects}
 
     @staticmethod

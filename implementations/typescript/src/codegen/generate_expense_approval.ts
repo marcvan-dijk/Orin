@@ -1,5 +1,5 @@
 import { SemanticModel } from "../orin_model.ts";
-import { GenerationRefused } from "./generate_password_reset.ts";
+import { GenerationRefused, checkedModuleId, readiness } from "./sanitize.ts";
 
 export const NO_ELIGIBLE_APPROVER_UNCERTAINTY = "finance.expense-approval/uncertainty/no-eligible-approver";
 
@@ -19,13 +19,13 @@ export function generateExpenseApproval(model: SemanticModel, decision: NoEligib
   if (decision?.noEligibleApprover !== "stay-submitted") {
     throw new GenerationRefused('expense-approval decision requires noEligibleApprover: "stay-submitted"');
   }
-  const gates = resolved(model).computeReadinessGates();
+  const moduleId = checkedModuleId(model);
+  const gates = readiness(resolved(model));
   if (gates.compilation !== "eligible") {
     throw new GenerationRefused(
       `model is ${gates.compilation}; unresolved: ${gates.blockingUnresolved.join(", ") || "none"}`,
     );
   }
-  const moduleId = String(model.document.module?.id ?? "unknown").replace(/[^A-Za-z0-9._/-]/g, "_");
   return `// Generated from ${moduleId}. Do not edit.
 // Resolved ${NO_ELIGIBLE_APPROVER_UNCERTAINTY}: ${decision.noEligibleApprover}.
 

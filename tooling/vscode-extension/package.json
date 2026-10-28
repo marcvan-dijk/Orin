@@ -14,6 +14,15 @@
     "onLanguage:orin"
   ],
   "main": "./out/extension.js",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Syntax highlighting, outline and hover work in untrusted workspaces. The Orin agent and checker run Python from the workspace and are disabled until the workspace is trusted.",
+      "restrictedConfigurations": [
+        "orin.pythonPath"
+      ]
+    }
+  },
   "contributes": {
     "languages": [
       {

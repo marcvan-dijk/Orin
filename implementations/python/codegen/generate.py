@@ -37,15 +37,41 @@ class GenerationError(Exception):
     """Raised when a model cannot be turned into an implementation."""
 
 
+def sanitize_id(value: object) -> str:
+    """Reduce a model-derived identifier to a charset that is inert in any emitted comment or literal."""
+    return re.sub(r"[^A-Za-z0-9._/-]", "_", str(value))[:200]
+
+
+def _render(template: str, values: dict[str, str]) -> str:
+    """Single-pass placeholder substitution so substituted values are never rescanned."""
+    return re.sub(r"@@([A-Z_]+)@@", lambda m: values[m.group(1)], template)
+
+
+def _module_id(model: SemanticModel) -> object:
+    module = model.document.get("module", {})
+    if not isinstance(module, dict):
+        raise GenerationError("malformed model: 'module' must be an object")
+    return module.get("id")
+
+
 def _object(model: SemanticModel, object_id: str) -> dict:
+    if not isinstance(model.document.get("objects", []), list):
+        raise GenerationError("malformed model: 'objects' must be a list")
     for obj in model.document.get("objects", []):
         if isinstance(obj, dict) and obj.get("id") == object_id:
             return obj
     raise GenerationError(f"model is missing required object: {object_id}")
 
 
+def _claims(obj: dict) -> list[str]:
+    claims = obj.get("claims", [])
+    if not isinstance(claims, list):
+        raise GenerationError(f"malformed model: claims of {sanitize_id(obj.get('id'))} must be a list")
+    return [c for c in claims if isinstance(c, str)]
+
+
 def _ttl_seconds(model: SemanticModel) -> int:
-    for claim in _object(model, EXPIRY_RULE_ID).get("claims", []):
+    for claim in _claims(_object(model, EXPIRY_RULE_ID)):
         match = re.search(r"expire after (\d+) (second|minute|hour)s?", claim)
         if match:
             return int(match.group(1)) * _UNITS[match.group(2)]
@@ -54,7 +80,7 @@ def _ttl_seconds(model: SemanticModel) -> int:
 
 def _rate_limit(model: SemanticModel) -> tuple[int, int, bool]:
     """Return (max attempts, window seconds, per network origin) from the accepted rule."""
-    for claim in _object(model, RATE_LIMIT_RULE_ID).get("claims", []):
+    for claim in _claims(_object(model, RATE_LIMIT_RULE_ID)):
         match = re.search(
             r"limited to (\d+) attempts? per (?:(\d+) )?(second|minute|hour)s? for the same email address(.*)",
             claim,
@@ -67,7 +93,7 @@ def _rate_limit(model: SemanticModel) -> tuple[int, int, bool]:
 
 
 def _is_expense(model: SemanticModel) -> bool:
-    return model.document.get("module", {}).get("id") == EXPENSE_MODULE_ID
+    return _module_id(model) == EXPENSE_MODULE_ID
 
 
 def output_name(model: SemanticModel) -> str:
@@ -75,33 +101,40 @@ def output_name(model: SemanticModel) -> str:
 
 
 def generate_source(model: SemanticModel) -> str:
-    gates = model.compute_readiness_gates()
+    _module_id(model)
+    try:
+        gates = model.compute_readiness_gates()
+    except (AttributeError, TypeError, KeyError, ValueError) as error:
+        raise GenerationError(f"malformed model: {error}") from error
     if gates["compilation"] != "eligible":
         blockers = ", ".join(gates.get("blockingUnresolved", [])) or "diagnostics present"
         raise GenerationError(
             f"model is not ready for generation (compilation={gates['compilation']}): {blockers}. "
             "Resolve the consequential decisions first."
         )
-    module_id = model.document.get("module", {}).get("id", "unknown")
+    module_id = sanitize_id(_module_id(model) or "unknown")
     if _is_expense(model):
         for object_id in (EXPENSE_WORKFLOW_ID, *EXPENSE_RULES):
             _object(model, object_id)
-        return _EXPENSE_TEMPLATE.replace("@@MODULE@@", json.dumps(module_id))
+        return _render(_EXPENSE_TEMPLATE, {"MODULE": json.dumps(module_id)})
     _object(model, WORKFLOW_ID)
     _object(model, SINGLE_USE_RULE_ID)
     _object(model, NO_DISCLOSURE_RULE_ID)
     limit, window, per_origin = _rate_limit(model)
-    return (
-        _TEMPLATE.replace("@@MODULE@@", json.dumps(module_id))
-        .replace("@@TTL@@", str(_ttl_seconds(model)))
-        .replace("@@RATE_LIMIT@@", str(limit))
-        .replace("@@RATE_WINDOW@@", str(window))
-        .replace("@@RATE_PER_ORIGIN@@", str(per_origin))
-    )
+    return _render(_TEMPLATE, {
+        "MODULE": json.dumps(module_id),
+        "TTL": str(_ttl_seconds(model)),
+        "RATE_LIMIT": str(limit),
+        "RATE_WINDOW": str(window),
+        "RATE_PER_ORIGIN": str(per_origin),
+    })
 
 
 def generate(model_path: str | Path, outdir: str | Path) -> Path:
-    model = SemanticModel.from_json_file(model_path)
+    try:
+        model = SemanticModel.from_json_file(model_path)
+    except json.JSONDecodeError as error:
+        raise GenerationError(f"model is not valid JSON: {error}") from error
     source = generate_source(model)
     out = Path(outdir)
     out.mkdir(parents=True, exist_ok=True)

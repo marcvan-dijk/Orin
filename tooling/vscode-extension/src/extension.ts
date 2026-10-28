@@ -25,6 +25,15 @@ const SYMBOL_KINDS: Record<string, vscode.SymbolKind> = {
 
 type OrinDiagnostic = { code: string; message: string; line?: number };
 
+const UNTRUSTED_MESSAGE =
+  "Orin agent and checker are disabled in untrusted workspaces because they run Python from the workspace. Trust this workspace to enable them.";
+
+function requireTrust(interactive: boolean): boolean {
+  if (vscode.workspace.isTrusted) return true;
+  if (interactive) void vscode.window.showWarningMessage(UNTRUSTED_MESSAGE);
+  return false;
+}
+
 const decisionStore = new Map<string, AgentDecision[]>();
 
 function inspectFile(
@@ -32,6 +41,7 @@ function inspectFile(
   file: string,
   callback: (error: Error | null, stdout: string, stderr: string) => void,
 ): void {
+  if (!requireTrust(false)) return;
   const repository = path.resolve(context.extensionPath, "..", "..");
   const python = vscode.workspace
     .getConfiguration("orin")
@@ -90,6 +100,11 @@ export function activate(context: vscode.ExtensionContext): void {
     }),
   );
   vscode.workspace.textDocuments.forEach(refresh);
+  context.subscriptions.push(
+    vscode.workspace.onDidGrantWorkspaceTrust(() =>
+      vscode.workspace.textDocuments.forEach(refresh),
+    ),
+  );
 
   const showOptions = vscode.commands.registerCommand(
     "orin.showDecisionOptions",
@@ -97,7 +112,7 @@ export function activate(context: vscode.ExtensionContext): void {
       const decision = decisionStore
         .get(uri.toString())
         ?.find((d) => d.id === decisionId);
-      if (!decision) return;
+      if (!decision || !requireTrust(true)) return;
       const picked = await vscode.window.showQuickPick(
         decision.options.map((o) => ({
           label: o.id,
@@ -174,6 +189,7 @@ export function activate(context: vscode.ExtensionContext): void {
   const analyze = vscode.commands.registerCommand(
     "orin.analyzeCurrentFile",
     () => {
+      if (!requireTrust(true)) return;
       const document = vscode.window.activeTextEditor?.document;
       if (!document || document.languageId !== "orin") {
         void vscode.window.showInformationMessage("Open an .orin file first.");
@@ -292,6 +308,7 @@ export function activate(context: vscode.ExtensionContext): void {
 
   context.subscriptions.push(
     vscode.commands.registerCommand("orin.inspectWithAgent", () => {
+      if (!requireTrust(true)) return;
       const document = vscode.window.activeTextEditor?.document;
       if (!document || document.languageId !== "orin") {
         void vscode.window.showInformationMessage("Open an .orin file first.");

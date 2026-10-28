@@ -15,12 +15,16 @@ COPIED = ("tooling", "tests", "examples", "implementations")
 
 # (command fragment, expected exit code, text expected in output)
 EXPECTATIONS = [
+    ("orin_cli check examples/password-reset.orin", 1, ["PROBLEMS:", "ORIN-E041"]),
+    ("orin_cli readiness examples/", 2, ["BLOCKED:", "ORIN-R201"]),
     ("inspect examples/password-reset.orin", 2, ["Compilation: blocked", "Affected objects:",
                                                   "account.password-reset/uncertainty/rate-limit"]),
     ("--option five-per-15m", 4, ["Accepted decision: five-per-15m-per-address-and-origin",
                                   "Updated compilation: eligible"]),
     ("--option three-per-hour", 4, ["Accepted decision: three-per-hour-per-address"]),
     ("diff out/five.json", 1, ["5 attempts per 15 minutes", "3 attempts per hour"]),
+    ("orin_cli check out/three.json", 0, ["OK: out/three.json is valid", "eligible"]),
+    ("orin_cli generate out/three.json", 0, []),
     ("inspect out/three.json", 0, ["Ready: no blocking consequential decisions remain."]),
     ("password_reset_proof.py", 0, ['"blockedCompilation": "blocked"', '"resolvedCompilation": "eligible"',
                                     '"canonicalMeaningStableAcrossVariants": true']),
@@ -76,6 +80,8 @@ class OnboardingDocTests(unittest.TestCase):
                     self.assertEqual(result.returncode, code, f"{command}\n{output}")
                     for needle in needles:
                         self.assertIn(needle, output, command)
+                    if key.startswith("orin_cli generate"):
+                        self.assertTrue((self.work / "out/generated/password_reset_generated.py").is_file())
                     ran.add(key)
                     break
         self.assertGreaterEqual(len(ran), len(EXPECTATIONS) - 1)

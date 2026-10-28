@@ -5,6 +5,9 @@ Use this folder with one rule in mind: concept authority lives in
 tracking lives in [`ORIN-0003-language-improvement-plan.md`](./ORIN-0003-language-improvement-plan.md),
 and broader future material is kept out of the primary path.
 
+Contributing: [`../CONTRIBUTING.md`](../CONTRIBUTING.md) — test commands,
+layout rules, and the scope rule.
+
 ## Authoritative now
 
 - [`ORIN-0001-intent-spec.md`](./ORIN-0001-intent-spec.md) — canonical

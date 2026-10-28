@@ -228,6 +228,7 @@ python implementations/python/parity_check.py
 ```
 
 CI runs all of this: [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+To run every test suite or contribute, see [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 More tools:
 

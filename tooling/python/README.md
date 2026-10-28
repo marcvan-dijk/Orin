@@ -115,7 +115,7 @@ python -m tooling.python.orin_cli generate model.json --decision decision.json -
 - `inspect` / `decide` delegate to `implementations/python/orin_agent_core.py`.
 - `examples` runs the matching `tests/conformance/<name>.cases.json`, if any.
 - `new` writes a minimal valid `<name>.orin` (one rule, workflow, example, open uncertainty).
-- `generate` shells out to `implementations/python/codegen` or `implementations/typescript/src/codegen/cli.ts` (needs `node`; typescript needs a decision `.json` file). Reports "not available" if missing.
+- `generate` shells out to `implementations/python/codegen` or `implementations/typescript/src/codegen/cli.ts` (typescript needs `node`; reports "not available" if missing). `--decision` takes an option id (as shown by `inspect`) or a `.json` file `{"option": "<id>"}` (a raw TS decision file also works), for both targets. If the model is blocked and no decision is given, the open decisions and option ids are printed and the exit code is `2`. The python target applies the option via `orin_agent_core`, writes `<model>.resolved.json` into `--out`, then generates. The typescript target translates the option to its decision JSON (password-reset options; expense-approval accepts `stay-submitted`).
 
 Exit codes: `0` ok/ready, `1` problems or failing examples, `2` blocked
 (decisions required), `3` invalid input or usage.

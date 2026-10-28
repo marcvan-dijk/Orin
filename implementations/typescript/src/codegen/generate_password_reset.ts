@@ -1,10 +1,11 @@
 import { SemanticModel } from "../orin_model.ts";
+import { GenerationRefused, checkedModuleId, readiness } from "./sanitize.ts";
 
 export const RATE_LIMIT_UNCERTAINTY = "account.password-reset/uncertainty/rate-limit";
 
 export type RateLimitDecision = { maxRequests: number; windowSeconds: number };
 
-export class GenerationRefused extends Error {}
+export { GenerationRefused };
 
 function resolved(model: SemanticModel): SemanticModel {
   const next = JSON.parse(JSON.stringify(model.document));
@@ -21,13 +22,13 @@ export function generatePasswordReset(model: SemanticModel, decision: RateLimitD
     || !Number.isInteger(decision?.windowSeconds) || decision.windowSeconds < 1) {
     throw new GenerationRefused("rate-limit decision requires positive integer maxRequests and windowSeconds");
   }
-  const gates = resolved(model).computeReadinessGates();
+  const moduleId = checkedModuleId(model);
+  const gates = readiness(resolved(model));
   if (gates.compilation !== "eligible") {
     throw new GenerationRefused(
       `model is ${gates.compilation}; unresolved: ${gates.blockingUnresolved.join(", ") || "none"}`,
     );
   }
-  const moduleId = String(model.document.module?.id ?? "unknown").replace(/[^A-Za-z0-9._/-]/g, "_");
   return `// Generated from ${moduleId}. Do not edit.
 // Resolved ${RATE_LIMIT_UNCERTAINTY}: ${decision.maxRequests} requests per ${decision.windowSeconds}s per address.
 

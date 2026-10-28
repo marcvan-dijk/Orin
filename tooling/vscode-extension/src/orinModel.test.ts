@@ -26,4 +26,40 @@ assert.strictEqual(defaultResolvedPath("/a/b/x.orin"), "/a/b/x.resolved.json");
 assert.strictEqual(defaultResolvedPath("C:\\a\\x.model.json"), "C:\\a\\x.model.resolved.json");
 assert.deepStrictEqual(buildDecideArgs("f.orin", "u", "o", "w.json").slice(3), ["f.orin", "--uncertainty", "u", "--option", "o", "--write", "w.json"]);
 assert.ok(decideSucceeded(4) && !decideSucceeded(3) && !decideSucceeded(0) && !decideSucceeded(undefined));
+
+const root = path.resolve(__dirname, "..", "..", "..");
+const files = ["examples", path.join("docs", "authoring-examples")].flatMap((dir) =>
+  fs.readdirSync(path.join(root, dir)).filter((f) => f.endsWith(".orin")).map((f) => path.join(root, dir, f)),
+);
+assert.ok(files.length >= 8);
+for (const file of files) {
+  const text = fs.readFileSync(file, "utf8");
+  const lines = text.split(/\r?\n/);
+  const ol = parseOutline(text);
+  const label = path.basename(file);
+  assert.ok(ol.symbols.length > 0, `${label}: empty outline`);
+  assert.ok(ol.modulePurpose, `${label}: missing module purpose`);
+  for (const sym of ol.symbols) {
+    assert.ok(sym.startLine <= sym.endLine && sym.endLine < lines.length, `${label}: bad range ${sym.name}`);
+  }
+  const declared = lines.filter((l) => /^\s*workflow\b/.test(l)).length;
+  const workflows = ol.symbols.filter((x) => x.kind === "workflow");
+  assert.strictEqual(workflows.length, declared, `${label}: workflow count`);
+  for (const w of workflows) {
+    assert.ok(findWorkflowAt(ol, w.startLine), `${label}: no workflow at start`);
+    const hover = workflowHover(ol, w);
+    assert.ok(hover.includes(w.name) && hover.includes("Purpose"), `${label}: hover ${w.name}`);
+  }
+  const uncertainties = lines.filter((l) => /^\s*uncertainty\b/.test(l)).length;
+  assert.strictEqual(ol.symbols.filter((x) => x.kind === "uncertainty").length, uncertainties, `${label}: uncertainties`);
+  for (const sym of ol.symbols.filter((x) => x.kind === "uncertainty")) {
+    assert.strictEqual(lines[findUncertaintyLine(text, sym.name)].includes(sym.name), true, `${label}: uncertainty line`);
+  }
+}
+const brace = parseOutline(fs.readFileSync(path.join(root, "docs", "authoring-examples", "book-lending.orin"), "utf8"));
+assert.strictEqual(brace.symbols.filter((x) => x.kind === "rule").length, 3);
+assert.strictEqual(brace.symbols.filter((x) => x.kind === "example").length, 2);
+assert.strictEqual(brace.symbols.filter((x) => x.kind === "uncertainty").length, 2);
+const lend = brace.symbols.find((x) => x.kind === "workflow")!;
+assert.ok(lend.endLine > lend.startLine);
 console.log("orinModel tests passed");

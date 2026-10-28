@@ -21,9 +21,52 @@ function isTopLevel(line: string): boolean {
   return /^[A-Za-z]/.test(line);
 }
 
+const BRACE_BLOCK = /^\s*(module|workflow|example|uncertainty|rule)\s+([^\s{]+)\s*\{/;
+const QUOTED = /^\s*(purpose|outcome|actor)\s+"((?:[^"\\]|\\.)*)"/;
+
+// Brace-style outline (`workflow name { ... }`); a workflow's `outcome` serves as its purpose.
+function parseBraceOutline(lines: string[]): OrinOutline {
+  const symbols: OrinSymbol[] = [];
+  let modulePurpose: string | undefined;
+  const stack: (OrinSymbol | undefined)[] = [];
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    const block = BRACE_BLOCK.exec(line);
+    const field = QUOTED.exec(line);
+    const owner = stack[stack.length - 1];
+    if (block) {
+      const symbol: OrinSymbol = {
+        kind: block[1] as OrinSymbolKind,
+        name: block[2],
+        startLine: i,
+        endLine: i,
+      };
+      symbols.push(symbol);
+      stack.push(symbol);
+    } else if (field) {
+      if (owner?.kind === "module" && field[1] === "purpose") modulePurpose = field[2];
+      else if (owner?.kind === "workflow") {
+        if (field[1] === "actor") owner.actor = field[2];
+        else if (field[1] === "purpose" || !owner.purpose) owner.purpose = field[2];
+      }
+    }
+    const stripped = line.replace(/"(?:[^"\\]|\\.)*"/g, "");
+    const opens = (stripped.match(/\{/g) ?? []).length - (block ? 1 : 0);
+    const closes = (stripped.match(/\}/g) ?? []).length;
+    // Nested non-symbol braces (e.g. `entity x {`) are tracked as anonymous frames.
+    for (let k = 0; k < opens; k++) stack.push(undefined);
+    for (let k = 0; k < closes && stack.length > 0; k++) {
+      const closed = stack.pop();
+      if (closed) closed.endLine = i;
+    }
+  }
+  return { modulePurpose, symbols };
+}
+
 // Line-based outline; all line numbers are zero-based.
 export function parseOutline(text: string): OrinOutline {
   const lines = text.split(/\r?\n/);
+  if (lines.some((l) => /^module\s+[^\s{:]+\s*\{/.test(l))) return parseBraceOutline(lines);
   const symbols: OrinSymbol[] = [];
   let modulePurpose: string | undefined;
   let current: OrinSymbol | undefined;
@@ -166,7 +209,7 @@ export function parseDecisions(output: string): AgentDecision[] {
 export function findUncertaintyLine(source: string, decisionId: string): number {
   const name = decisionId.split("/").pop() ?? decisionId;
   const lines = source.split(/\r?\n/);
-  const index = lines.findIndex((l) => l.trim() === `uncertainty: ${name}`);
+  const index = lines.findIndex((l) => l.trim() === `uncertainty: ${name}` || l.trim() === `uncertainty ${name} {`);
   return index >= 0 ? index : 0;
 }
 

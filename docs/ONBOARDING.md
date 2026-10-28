@@ -4,18 +4,19 @@ Orin is a way to write down **what a program must do**. AI and code
 implementations decide **how** it is built. The Orin file stays the source of
 truth when the code changes.
 
-You need only `git`, and `python` (3.10 or newer) for steps 4 to 6. Step 7 also
-uses `node` (22.6 or newer). All commands run from the repository root. If `python` is not found, use
-`python3`.
+You need `git` and `python` (3.10 or newer). `node` (22.6 or newer) is needed
+only for the optional TypeScript check at the end of step 7; skip it if you do
+not have Node. All commands run from the repository root. If `python` is not
+found, use `python3`.
 
 ## 1. Clone (1 minute)
 
 ```bash
-git clone https://github.com/<owner>/Orin.git
+git clone https://github.com/marcvan-dijk/Orin.git
 cd Orin
 ```
 
-Use the URL of the repository you are working from.
+If you work from a fork, use the URL of your fork.
 
 ## 2. Open the example (2 minutes)
 
@@ -40,7 +41,22 @@ Why keep them apart? Intent should not change when code changes. A decision
 should never be guessed silently by AI or by a developer. Evidence tells you
 if an implementation really keeps the intent.
 
-## 4. Run the agent (1 minute)
+## 4. Check the example and run the agent (2 minutes)
+
+First ask the checker if the example is complete:
+
+```bash
+python -m tooling.python.orin_cli check examples/password-reset.orin
+```
+
+It prints `PROBLEMS:` and the open decision (`ORIN-E041`), and exits `1`.
+For a longer list of what is missing, run:
+
+```bash
+python -m tooling.python.orin_cli readiness examples/password-reset.orin
+```
+
+It prints `BLOCKED:` and exits `2`. Now ask the agent about the open decision:
 
 ```bash
 python -m tooling.python.orin_agent inspect examples/password-reset.orin
@@ -118,13 +134,15 @@ Only one rule line differs:
 >         "Password reset requests are limited to 3 attempts per hour for the same email address, regardless of network origin.",
 ```
 
-Check that the program is now ready:
+Check that the decision is closed:
 
 ```bash
+python -m tooling.python.orin_cli check out/three.json
 python -m tooling.python.orin_agent inspect out/three.json
 ```
 
-It prints `Ready: no blocking consequential decisions remain.` and exits `0`.
+The first prints `OK: out/three.json is valid (compilation: eligible).` The
+second prints `Ready: no blocking consequential decisions remain.` Both exit `0`.
 The `defer` option is refused (exit code `3`): it produces no new file and the program stays blocked.
 
 ## 6. See the effect on the examples (1 minute)
@@ -135,11 +153,20 @@ person always gets the same confirmation. Only the rate-limit rule changed.
 This is the point of Orin: the decision is visible and recorded, and the
 evidence tells you what must still be true.
 
-## 7. Run the proof for two implementations (1 minute)
+## 7. Generate code and run the proof (2 minutes)
 
-Orin does not yet have a general code generator. The repository has a small
-proof that turns the accepted meaning into two different implementation plans
-and checks the same behaviour for both.
+Now that the decision is made, generate a small Python implementation from the
+decided model:
+
+```bash
+python -m tooling.python.orin_cli generate out/three.json --target python --out out/generated
+```
+
+It writes `out/generated/password_reset_generated.py` and exits `0`. If a
+decision is still open, `generate` refuses to run (exit `1`).
+
+The repository also has a small proof that turns the accepted meaning into two
+different implementation plans and checks the same behaviour for both.
 
 ```bash
 python implementations/python/password_reset_proof.py
@@ -158,14 +185,22 @@ the same for both variants (`low-latency-managed` and `simple-portable`). Only
 the implementation choices differ. It also lists the eight behaviour cases that
 any implementation must pass.
 
-Run the checks. The TypeScript reference runtime is one such implementation:
+Run the Python check:
 
 ```bash
 python implementations/python/test_orin_model.py PasswordResetProofRunTests.test_password_reset_end_to_end_derivation_proof
+```
+
+Expected: `Ran 1 test ... OK`.
+
+**Optional (needs Node 22.6 or newer).** The TypeScript reference runtime is
+another implementation. You can skip this and still finish the walkthrough:
+
+```bash
 node --test --experimental-strip-types implementations/typescript/src/password_reset_proof.test.ts
 ```
 
-Expected: `Ran 1 test ... OK`, then `# pass 4` and `# fail 0`.
+Expected: `# pass 4` and `# fail 0`.
 
 ## What you learned
 
