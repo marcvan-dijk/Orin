@@ -1,44 +1,40 @@
-module invoice-reminders {
-  purpose "Nudge customers to pay overdue invoices without pestering them."
+module: invoice-reminders
 
-  type invoice-number
+purpose:
+  Nudge customers to pay overdue invoices without pestering them.
 
-  entity invoice {
-    field number invoice-number identity
-  }
+rules:
+  - A reminder is sent 7 days after the due date if the invoice is still unpaid.
+  - No customer receives more than one reminder for the same invoice in any 7 days.
+  - Once an invoice is paid, no further reminders are sent for it.
+  - At most 3 reminders are sent for one invoice.
 
-  rule reminder-after-due-date {
-    guarantee "A reminder is sent 7 days after the due date if the invoice is still unpaid."
-  }
-  rule at-most-one-per-week {
-    guarantee "No customer receives more than one reminder for the same invoice in any 7 days."
-  }
-  rule paid-stops-reminders {
-    guarantee "Once an invoice is paid, no further reminders are sent for it."
-  }
-  rule stop-after-three {
-    guarantee "At most 3 reminders are sent for one invoice."
-  }
+workflow: send-due-reminders
+  output:
+    Each unpaid invoice that is due for a reminder gets exactly one reminder that day.
 
-  workflow send-due-reminders {
-    outcome "Each unpaid invoice that is due for a reminder gets exactly one reminder that day."
-  }
+example: first-reminder
+  given:
+    An unpaid invoice due on 1 March and no reminders sent.
+  when:
+    The daily check runs on 8 March.
+  then:
+    One reminder is sent.
 
-  example first-reminder {
-    given "An unpaid invoice due on 1 March and no reminders sent."
-    when "The daily check runs on 8 March."
-    then "One reminder is sent."
-  }
-  example already-reminded {
-    given "An unpaid invoice that was reminded on 8 March."
-    when "The daily check runs on 10 March."
-    then "No reminder is sent."
-  }
+example: already-reminded
+  given:
+    An unpaid invoice that was reminded on 8 March.
+  when:
+    The daily check runs on 10 March.
+  then:
+    No reminder is sent.
 
-  uncertainty time-zone {
-    question "Which time zone decides when a day starts: the business's or the customer's?"
-  }
-  uncertainty weekends {
-    question "Should reminders due on a weekend or holiday be sent that day or the next working day?"
-  }
-}
+uncertainty: time-zone
+  blocking: yes
+  question:
+    Which time zone decides when a day starts: the business's or the customer's?
+
+uncertainty: weekends
+  blocking: yes
+  question:
+    Should reminders due on a weekend or holiday be sent that day or the next working day?

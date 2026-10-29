@@ -15,9 +15,12 @@ from typing import Any
 
 sys.path.insert(0, str(Path(__file__).parent))
 from orin_model import SemanticModel
+from orin_parser import OrinParser, OrinSourceError
 
 ROOT = Path(__file__).resolve().parents[2]
 CONFORMANCE = ROOT / "tests" / "conformance"
+EXAMPLES = ROOT / "examples"
+TS_PARSER = ROOT / "implementations" / "typescript" / "src" / "orin_parser.ts"
 TS_MODEL = ROOT / "implementations" / "typescript" / "src" / "orin_model.ts"
 
 TS_SCRIPT = """
@@ -38,6 +41,88 @@ for (const path of JSON.parse(process.argv[2])) {
 }
 console.log(JSON.stringify(out));
 """
+
+
+TS_PARSE_SCRIPT = """
+const { parseOrinFile, OrinSourceError } = await import(process.argv[1]);
+const strip = (v) => Array.isArray(v) ? v.map(strip)
+  : v && typeof v === "object" ? Object.fromEntries(Object.entries(v).filter(([k]) => k !== "source").map(([k, x]) => [k, strip(x)])) : v;
+const out = {};
+for (const path of JSON.parse(process.argv[2])) {
+  try {
+    const model = parseOrinFile(path);
+    out[path] = {
+      diagnostics: model.diagnostics().map((d) => ({ code: d.code, objectId: d.objectId ?? null, message: d.message })),
+      document: strip(JSON.parse(JSON.stringify(model.document))),
+    };
+  } catch (error) {
+    out[path] = error instanceof OrinSourceError ? { sourceError: error.code, line: error.line } : { error: String(error) };
+  }
+}
+console.log(JSON.stringify(out));
+"""
+
+
+def _strip_source(value: Any) -> Any:
+    if isinstance(value, list):
+        return [_strip_source(v) for v in value]
+    if isinstance(value, dict):
+        return {k: _strip_source(v) for k, v in value.items() if k != "source"}
+    return value
+
+
+def python_parse_snapshot(path: Path) -> dict[str, Any]:
+    try:
+        model = OrinParser().parse_file(path)
+        return {
+            "diagnostics": [{"code": d.code, "objectId": d.object_id, "message": d.message} for d in model.diagnostics()],
+            "document": _strip_source(json.loads(json.dumps(model.document))),
+        }
+    except OrinSourceError as error:
+        return {"sourceError": error.code, "line": error.line}
+    except Exception as error:  # noqa: BLE001
+        return {"error": str(error)}
+
+
+def typescript_parse_snapshots(paths: list[Path]) -> dict[str, dict[str, Any]]:
+    result = subprocess.run(
+        ["node", "--experimental-strip-types", "--input-type=module", "-e", TS_PARSE_SCRIPT,
+         TS_PARSER.as_uri(), json.dumps([str(p) for p in paths])],
+        capture_output=True, text=True, check=False,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"typescript parser execution failed: {result.stderr.strip()}")
+    return json.loads(result.stdout)
+
+
+def compare_parse(py: dict[str, Any], ts: dict[str, Any]) -> str | None:
+    if py.get("diagnostics") != ts.get("diagnostics"):
+        return "diagnostics differ"
+    if py.get("document") != ts.get("document"):
+        return "model differs"
+    if ("sourceError" in py or "error" in py) and py != ts:
+        return "error differs"
+    return None
+
+
+def run_examples(examples: Path = EXAMPLES, node: str | None = None) -> tuple[list[tuple[str, str, str]], int]:
+    node = node if node is not None else shutil.which("node")
+    paths = sorted(examples.glob("*.orin"))
+    py = {p: python_parse_snapshot(p) for p in paths}
+    if not node:
+        return [(f"examples/{p.name}", "parse", "SKIP") for p in paths] + [
+            ("NOTICE", "node not found; TypeScript parser parity skipped", "SKIP")], 0
+    try:
+        ts = typescript_parse_snapshots(paths)
+    except (RuntimeError, OSError, json.JSONDecodeError) as error:
+        return [("(typescript parser)", "-", f"FAIL {error}")], 1
+    rows: list[tuple[str, str, str]] = []
+    failures = 0
+    for p in paths:
+        problem = compare_parse(py[p], ts.get(str(p), {"error": "missing"}))
+        failures += problem is not None
+        rows.append((f"examples/{p.name}", "parse", f"FAIL {problem}" if problem else "PASS"))
+    return rows, failures
 
 
 def collect_targets(conformance: Path = CONFORMANCE) -> list[tuple[str, str]]:
@@ -131,6 +216,9 @@ def run(conformance: Path = CONFORMANCE, node: str | None = None) -> tuple[list[
 
 def main() -> int:
     rows, failures = run()
+    example_rows, example_failures = run_examples()
+    rows += example_rows
+    failures += example_failures
     width = max((len(r[0]) for r in rows), default=10)
     mwidth = max((len(r[1]) for r in rows), default=10)
     print(f"{'fixture/case'.ljust(width)}  {'model'.ljust(mwidth)}  parity")

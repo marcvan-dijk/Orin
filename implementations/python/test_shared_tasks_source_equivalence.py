@@ -26,7 +26,7 @@ class SharedTasksSourceEquivalenceTests(unittest.TestCase):
 
         uncertainties = [o for o in loaded["objects"] if o["kind"] == "uncertainty"]
         self.assertEqual([u["name"] for u in uncertainties], ["non-member-completion"])
-        loaded["objects"] = [o for o in loaded["objects"] if o["kind"] != "uncertainty"]
+        loaded["objects"] = [o for o in loaded["objects"] if o["kind"] not in ("uncertainty", "evidence")]
 
         def by_id(doc):
             return {o["id"]: o for o in doc["objects"]}

@@ -1,126 +1,160 @@
 # Orin Language Reference
 
-This is a short reference for the `.orin` language as the Python loader
-(`implementations/python/orin_parser.py`) reads it today. It lists what works
-now, not what is planned.
+This is a short guide to writing `.orin` files in **outline style**, as the
+Python loader (`implementations/python/orin_parser.py`) reads it today. The
+exact grammar is in `ORIN-SYNTAX-GRAMMAR.md`. Why outline style is the main
+style is in `DECISION-OUTLINE-SYNTAX.md`. Brace style (`module name { ... }`)
+still loads but is legacy and is not described here.
 
-## Two writing styles
+Orin files say what a program must do: its purpose, its rules, examples you
+can observe, and questions nobody has answered yet. They do not say how to
+build it.
 
-1. **Outline style** (indented labels like `module: password-reset`). Used by
-   `examples/password-reset.orin` and described in `ORIN-SYNTAX-GUIDE.md`. The
-   loader does **not** read this style in general. It only loads that one
-   example file, by matching its known lines and using the matching JSON file
-   in `tests/conformance/`.
-2. **Block style** (`module name { ... }`). This is the style the loader
-   really parses. Everything below, and every snippet, uses it.
+## The basics
 
-Block style rules:
+- The first line is `module: <name>`.
+- A section starts at the left edge with `key: name` or `key:`.
+- Indented lines belong to the section above. How far you indent does not
+  matter.
+- Blank lines and lines starting with `//` are ignored.
+- A line at the left edge that is not `key: ...` gives `ORIN-P010`. A file
+  that does not start with `module:` gives `ORIN-P001`.
 
-- One declaration or attribute per line. Blank lines and lines starting with
-  `//` are ignored.
-- Text values are in double quotes: `purpose "Reset passwords safely."`
-- Names use letters, digits, `_`, `.` and `-`.
-- The file starts with `module <name> {`. Without it you get `ORIN-P001`.
-- Each object gets an id: `<module>/<kind>/<name>`.
+## Two levels of detail
 
-## Module-level lines
+The loader looks at which sections you used.
 
-| Line | Meaning |
-|---|---|
-| `purpose "..."` | Why the module exists. |
-| `import <name>` | Records an import (kept as text only). |
-| `context { repository "..." risk "..." }` | Extra facts, one per line. Only `repository` and `risk` are allowed (`ORIN-P006`). |
-| `policy implementation { ... }` | Implementation preferences, one per line: `optimize-for`, `prefer`, `require`, `deploy-to`, each with a quoted value (`ORIN-P007`). |
-| `scope ... {` , `risk ... {`, `role ...` | Accepted and ignored. |
+- **Simple**: only `purpose`, `rules`, `workflow`, `example`, `uncertainty`.
+  This is the easiest way to start. Rules and workflow steps are plain text.
+- **Detailed**: as soon as you use `type`, `entity`, `relation`, `state`,
+  `capability`, `effect` or `rule:` (one rule per section), the file is read
+  as a checked model. Names must point to things you declared.
 
-## Section kinds
-
-Single-line (no braces): `type <name>`, `state <name>`,
-`capability <name>`, `evidence <name> "statement"`.
-
-Block (`kind name {` ... `}`): `entity`, `relation`, `rule`, `workflow`,
-`example`, `uncertainty`, `target`, `effect`.
-
-| Kind | Lines that work inside |
-|---|---|
-| `entity` | `field <name> <value-type> [identity]` |
-| `relation` | `from <entity>`, `to <entity>`, `cardinality <one-to-one\|one-to-many\|many-to-one\|many-to-many>` |
-| `workflow` | `input <name> <type>`, `output <name> <type>`, `transition <state> -> <state>`, `requires <capability>`, `uses <effect>`, `actor <name>`, `bind <actor> <capability>` |
-| `effect` | `requires <capability>`, `durability <strong\|eventual>` |
-| `rule`, `example`, `uncertainty`, `target` | text lines (below) |
-
-Text lines, allowed in any block: `purpose`, `guarantee`, `question`,
-`outcome`, `recovery`, `given`, `when`, `then`, `impact` (all take a quoted
-text), `severity` (quoted), `authority` (unquoted). `budget ...` is ignored.
-Any other line gives `ORIN-P005`. A `{` block that is not closed gives
-`ORIN-P003`; a line that fits nothing gives `ORIN-P002`.
-
-Short names such as `Order` are turned into full ids for you. Referring to a
-name that is not declared gives `ORIN-E007` or a type error (see below).
-
-## Rules, examples, uncertainties, decisions
-
-**Rule** — something that must always be true. Write each statement as a
-`guarantee`.
-
-**Example** — one observable case. Use `given`, `when`, `then`.
-
-**Uncertainty** — a question nobody answered yet. In the loader, every
-`uncertainty` block is *consequential* (it blocks readiness) as long as it is
-in the file.
-
-**Decision** — there is no `decision` keyword. To decide, answer the question
-and remove the `uncertainty` block. Write the answer as a `rule` or
-`example`.
+## Simple sections
 
 ```orin
-module demo.shop {
-  purpose "Sell items."
-  type Email
-  type Sku
-  state placed
-  state paid
-  entity Order {
-    field id Sku identity
-    field contact Email
-  }
-  workflow pay {
-    input order Order
-    transition placed -> paid
-  }
-  rule no-double-pay {
-    guarantee "An order is charged once."
-  }
-  example paid-once {
-    given "An order is placed."
-    when "The buyer pays."
-    then "The order is paid."
-  }
-  uncertainty refunds {
-    question "Are refunds allowed after 30 days?"
-    impact "Support load"
-  }
-}
+module: demo.shop
+
+purpose:
+  Sell items to customers and take payment once.
+
+rules:
+  - An order is charged at most once.
+  - A paid order cannot be paid again.
+
+workflow: pay-order
+  input:
+    order
+  steps:
+    check the order is placed
+    charge the customer
+    mark the order paid
+
+example: pays-once
+  given:
+    An order that is placed.
+  when:
+    The buyer pays.
+  then:
+    The order is paid.
+
+uncertainty: refund-window
+  blocking: yes
+  question:
+    Are refunds allowed after 30 days?
 ```
 
+| Section | What it holds |
+|---|---|
+| `purpose:` | Why the module exists. Text on the same line or indented below. |
+| `rules:` | A list of `- ` statements that must always be true. |
+| `workflow: name` | `input:` (names), `steps:` (guidance, not checked), `failure:`, `recovery:`, `after:` (postconditions). |
+| `example: name` | One observable case: `given:`, `when:`, `then:`. |
+| `uncertainty: name` | `question:` and `blocking: yes` or `no`. |
+
+A blocking uncertainty stops the module from being *ready*. To settle one,
+write the answer as a rule or an example and remove the uncertainty.
+
+## Detailed sections
+
+```orin
+module: demo.orders
+
+purpose:
+  Orders move from placed to paid.
+
+type: sku
+
+entity: order
+  identity:
+    id sku
+
+state: placed
+
+state: paid
+
+capability: charge-order
+
+capability: write-order-state
+
+effect: persistent-entity-store.write.order-state
+  requires:
+    write-order-state
+  durability: strong
+
+workflow: pay
+  actor: buyer
+  input:
+    buyer order
+    order order
+  output:
+    order order
+  requires:
+    charge-order
+  uses:
+    persistent-entity-store.write.order-state
+  actor-capabilities:
+    buyer charge-order
+    buyer write-order-state
+  transitions:
+    placed -> paid
+
+rule: paid-is-final
+  requires:
+    paid
+    charge-order
+  claims:
+    - A paid order does not go back to placed.
+
+example: pay-once
+  requires:
+    pay
+    paid-is-final
+  then:
+    order.state = paid
+```
+
+| Section | Lines inside |
+|---|---|
+| `type: name` | none. A simple value type, such as an id. |
+| `entity: name` | `identity:` then `field type` lines. |
+| `relation: name` | `between:` (two entities), `cardinality:` (`one-to-one`, `one-to-many`, `many-to-one`, `many-to-many`). |
+| `state: name`, `capability: name` | none. |
+| `effect: name` | `requires:` (capabilities), `durability:` (`strong` or `eventual`). |
+| `workflow: name` | `actor:`, `input:` and `output:` (`name type` lines), `requires:`, `uses:`, `actor-capabilities:` (`actor capability` lines), `transitions:` (`from -> to`), `failure:`, `recovery:`, `after:`. |
+| `rule: name` | `requires:` (names it talks about), `claims:` (`- ` statements). |
+| `example: name` | `requires:` and `then:` (the expected result). |
+| `uncertainty: name` | `blocking:` and `question:`. |
+
+Ids are built as `<module>/<kind>/<name>`. Short names are turned into full
+ids for you. A name that was never declared gives `ORIN-E007` or a type error.
 A rule that says both "X" and "not X" gives `ORIN-E046`.
 
-## Policy and context
+## Not supported yet
 
-```orin
-module demo.policy {
-  context {
-    repository "github.com/example/shop"
-    risk "medium"
-  }
-  policy implementation {
-    optimize-for "cost"
-    deploy-to "eu-west"
-  }
-}
-```
-
-Each policy line shows up as an `ORIN-R301` info message. It never blocks.
+Outline style cannot yet write: plain entity fields, imports, `context`,
+implementation policy, or uncertainty `options:`. See section 6 of `ORIN-SYNTAX-GRAMMAR.md`. Entity
+lifecycle and effect inputs/outputs are also missing, so those items still block.
 
 ## Check errors (ORIN-E…)
 
@@ -175,15 +209,24 @@ Non-blocking: R101 (relation `deletionBehavior` unset, default `retain`),
 R102 (effect `retryPolicy` unset, default `none`), R301 (policy choice).
 R900 means the document structure is broken.
 
-**Important limit today:** block style cannot yet write the fields behind
-R001–R050 (for example `failureBehavior`, `evidenceLinks`). `recovery` and
-`outcome` lines become plain claims, not those fields. So a block-style
-workflow or rule always reports these `R` items; only the JSON form
-(`tests/conformance/*.json`) can satisfy them.
+Clear R020, R021, R050 and R040 in outline style:
 
-## Outline example
+```orin
+rules:
+  - A returned loan cannot be returned again.
+    proved-by: double-return
 
-`examples/password-reset.orin` uses labels `module:`, `purpose:`, `rules:`
-(with `-` items), `workflow:` (`input:`, `steps:`), `example:` (`given:`,
-`when:`, `then:`) and `uncertainty:` (`blocking: yes`, `question:`). Because
-it has an open, blocking question, the example is *blocked*, not ready.
+workflow: return-book
+  input:
+    loan
+  failure:
+    The loan stays on loan and no fee is charged.
+  recovery:
+    The return may be repeated until it is recorded.
+  after:
+    The loan is returned.
+```
+
+`proved-by:` takes example names (comma separated; also allowed in a `rule:`
+block). R001, R002, R010, R011, R030, R031, R032 still need the JSON form.
+

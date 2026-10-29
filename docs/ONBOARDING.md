@@ -4,10 +4,12 @@ Orin is a way to write down **what a program must do**. AI and code
 implementations decide **how** it is built. The Orin file stays the source of
 truth when the code changes.
 
-You need `git` and `python` (3.10 or newer). `node` (22.6 or newer) is needed
-only for the optional TypeScript check at the end of step 7; skip it if you do
-not have Node. All commands run from the repository root. If `python` is not
-found, use `python3`.
+You need `git` and Python. Node is only for the optional TypeScript check at
+the end of step 7. Exact versions are in
+[Requirements](../README.md#try-it). Unknown words: [glossary](./GLOSSARY.md).
+All commands run from the repository root. If `python` is not found, use
+`python3` (Windows: `py`). On Windows PowerShell, see the note in the README;
+every command below is on one line.
 
 ## 1. Clone (1 minute)
 
@@ -86,23 +88,31 @@ The exit code is `2`, which means "blocked". Orin does not build the program
 while an important decision is open. (Note: the agent gives its own, more exact
 version of the question than the short text in the `.orin` file.)
 
+### What the readiness codes mean
+
+Each line of `readiness` starts with a code. `ORIN-R201` is the one real
+open question here: the `rate-limit` uncertainty. The other `ORIN-R0xx` lines
+are optional hardening: extra detail (who may do a thing, what happens on
+failure, which evidence proves a rule) that makes a program safer to build.
+Notes marked `ORIN-R3xx` never block. You can ignore the hardening lines on
+your first run; only decisions (`R2xx`) must be answered before code is made.
+
 Look at **Affected objects**. This is the impact: the decision touches one
 workflow and both examples.
 
 ## 5. Make a decision (2 minutes)
 
-Choose an option. The output file goes in a folder you choose; here, `out/`.
+Choose an option. The file `password-reset.model.json` is the same program as
+the `.orin` file, in a form tools read (the "semantic model"; see the
+[glossary](./GLOSSARY.md)). The output goes in `out/`.
 
 ```bash
-mkdir -p out
-python -m tooling.python.orin_agent decide \
-  tests/conformance/password-reset.model.json \
-  --uncertainty account.password-reset/uncertainty/rate-limit \
-  --option five-per-15m-per-address-and-origin \
-  --write out/five.json
+mkdir out
+python -m tooling.python.orin_agent decide tests/conformance/password-reset.model.json --uncertainty account.password-reset/uncertainty/rate-limit --option five-per-15m-per-address-and-origin --write out/five.json
 ```
 
-Real output (exit code `4` means "decision accepted"):
+Real output (exit code `4` means "decision accepted"; it is not an error, but
+a script that expects `0` will see it as a failure):
 
 ```text
 Accepted decision: five-per-15m-per-address-and-origin
@@ -113,11 +123,7 @@ Wrote revised semantic artifact to <your path>/out/five.json
 Now change your mind. Run the same command with the other option:
 
 ```bash
-python -m tooling.python.orin_agent decide \
-  tests/conformance/password-reset.model.json \
-  --uncertainty account.password-reset/uncertainty/rate-limit \
-  --option three-per-hour-per-address \
-  --write out/three.json
+python -m tooling.python.orin_agent decide tests/conformance/password-reset.model.json --uncertainty account.password-reset/uncertainty/rate-limit --option three-per-hour-per-address --write out/three.json
 ```
 
 Compare the two results (`diff` exits `1` when files differ; that is normal):
@@ -172,7 +178,9 @@ different implementation plans and checks the same behaviour for both.
 python implementations/python/password_reset_proof.py
 ```
 
-Real output (shortened):
+The output is long. To find the lines below, filter it by hand: in Bash add
+`| grep canonical`; in PowerShell add `| Select-String canonical`. Real output
+(shortened):
 
 ```text
 "blockedCompilation": "blocked",
@@ -193,7 +201,7 @@ python implementations/python/test_orin_model.py PasswordResetProofRunTests.test
 
 Expected: `Ran 1 test ... OK`.
 
-**Optional (needs Node 22.6 or newer).** The TypeScript reference runtime is
+**Optional (needs Node; see [Requirements](../README.md#try-it)).** The TypeScript reference runtime is
 another implementation. You can skip this and still finish the walkthrough:
 
 ```bash
@@ -208,6 +216,6 @@ Expected: `# pass 4` and `# fail 0`.
 - A **decision** is explicit. Nothing is built until a human makes it.
 - **Evidence** checks any implementation against the intent.
 
-Next: [`ORIN-SYNTAX-GUIDE.md`](./ORIN-SYNTAX-GUIDE.md) and
+Words: [`GLOSSARY.md`](./GLOSSARY.md). Next: [`ORIN-SYNTAX-GUIDE.md`](./ORIN-SYNTAX-GUIDE.md) and
 [`PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`](./PASSWORD-RESET-MVP-DEMO-RUNBOOK.md).
 Delete the `out/` folder when you are done.

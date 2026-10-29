@@ -7,16 +7,8 @@ to print the gap report; tests for stems with no gaps are normal tests, others a
 """
 from __future__ import annotations
 
-# Gap summary (initial run, parser before c1 changes):
-#  * module.id/name use the bare file stem; fixture wants a namespaced module name
-#    (account.password-reset, finance.expense-approval) -> object ids differ, so every object differs by id.
-#  * password-reset module: context, implementationPolicies, imports not parsed; purpose text differs.
-#  * rule ids: fixture uses short slugs (reset-token-expiry, no-self-decision, ...); outline derives
-#    ids from the first words of the rule sentence.
-#  * password-reset fixture-only objects: capability/person.request-password-reset,
-#    capability/system.send-reset-message, state/{account-exists,reset-requested,reset-token-issued},
-#    value-type/{email,reset-token}; the .orin text likely lacks these -> add lines to the .orin.
-#  * Run `python -m implementations.python.test_fixture_free_parsing` for the full current list.
+# Decision data authored inline on an uncertainty (why_it_matters, affected_objects, rule,
+# options) is not part of the structured fixture; it is compared to <stem>.decisions.json instead.
 
 import json
 import unittest
@@ -37,9 +29,18 @@ def _strip(value: Any) -> Any:
     return value
 
 
-def parse_without_fixture(stem: str) -> dict[str, Any]:
+DECISION_KEYS = ("why_it_matters", "affected_objects", "rule", "options")
+
+
+def parse_without_fixture(stem: str, keep_decisions: bool = False) -> dict[str, Any]:
     text = (ROOT / "examples" / f"{stem}.orin").read_text(encoding="utf-8")
-    return _strip(OrinParser().parse_outline(text).document)
+    document = _strip(OrinParser().parse_outline(text).document)
+    if not keep_decisions:
+        for obj in document["objects"]:
+            if obj["kind"] == "uncertainty":
+                for key in DECISION_KEYS:
+                    obj.pop(key, None)
+    return document
 
 
 def load_fixture(stem: str) -> dict[str, Any]:
@@ -93,13 +94,19 @@ class FixtureFreeParsingTests(unittest.TestCase):
     def _check(self, stem: str) -> None:
         self.assertEqual([], diff_models(load_fixture(stem), parse_without_fixture(stem)))
 
-    @unittest.expectedFailure
     def test_password_reset_matches_fixture(self) -> None:
         self._check("password-reset")
 
-    @unittest.expectedFailure
     def test_expense_approval_matches_fixture(self) -> None:
         self._check("expense-approval")
+
+    def test_expense_inline_decisions_match_sidecar(self) -> None:
+        sidecar = json.loads((ROOT / "tests" / "conformance" / "expense-approval.decisions.json").read_text(encoding="utf-8"))
+        document = parse_without_fixture("expense-approval", keep_decisions=True)
+        for obj in document["objects"]:
+            if obj["kind"] == "uncertainty":
+                expected = sidecar["decisions"][obj["id"]]
+                self.assertEqual(expected, {k: obj[k] for k in DECISION_KEYS})
 
 
 if __name__ == "__main__":

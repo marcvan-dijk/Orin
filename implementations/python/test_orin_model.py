@@ -656,14 +656,14 @@ class OrinParserTests(unittest.TestCase):
         }
 
         self.assertEqual(model.document["module"]["imports"], ["account-store", "email-provider"])
-        self.assertEqual(model.document["module"]["source"]["line"], line_number("module: password-reset"))
+        self.assertEqual(model.document["module"]["source"]["line"], line_number("module: account.password-reset"))
         self.assertEqual(
             source_lines["account.password-reset/rule/reset-token-expiry"],
-            line_number("- Reset links expire after 15 minutes."),
+            line_number("rule: reset-token-expiry"),
         )
         self.assertEqual(
             source_lines["account.password-reset/rule/reset-token-single-use"],
-            line_number("- Reset links can only be used once."),
+            line_number("rule: reset-token-single-use"),
         )
         self.assertEqual(
             source_lines["account.password-reset/workflow/request-reset"],

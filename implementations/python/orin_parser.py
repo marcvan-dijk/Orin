@@ -67,7 +67,7 @@ class OrinParser:
     def parse_file(self, path: str | Path) -> SemanticModel:
         path = Path(path)
         try:
-            text = path.read_text(encoding="utf-8")
+            text = path.read_text(encoding="utf-8").removeprefix("\ufeff")
         except FileNotFoundError:
             raise OrinSourceError("ORIN-P012", "The file does not exist.", "Check the path and spelling.", str(path), 1, 1) from None
         except UnicodeDecodeError as error:
@@ -95,11 +95,20 @@ class OrinParser:
         A sibling tests/conformance/<stem>.structured.json, when present, supplies the
         accepted structured model; source lines are attached from the outline.
         """
+        try:
+            return self._parse_outline_text(text.removeprefix("\ufeff"), path)
+        except OrinSourceError as error:
+            if path is not None and not error.file:
+                raise error.with_file(str(path)) from None
+            raise
+
+    def _parse_outline_text(self, text: str, path: Path | None) -> SemanticModel:
         lines = text.splitlines()
         sections = self._outline_sections(lines)
         if any(s["key"] in ("type", "entity", "relation", "state", "capability", "effect", "rule") for s in sections[1:]):
             return SemanticModel(self._full_document(sections))
-        fixture = self._find_structured_fixture(path) if path is not None else None
+        # Fallback for minimal, non-namespaced outlines: borrow the accepted structured model.
+        fixture = self._find_structured_fixture(path) if path is not None and "." not in sections[0]["value"] else None
         if fixture is not None:
             document = json.loads(fixture.read_text(encoding="utf-8"))
             self._attach_outline_lines(document, sections)
@@ -132,9 +141,10 @@ class OrinParser:
                         "Start sections with a keyword and a colon, for example: rules:", None, number,
                         1, raw.rstrip(),
                     )
-                sections.append({"key": match.group(1), "value": match.group(2).strip(), "line": number, "body": []})
+                sections.append({"key": match.group(1), "value": match.group(2).strip(), "line": number, "body": [], "raw": []})
             elif sections:
                 sections[-1]["body"].append((number, stripped))
+                sections[-1]["raw"].append((number, len(raw) - len(raw.lstrip()), stripped))
             else:
                 raise OrinSourceError(
                     "ORIN-P001", "A module declaration is required first.",
@@ -150,7 +160,7 @@ class OrinParser:
         current: list[tuple[int, str]] | None = None
         for number, text in body:
             match = re.match(r"^([A-Za-z][\w-]*):\s*(.*)$", text)
-            if match and match.group(1) in {"given", "when", "then", "input", "steps", "blocking", "question", "output", "requires"}:
+            if match and match.group(1) in {"given", "when", "then", "input", "steps", "blocking", "question", "output", "requires", "failure", "recovery", "after"}:
                 current = blocks.setdefault(match.group(1), [])
                 if match.group(2):
                     current.append((number, match.group(2)))
@@ -182,14 +192,24 @@ class OrinParser:
             if key == "purpose":
                 module["purpose"] = " ".join(([value] if value else []) + [t for _, t in body])
             elif key == "rules":
+                last_rule: dict[str, Any] | None = None
                 for number, text in body:
+                    proof = re.match(r"^proved-by:\s*(.*)$", text)
+                    if proof and last_rule is not None:
+                        links = [f"{name}/example/{n.strip()}" for n in proof.group(1).split(",") if n.strip()]
+                        last_rule.setdefault("evidenceLinks", []).extend(links)
+                        continue
                     claim = text[2:].strip() if text.startswith("- ") else text
-                    add("rule", self._slug(claim), number, claims=[claim])
+                    last_rule = add("rule", self._slug(claim), number, claims=[claim])
             elif key == "workflow":
                 blocks = self._sub_blocks(body)
                 extra: dict[str, Any] = {}
                 if "input" in blocks:
                     extra["inputs"] = [t for _, t in blocks["input"]]
+                for block, field in (("failure", "failureBehavior"), ("recovery", "recoveryBehavior"),
+                                     ("after", "postconditions")):
+                    if block in blocks:
+                        extra[field] = [t[2:].strip() if t.startswith("- ") else t for _, t in blocks[block]]
                 add("workflow", value, section["line"], **extra)
             elif key == "example":
                 blocks = self._sub_blocks(body)
@@ -201,14 +221,15 @@ class OrinParser:
                 question = " ".join(t for _, t in blocks.get("question", []))
                 add("uncertainty", value, section["line"], status="unresolved", claims=[question],
                     consequential=blocking, authority="human")
-                if blocking:
+                if blocking and not any(o["kind"] == "evidence" for o in objects):
                     add("evidence", "blocked", section["line"], status="blocked",
                         statement=f"The {value} decision is unresolved.")
         return {"modelVersion": "0.1.0", "module": module, "objects": objects}
 
     _FULL_KEYS = {
         "identity", "between", "cardinality", "requires", "durability", "actor", "input", "output",
-        "uses", "actor-capabilities", "transitions", "claims", "then", "blocking", "question",
+        "uses", "actor-capabilities", "transitions", "claims", "given", "when", "then",
+        "failure", "recovery", "after", "proved-by",
     }
     _REF_ORDER = ("rule", "workflow", "relation", "state", "capability", "effect", "entity-type", "value-type")
 
@@ -224,6 +245,80 @@ class OrinParser:
             elif current is not None:
                 current.append(text[2:].strip() if text.startswith("- ") else text)
         return blocks
+
+    @staticmethod
+    def _tree(raw: list[tuple[int, int, str]]) -> list[dict[str, Any]]:
+        """Indentation tree of `key: value` lines; other lines become keyless nodes."""
+        roots: list[dict[str, Any]] = []
+        stack: list[dict[str, Any]] = []
+        for number, indent, text in raw:
+            match = re.match(r"^([A-Za-z][\w-]*):(?:\s+(.*))?$", text)
+            node = {"indent": indent, "key": match.group(1) if match else None,
+                    "value": (match.group(2) or "").strip() if match else text, "children": [], "line": number}
+            while stack and stack[-1]["indent"] >= indent:
+                stack.pop()
+            (stack[-1]["children"] if stack else roots).append(node)
+            stack.append(node)
+        return roots
+
+    @staticmethod
+    def _node_text(node: dict[str, Any]) -> str:
+        return " ".join(([node["value"]] if node["value"] else []) + [c["value"] for c in node["children"]])
+
+    @staticmethod
+    def _node_items(node: dict[str, Any]) -> list[str]:
+        items = ([node["value"]] if node["value"] else []) + [c["value"] for c in node["children"]]
+        return [i[2:].strip() if i.startswith("- ") else i for i in items]
+
+    def _module_extras(self, key: str, section: dict[str, Any], module: dict[str, Any]) -> bool:
+        if key == "context":
+            module["context"] = {n["key"]: self._node_text(n) for n in self._tree(section["raw"]) if n["key"]}
+        elif key == "policies":
+            module["implementationPolicies"] = {n["key"]: self._node_text(n) for n in self._tree(section["raw"]) if n["key"]}
+        elif key == "imports":
+            module["imports"] = [t[2:].strip() if t.startswith("- ") else t for _, t in section["body"]]
+        else:
+            return False
+        return True
+
+    def _uncertainty_fields(self, name: str, section: dict[str, Any], ref: Any) -> dict[str, Any]:
+        """Question, blocking flag and optional decision data (why-it-matters, affects, rule, options)."""
+        top = {n["key"]: n for n in self._tree(section["raw"]) if n["key"] and n["key"] != "option"}
+        blocking = self._node_text(top["blocking"]).lower() in ("yes", "true") if "blocking" in top else False
+        out: dict[str, Any] = {
+            "status": "unresolved",
+            "claims": [self._node_text(top["question"])] if "question" in top else [""],
+            "consequential": blocking, "authority": "human",
+        }
+        if "why-it-matters" in top:
+            out["why_it_matters"] = self._node_text(top["why-it-matters"])
+        if "affects" in top:
+            out["affected_objects"] = [ref(t, self._REF_ORDER) for t in self._node_items(top["affects"])]
+        if "rule" in top:
+            rule_name = self._node_text(top["rule"])
+            out["rule"] = {"id": f"{name}/rule/{rule_name}", "name": rule_name}
+        options = []
+        for node in (n for n in self._tree(section["raw"]) if n["key"] == "option"):
+            option: dict[str, Any] = {"id": node["value"]}
+            examples = []
+            for child in node["children"]:
+                key = child["key"]
+                if key in ("label", "explanation", "compilation"):
+                    option[key] = self._node_text(child)
+                elif key in ("effects", "impact"):
+                    option[key] = self._node_items(child)
+                elif key == "rule-claims":
+                    option["rule_claims"] = self._node_items(child)
+                elif key == "example":
+                    expects = next((self._node_items(c) for c in child["children"] if c["key"] == "expects"), [])
+                    examples.append({"id": f"{name}/example/{child['value']}", "kind": "example",
+                                     "name": child["value"], "status": "accepted", "expects": expects})
+            if examples:
+                option["examples"] = examples
+            options.append(option)
+        if options:
+            out["options"] = options
+        return out
 
     def _full_document(self, sections: list[dict[str, Any]]) -> dict[str, Any]:
         name = sections[0]["value"]
@@ -250,6 +345,8 @@ class OrinParser:
             if key == "purpose":
                 module["purpose"] = " ".join(([value] if value else []) + [t for _, t in body])
                 continue
+            if self._module_extras(key, section, module):
+                continue
             kind = DECLARATION_KINDS.get(key, key)
             if kind not in ("value-type", "entity-type", "relation", "state", "capability", "effect",
                             "workflow", "rule", "example", "uncertainty"):
@@ -272,34 +369,52 @@ class OrinParser:
                 if "durability" in blocks:
                     obj["durability"] = " ".join(blocks["durability"])
             elif kind == "workflow":
-                def params(items: list[str]) -> list[dict[str, str]]:
+                def params(items: list[str]) -> list[Any]:
                     return [{"name": i.split()[0], "type": ref(i.split()[1], ("entity-type", "value-type"))}
-                            for i in items if len(i.split()) == 2]
-                obj["inputs"] = params(blocks.get("input", []))
-                obj["outputs"] = params(blocks.get("output", []))
+                            if len(i.split()) == 2 else i for i in items]
+                derived = {
+                    "inputs": params(blocks.get("input", [])),
+                    "outputs": params(blocks.get("output", [])),
+                    "requires": [ref(t, ("capability",)) for t in blocks.get("requires", [])],
+                    "uses": [ref(t, ("effect",)) for t in blocks.get("uses", [])],
+                    "actorCapabilities": [
+                        {"actor": i.split()[0], "capability": ref(i.split()[1], ("capability",))}
+                        for i in blocks.get("actor-capabilities", []) if len(i.split()) == 2
+                    ],
+                    "transitions": [
+                        {"from": ref(a.strip(), ("state",)), "to": ref(b.strip(), ("state",))}
+                        for a, b in (i.split("->", 1) for i in blocks.get("transitions", []) if "->" in i)
+                    ],
+                    "claims": blocks.get("claims", []),
+                }
                 if "actor" in blocks:
                     obj["actor"] = " ".join(blocks["actor"])
-                obj["requires"] = [ref(t, ("capability",)) for t in blocks.get("requires", [])]
-                obj["uses"] = [ref(t, ("effect",)) for t in blocks.get("uses", [])]
-                obj["actorCapabilities"] = [
-                    {"actor": i.split()[0], "capability": ref(i.split()[1], ("capability",))}
-                    for i in blocks.get("actor-capabilities", []) if len(i.split()) == 2
-                ]
-                obj["transitions"] = [
-                    {"from": ref(a.strip(), ("state",)), "to": ref(b.strip(), ("state",))}
-                    for a, b in (i.split("->", 1) for i in blocks.get("transitions", []) if "->" in i)
-                ]
+                for block, field in (("failure", "failureBehavior"), ("recovery", "recoveryBehavior"),
+                                     ("after", "postconditions")):
+                    if blocks.get(block):
+                        obj[field] = blocks[block]
+                # Empty attributes are omitted, matching the accepted structured model.
+                obj.update({k: v for k, v in derived.items() if v})
             elif kind == "rule":
                 obj["requires"] = [ref(t, self._REF_ORDER) for t in blocks.get("requires", [])]
                 obj["claims"] = blocks.get("claims", [])
+                if blocks.get("proved-by"):
+                    obj["evidenceLinks"] = [f"{name}/example/{n.strip()}" for t in blocks["proved-by"]
+                                            for n in t.split(",") if n.strip()]
+            elif kind == "example" and "given" in blocks:
+                obj["claims"] = [" ".join(blocks[k]) for k in ("given", "when", "then") if k in blocks]
             elif kind == "example":
                 obj["requires"] = [ref(t, self._REF_ORDER) for t in blocks.get("requires", [])]
                 obj["expects"] = blocks.get("then", [])
             elif kind == "uncertainty":
-                blocking = " ".join(blocks.get("blocking", [])).lower() in ("yes", "true")
-                obj.update(status="unresolved", claims=[" ".join(blocks.get("question", []))],
-                           consequential=blocking, authority="human")
+                obj.update(self._uncertainty_fields(name, section, ref))
+            if kind == "rule" and not obj.get("requires"):
+                obj.pop("requires", None)
             objects.append(obj)
+            if kind == "uncertainty" and obj["consequential"] and not any(o["id"] == f"{name}/evidence/blocked" for o in objects):
+                objects.append({"id": f"{name}/evidence/blocked", "kind": "evidence", "name": "blocked",
+                                "status": "blocked", "source": {"line": line},
+                                "statement": f"The {value} decision is unresolved."})
         return {"modelVersion": "0.1.0", "module": module, "objects": objects}
 
     @staticmethod

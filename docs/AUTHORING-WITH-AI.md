@@ -18,60 +18,54 @@ questions. It is not a plan, a task list, or a design for how to build it.
 
 ## Syntax cheat sheet
 
-Use the brace style. The current Python loader reads this style for any
-file. (`examples/password-reset.orin` uses the outline style, which the
-loader accepts only for that file. Same ideas, different layout.)
+Use the outline style: `key: name`, then indented lines. This is the
+standard layout. (An older brace style, `module name { ... }`, still loads
+but is legacy. Do not write new files in it.) See
+`examples/password-reset.orin` and `examples/shared-tasks.minimal.orin`.
 
 ```text
-module my-program {
-  purpose "One sentence on why this exists."
+module: my-program
 
-  type thing-name                      // a plain kind of value
+purpose:
+  One sentence on why this exists.
 
-  entity thing {                       // something with identity
-    field name thing-name identity
-  }
+rules:
+  - Something that must always be true.
+  - Something that is never allowed.
 
-  relation owned-by {
-    from thing
-    to other-thing
-    cardinality many-to-one            // one-to-one, one-to-many,
-  }                                    // many-to-one, many-to-many
+workflow: do-something
+  input:
+    some-value
+  output:
+    What the person observes when it finishes.
 
-  rule short-name {
-    guarantee "Something that must always be true."
-  }
+example: happy-case
+  given:
+    The starting situation, with real values.
+  when:
+    What the person does.
+  then:
+    What they observe, with real values.
 
-  workflow do-something {
-    input some-value
-    outcome "What the person observes when it finishes."
-  }
-
-  example happy-case {
-    given "The starting situation, with real values."
-    when "What the person does."
-    then "What they observe, with real values."
-  }
-
-  uncertainty open-question {
-    question "A decision that changes behaviour and is not yet made."
-  }
-}
+uncertainty: open-question
+  blocking: yes
+  question:
+    A decision that changes behaviour and is not yet made.
 ```
 
 Rules of the format:
 
 - Names use lowercase letters, digits, `-` and `.`. No spaces.
-- Text sits in double quotes, on one line.
-- `//` starts a comment line.
-- Allowed inside `rule`: `guarantee`. Inside `workflow`: `input`,
-  `outcome`, `recovery`. Inside `example`: `given`, `when`, `then`.
-  Inside `uncertainty`: `question`, `impact`.
-- Only use `type`, `entity`, `relation` when the idea matters to the
-  person. Many programs only need `purpose`, `rule`, `example`,
-  `uncertainty`.
-- Order: `module`, `purpose`, types/entities, rules, workflows, examples,
-  uncertainties.
+- A `key:` line starts at the left edge. Its content is indented by two
+  spaces underneath it.
+- Text is plain sentences. No quotes needed.
+- `rules:` is a list; each item starts with `- `.
+- Inside `workflow`: `input:` and `output:`. Inside `example`: `given:`,
+  `when:`, `then:`. Inside `uncertainty`: `blocking: yes` and `question:`.
+- Only add `type`, `entity`, `relation` when the idea matters to the
+  person (see `examples/shared-tasks.minimal.orin`). Many programs only
+  need `purpose`, `rules`, `example`, `uncertainty`.
+- Order: `module`, `purpose`, rules, workflows, examples, uncertainties.
 
 ## What goes in, what stays out
 
@@ -131,19 +125,58 @@ rounded.
 5. Every consequential gap is an `uncertainty`, not a guess.
 6. Nothing in the file is a task, a plan, or a technology choice.
 7. A non-programmer could read it and say "yes, that is what I meant".
-8. It loads. If Python is already available, run from the repository root:
+8. It loads. From the repository root run:
 
    ```text
-   python -c "import sys; sys.path.insert(0,'implementations/python'); \
-   from orin_parser import OrinParser; \
-   m = OrinParser().parse_file('PATH/TO/FILE.orin'); \
-   print([(d.code, d.message) for d in m.diagnostics()])"
+   python -m tooling.python.orin_cli check PATH/TO/FILE.orin
    ```
 
-   Expected: only `ORIN-E041` (open uncertainty) entries. Any other code
+   Expected: only `ORIN-E041` (open uncertainty) lines. Any other code
    means a syntax or reference mistake. Fix it and run again. Do not
-   install anything just for this check; if no tool is available, check by
-   hand against the cheat sheet.
+   install anything just for this check; if Python is not available, check
+   by hand against the cheat sheet.
+
+## From draft to code
+
+A draft with open uncertainties is not ready to build. Close each one in
+one of two ways.
+
+**A. Close it by hand.** The person decides. Then:
+
+1. Delete the `uncertainty:` block.
+2. Add the answer as a line under `rules:`.
+3. Add an `example:` that shows it with real values.
+4. Run `check` again. The `ORIN-E041` line for it should be gone.
+
+**B. Let the agent decide from options.** Give the person two or three
+choices, each with what it would change. Then record the choice and let the
+tool update the model.
+
+Options live in a file next to the model, named `<name>.decisions.json`
+(for example `expense-approval.decisions.json`). It maps each uncertainty
+name to why it matters and a list of options. Each option has an `id`, a
+`label`, its `impact`, and the rule it adds. An option such as `defer` can
+be marked `"compilation": "blocked"`, which keeps the question open. The
+exact shape is in `tooling/python/README.md`.
+
+Then, from the repository root:
+
+```text
+python -m tooling.python.orin_cli check FILE
+python -m tooling.python.orin_cli readiness FILE
+python -m tooling.python.orin_cli decide MODEL --uncertainty NAME --option ID --write OUT
+python -m tooling.python.orin_cli generate MODEL --decision ID --target python --out DIR
+```
+
+- `check` finds mistakes and lists open uncertainties.
+- `readiness` says ready or blocked, and which decisions are still needed.
+- `decide` applies one chosen option and writes the updated model.
+- `generate` builds code (`--target python` or `typescript`) once nothing
+  blocks it.
+
+`check` and `readiness` take a `.orin` file. `generate` takes a model file
+(`*.model.json`), the machine-readable form of the program. Run
+`decide --help` for the current options. Exit code `0` means ready; `2` means a decision is still needed.
 
 ## Handing over
 
@@ -152,4 +185,4 @@ and either resolved the uncertainties or explicitly accepted building
 around them. Orin files stay the source of truth: if behaviour changes,
 change the `.orin` first.
 
-See `authoring-examples/` for two complete requests and their results.
+See `authoring-examples/` for five complete requests and their results.

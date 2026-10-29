@@ -1,4 +1,7 @@
-"""Generate a standalone Python module from a ready password-reset Orin model.
+"""Generate a standalone Python module from a ready Orin model.
+
+Password-reset and expense-approval use hand-written templates; any other ready model with workflow transitions
+is generated model-driven (see model_driven.py) together with a NotImplementedRule report.
 
 Usage: python -m implementations.python.codegen.generate <model.json> <outdir>
 """
@@ -14,6 +17,7 @@ if str(_PYTHON_DIR) not in sys.path:
     sys.path.insert(0, str(_PYTHON_DIR))
 
 from orin_model import SemanticModel  # noqa: E402
+from . import model_driven, prose_driven  # noqa: E402
 
 OUTPUT_NAME = "password_reset_generated.py"
 WORKFLOW_ID = "account.password-reset/workflow/request-reset"
@@ -96,8 +100,51 @@ def _is_expense(model: SemanticModel) -> bool:
     return _module_id(model) == EXPENSE_MODULE_ID
 
 
+def _has_object(model: SemanticModel, object_id: str) -> bool:
+    objects = model.document.get("objects", [])
+    return isinstance(objects, list) and any(isinstance(o, dict) and o.get("id") == object_id for o in objects)
+
+
+def _is_model_driven(model: SemanticModel) -> bool:
+    return not _is_expense(model) and not _has_object(model, WORKFLOW_ID) \
+        and model_driven.has_transition_workflows(model.document)
+
+
+def _is_prose(model: SemanticModel) -> bool:
+    return not _is_expense(model) and not _has_object(model, WORKFLOW_ID) \
+        and not model_driven.has_transition_workflows(model.document) \
+        and prose_driven.has_prose_rules(model.document)
+
+
 def output_name(model: SemanticModel) -> str:
-    return EXPENSE_OUTPUT_NAME if _is_expense(model) else OUTPUT_NAME
+    if _is_expense(model):
+        return EXPENSE_OUTPUT_NAME
+    if _is_model_driven(model) or _is_prose(model):
+        return model_driven.output_stem(model.document.get("module", {})) + ".py"
+    return OUTPUT_NAME
+
+
+def _derive(model: SemanticModel) -> dict:
+    try:
+        return model_driven.derive_ir(model.document)
+    except model_driven.ModelDrivenError as error:
+        raise GenerationError(str(error)) from error
+
+
+def _derive_prose(model: SemanticModel) -> dict:
+    try:
+        return prose_driven.derive_ir(model.document)
+    except model_driven.ModelDrivenError as error:
+        raise GenerationError(str(error)) from error
+
+
+def generate_report(model: SemanticModel) -> dict | None:
+    """Report of derived and NotImplementedRule rules for model-driven output; None for template output."""
+    if _is_prose(model):
+        return prose_driven.report(str(_module_id(model)), _derive_prose(model))
+    if not _is_model_driven(model):
+        return None
+    return model_driven.report(str(_module_id(model)), _derive(model))
 
 
 def generate_source(model: SemanticModel) -> str:
@@ -117,6 +164,16 @@ def generate_source(model: SemanticModel) -> str:
         for object_id in (EXPENSE_WORKFLOW_ID, *EXPENSE_RULES):
             _object(model, object_id)
         return _render(_EXPENSE_TEMPLATE, {"MODULE": json.dumps(module_id)})
+    if _is_model_driven(model):
+        return _render(model_driven.TEMPLATE, {
+            "MODULE": json.dumps(module_id),
+            "IR": model_driven.render_ir(_derive(model)),
+        })
+    if _is_prose(model):
+        return _render(prose_driven.TEMPLATE, {
+            "MODULE": json.dumps(module_id),
+            "IR": prose_driven.render_ir(_derive_prose(model)),
+        })
     _object(model, WORKFLOW_ID)
     _object(model, SINGLE_USE_RULE_ID)
     _object(model, NO_DISCLOSURE_RULE_ID)
@@ -130,26 +187,67 @@ def generate_source(model: SemanticModel) -> str:
     })
 
 
-def generate(model_path: str | Path, outdir: str | Path) -> Path:
+def _load_model(model_path: str | Path, outdir: Path, decisions: list[str]) -> SemanticModel:
+    """Load a model.json, or an .orin source; each UNCERTAINTY=OPTION is applied through orin_agent_core."""
+    path = Path(model_path)
+    if path.suffix.lower() != ".orin" and not decisions:
+        try:
+            return SemanticModel.from_json_file(path)
+        except json.JSONDecodeError as error:
+            raise GenerationError(f"model is not valid JSON: {error}") from error
+    from .. import orin_agent_core as core
+    agent = core.OrinDecisionAgent()
+    stages: list[Path] = []
     try:
-        model = SemanticModel.from_json_file(model_path)
-    except json.JSONDecodeError as error:
-        raise GenerationError(f"model is not valid JSON: {error}") from error
+        current: str | Path = path
+        for index, spec in enumerate(decisions):
+            uncertainty, sep, option = spec.partition("=")
+            if not sep or not uncertainty or not option:
+                raise GenerationError(f"--decide expects UNCERTAINTY=OPTION, got: {sanitize_id(spec)}")
+            if "/" not in uncertainty:
+                module = agent._load_artifact(path).model.document.get("module")
+                module_id = module.get("id") if isinstance(module, dict) else module
+                prefix = str(module_id).rsplit("/", 1)[0]
+                uncertainty = f"{prefix}/uncertainty/{uncertainty}"
+            result = agent.apply_decision(current, uncertainty, option)
+            stage = outdir / f".orin-decision-stage-{index}.json"
+            outdir.mkdir(parents=True, exist_ok=True)
+            agent.write_model(stage, result.model)
+            stages.append(stage)
+            current = stage
+        if path.suffix.lower() == ".orin" and not decisions:
+            return agent._load_artifact(path).model
+        return SemanticModel(json.loads(Path(current).read_text(encoding="utf-8")))
+    except core.AgentError as error:
+        raise GenerationError(f"decision failed: {error}") from error
+    finally:
+        for stage in stages:
+            stage.unlink(missing_ok=True)
+
+
+def generate(model_path: str | Path, outdir: str | Path, decisions: list[str] | None = None) -> Path:
+    model = _load_model(model_path, Path(outdir), list(decisions or []))
     source = generate_source(model)
     out = Path(outdir)
     out.mkdir(parents=True, exist_ok=True)
     target = out / output_name(model)
     target.write_text(source, encoding="utf-8", newline="\n")
+    report = generate_report(model)
+    if report is not None:
+        target.with_suffix(".report.json").write_text(
+            json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8", newline="\n")
     return target
 
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description="Generate a Python implementation from a ready Orin model.")
-    parser.add_argument("model", help="path to a semantic model JSON file")
+    parser.add_argument("model", help="path to a semantic model JSON file or an .orin source")
     parser.add_argument("outdir", help="directory to write the generated module into")
+    parser.add_argument("--decide", action="append", default=[], metavar="UNCERTAINTY=OPTION",
+                        help="apply a human decision first (repeatable; needs the decision sidecar)")
     args = parser.parse_args(argv)
     try:
-        target = generate(args.model, args.outdir)
+        target = generate(args.model, args.outdir, args.decide)
     except (GenerationError, OSError, ValueError) as error:
         print(f"error: {error}", file=sys.stderr)
         return 1

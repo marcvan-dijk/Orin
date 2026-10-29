@@ -260,5 +260,58 @@ class OrinDecisionAgentCliTests(unittest.TestCase):
         self.assertIn("unknown decision option", completed.stderr)
 
 
+class FriendlyInspectTests(unittest.TestCase):
+    def _run(self, *args):
+        return subprocess.run(
+            [sys.executable, *AGENT, *args], cwd=ROOT,
+            capture_output=True, text=True, check=False,
+        )
+
+    def test_orin_without_options_shows_question_why_and_hint(self):
+        text = (ROOT / "examples" / "expense-approval.orin").read_text(encoding="utf-8")
+        bare = text[: text.index("  why-it-matters:")]
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as directory:
+            path = Path(directory) / "expense-approval.orin"
+            path.write_text(bare, encoding="utf-8")
+            completed = self._run("inspect", str(path))
+        self.assertEqual(completed.returncode, EXIT_BLOCKED)
+        self.assertIn("Question: What happens when no one other", completed.stdout)
+        self.assertNotIn("Why it matters: \n", completed.stdout + "\n")
+        # options come from the tests/conformance sidecar fallback
+        self.assertIn("Options:", completed.stdout)
+        self.assertIn("escalate-to-higher-authority", completed.stdout)
+
+    def test_second_decide_builds_on_written_model_via_conformance_sidecar(self):
+        lending = "library-lending/uncertainty/"
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as directory:
+            first = Path(directory) / "step1.json"
+            second = Path(directory) / "step2.json"
+            completed = self._run(
+                "decide", str(ROOT / "examples" / "library-lending.orin"),
+                "--uncertainty", lending + "renewal-with-reservation",
+                "--option", "refuse-renewal", "--write", str(first), "--friendly",
+            )
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            completed = self._run(
+                "decide", str(first),
+                "--uncertainty", lending + "reservation-hold-expiry",
+                "--option", "expire-after-3-days", "--write", str(second), "--friendly",
+            )
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            completed = self._run("inspect", str(second))
+        self.assertIn("no blocking consequential decisions remain", completed.stdout)
+
+    def test_friendly_inspect_and_decide_exit_zero(self):
+        completed = self._run("inspect", str(SOURCE), "--friendly")
+        self.assertEqual(completed.returncode, 0)
+        self.assertIn("Result:", completed.stdout)
+        completed = self._run(
+            "decide", str(MODEL), "--uncertainty", RATE_LIMIT_UNCERTAINTY_ID,
+            "--option", "five-per-15m-per-address-and-origin", "--friendly",
+        )
+        self.assertEqual(completed.returncode, 0)
+        self.assertIn("Result: decision", completed.stdout)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -14,6 +14,31 @@ The project should not lose its meaning.
 
 ---
 
+## Try it
+
+Run from the repository root. This is the first working command:
+
+```text
+python -m tooling.python.orin_cli check examples/password-reset.orin
+python -m tooling.python.orin_cli readiness examples/password-reset.orin
+```
+
+Both say "blocked" on purpose: the `rate-limit` question is still open, and a
+human must choose the answer. Next: [`docs/ONBOARDING.md`](docs/ONBOARDING.md)
+(10 minutes). New words? See the [glossary](docs/GLOSSARY.md).
+
+**Requirements** (one place; other docs point here). Reading Orin needs
+nothing. The tools need **Python 3.12** and, only for the TypeScript parts,
+**Node 24** (what CI uses). Node 22.6 is the lowest version that can run
+`--experimental-strip-types`.
+
+**Windows / PowerShell:** use `python` (or `py`) the same way. Put each command
+on one line: do not use `\` to continue a line. Create folders with
+`mkdir out` (PowerShell: `New-Item -ItemType Directory out`). `diff` is not
+available; use `fc` or `Compare-Object` instead.
+
+---
+
 ## The problem
 
 Software projects contain far more knowledge than their source code.
@@ -192,6 +217,7 @@ It asks, "What must remain true about this software, no matter how it is built?"
 
 The MVP is one small program: **password reset**. Other examples are only
 supporting proof. You do not need Python or TypeScript to read Orin.
+Unknown words: [`docs/GLOSSARY.md`](docs/GLOSSARY.md).
 
 1. Read the program: [`examples/password-reset.orin`](examples/password-reset.orin)
 2. First walkthrough (10 minutes): [`docs/ONBOARDING.md`](docs/ONBOARDING.md)
@@ -206,20 +232,7 @@ The core idea to see:
 
 ---
 
-## Try it
-
-Run from the repository root. This needs Python 3 (optional, only for the tools).
-
-```text
-python tooling/python/orin_cli.py check examples/password-reset.orin
-python tooling/python/orin_cli.py readiness examples/password-reset.orin
-```
-
-Both report "blocked" on purpose: the `rate-limit` decision is still open.
-A human must choose it. After that, the model can be turned into code:
-
-- Python generator: [`implementations/python/codegen/README.md`](implementations/python/codegen/README.md)
-- TypeScript generator: [`implementations/typescript/src/codegen/`](implementations/typescript/src/codegen/)
+## More commands
 
 Python and TypeScript must agree on the shared fixtures:
 
@@ -229,6 +242,11 @@ python implementations/python/parity_check.py
 
 CI runs all of this: [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
 To run every test suite or contribute, see [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+Code generators:
+
+- Python generator: [`implementations/python/codegen/README.md`](implementations/python/codegen/README.md)
+- TypeScript generator: [`implementations/typescript/src/codegen/`](implementations/typescript/src/codegen/)
 
 More tools:
 

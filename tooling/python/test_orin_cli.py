@@ -18,6 +18,46 @@ def run(*argv):
     return code, out.getvalue(), err.getvalue()
 
 
+class FriendlyTests(unittest.TestCase):
+    def test_readiness_groups_with_meanings(self):
+        code, out, _ = run("readiness", str(EXAMPLES / "password-reset.orin"))
+        self.assertEqual(code, 2)
+        self.assertIn("Must decide now (blocking):", out)
+        self.assertIn("Optional hardening", out)
+        self.assertIn("Say what happens when this workflow fails.", out)
+
+    def test_check_prints_next_step(self):
+        code, out, _ = run("check", str(EXAMPLES / "password-reset.orin"))
+        self.assertEqual(code, 1)
+        self.assertIn("Next step: open decision", out)
+        self.assertIn("orin_cli decide", out)
+
+    def test_decide_writes_output(self):
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as d:
+            out_file = Path(d) / "decided.json"
+            code, out, _ = run("decide", str(EXAMPLES / "password-reset.orin"),
+                               "--option", "three-per-hour-per-address", "--out", str(out_file))
+            self.assertEqual(code, 0)
+            self.assertTrue(out_file.is_file())
+            self.assertIn("Decided:", out)
+
+    def test_decide_unknown_option(self):
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as d:
+            code, _, err = run("decide", str(EXAMPLES / "password-reset.orin"),
+                               "--option", "nope", "--out", str(Path(d) / "x.json"))
+            self.assertEqual(code, 3)
+            self.assertIn("no open decision", err)
+
+    def test_help_has_example_and_legend(self):
+        code, out, _ = run("--help")
+        self.assertEqual(code, 0)
+        self.assertTrue(out.strip().splitlines()[-1].startswith("Exit codes:"))
+        for cmd in ("check", "readiness", "examples", "new", "generate", "decide", "inspect"):
+            code, out, _ = run(cmd, "--help")
+            self.assertEqual(code, 0)
+            self.assertIn("Example:", out)
+
+
 class NewGenerateTests(unittest.TestCase):
     def test_new_scaffold_loads_and_is_blocked(self):
         with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as d:

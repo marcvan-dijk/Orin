@@ -17,7 +17,7 @@ class AuthoringExamplesTests(unittest.TestCase):
         for path in sorted(EXAMPLES.glob("*.orin")):
             with self.subTest(example=path.name):
                 text = path.read_text(encoding="utf-8")
-                open_count = text.count("  uncertainty ")
+                open_count = text.count("\nuncertainty: ")
                 self.assertGreaterEqual(open_count, 1)
                 codes = [d.code for d in analyze(path)]
                 self.assertEqual(codes, ["ORIN-E041"] * open_count)

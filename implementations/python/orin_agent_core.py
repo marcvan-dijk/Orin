@@ -359,11 +359,24 @@ def _build_prompt(
     default_rule_id = uncertainty_id.replace("/uncertainty/", "/rule/", 1)
     rule_id = rule.get("id") or default_rule_id
     rule_name = rule.get("name") or rule_id.rsplit("/", 1)[-1]
-    question = uncertainty.get("question") or uncertainty.get("name") or uncertainty_id
+    claims = _string_tuple(uncertainty.get("claims"))
+    question = (
+        uncertainty.get("question")
+        or (claims[0] if claims else None)
+        or uncertainty.get("name")
+        or uncertainty_id
+    )
+    explanation = (
+        merged.get("why_it_matters")
+        or uncertainty.get("explanation")
+        or uncertainty.get("description")
+        or " ".join(claims)
+        or str(question)
+    )
     return DecisionPrompt(
         uncertainty_id=uncertainty_id,
         question=str(question),
-        why_it_matters=str(merged.get("why_it_matters", "")),
+        why_it_matters=str(explanation),
         affected_objects=_string_tuple(merged.get("affected_objects")),
         options=tuple(_build_option(raw, uncertainty_id) for raw in raw_options),
         rule_id=rule_id,
@@ -390,6 +403,47 @@ def _load_decisions_sidecar(path: Path) -> dict[str, dict[str, Any]]:
     if not isinstance(decisions, dict) or not all(isinstance(v, dict) for v in decisions.values()):
         raise InvalidInputError(f"decisions file {path} must contain a 'decisions' object")
     return decisions
+
+
+def _conformance_dir() -> Path:
+    return Path(__file__).resolve().parents[2] / "tests" / "conformance"
+
+
+def _uncertainty_ids(model: SemanticModel) -> set[str]:
+    objects = model.document.get("objects", [])
+    return {
+        o["id"]
+        for o in (objects if isinstance(objects, list) else [])
+        if isinstance(o, dict) and isinstance(o.get("id"), str) and "/uncertainty/" in o["id"]
+    }
+
+
+def _sidecar_candidates(source_path: Path, model: SemanticModel) -> list[Path]:
+    """Sidecars in precedence order: next to the file, then tests/conformance."""
+    found: list[Path] = []
+    names = [_decisions_sidecar_path(source_path).name]
+    module_id = model.document.get("module")
+    if isinstance(module_id, str) and module_id:
+        names.append(f"{module_id.rsplit('/', 1)[-1].rsplit('.', 1)[0]}.decisions.json")
+    directories = [source_path.parent, _conformance_dir()]
+    for directory in directories:
+        for name in names:
+            candidate = directory / name
+            if candidate.is_file() and candidate not in found:
+                found.append(candidate)
+    ids = _uncertainty_ids(model)
+    conformance = _conformance_dir()
+    if ids and conformance.is_dir():
+        for candidate in sorted(conformance.glob("*.decisions.json")):
+            if candidate in found:
+                continue
+            try:
+                keys = set(_load_decisions_sidecar(candidate))
+            except InvalidInputError:
+                continue
+            if keys & ids:
+                found.append(candidate)
+    return found
 
 
 def _collect_prompts(
@@ -465,11 +519,9 @@ class OrinDecisionAgent:
 
     @staticmethod
     def _prompts(artifact: LoadedArtifact) -> dict[str, DecisionPrompt]:
-        sidecar = (
-            _load_decisions_sidecar(artifact.decisions_path)
-            if artifact.decisions_path is not None
-            else {}
-        )
+        sidecar: dict[str, dict[str, Any]] = {}
+        for candidate in reversed(_sidecar_candidates(artifact.source_path, artifact.model)):
+            sidecar.update(_load_decisions_sidecar(candidate))
         return _collect_prompts(artifact.model, sidecar)
 
     def apply_decision(
@@ -487,6 +539,17 @@ class OrinDecisionAgent:
             decision.prompt.uncertainty_id
             for decision in inspection.decisions
         }
+        if uncertainty_id not in available_uncertainty_ids:
+            matches = sorted(
+                full for full in available_uncertainty_ids
+                if full.rsplit("/", 1)[-1] == uncertainty_id
+            )
+            if len(matches) == 1:
+                uncertainty_id = matches[0]
+            elif matches:
+                raise UnknownDecisionError(
+                    f"'{uncertainty_id}' is ambiguous; use a full id: " + ", ".join(matches)
+                )
         if uncertainty_id not in available_uncertainty_ids:
             raise UnknownDecisionError(
                 f"artifact does not expose blocking uncertainty '{uncertainty_id}'"
@@ -529,12 +592,19 @@ class OrinDecisionAgent:
             "status": "accepted",
             "claims": list(option.rule_claims),
         }
+        links = [example["id"] for example in option.examples]
         replaced = False
         for index, obj in enumerate(objects):
             if isinstance(obj, dict) and obj.get("id") == prompt.rule_id:
+                links = [*(obj.get("evidenceLinks") or []), *links]
                 objects[index] = updated_rule
                 replaced = True
                 break
+        if links:
+            updated_rule["evidenceLinks"] = list(dict.fromkeys(links))
+        for index, obj in enumerate(objects):
+            if replaced and isinstance(obj, dict) and obj.get("id") == prompt.rule_id:
+                objects[index] = updated_rule
         if not replaced:
             objects.append(updated_rule)
         existing_ids = {obj.get("id") for obj in objects if isinstance(obj, dict)}
@@ -567,26 +637,26 @@ class OrinDecisionAgent:
             _surface_latent_decisions(document)
             if document != model.document:
                 model = SemanticModel(document)
-            sidecar = _decisions_sidecar_path(source_path)
+            sidecar = next(iter(_sidecar_candidates(source_path, model)), None)
             return LoadedArtifact(
                 source_path=source_path,
                 source_kind="semantic-document",
                 semantic_path=source_path,
                 model=model,
-                decisions_path=sidecar if sidecar.is_file() else None,
+                decisions_path=sidecar,
             )
         if suffix == ".orin":
             if source_path == _password_reset_source_path().resolve():
                 return self._load_password_reset_source(source_path)
             try:
                 model = OrinParser().parse_file(source_path)
-                sidecar = _decisions_sidecar_path(source_path)
+                sidecar = next(iter(_sidecar_candidates(source_path, model)), None)
                 return LoadedArtifact(
                     source_path=source_path,
                     source_kind="orin-source",
                     semantic_path=None,
                     model=model,
-                    decisions_path=sidecar if sidecar.is_file() else None,
+                    decisions_path=sidecar,
                 )
             except ValueError as error:
                 raise InvalidInputError(
@@ -600,9 +670,9 @@ class OrinDecisionAgent:
     def _load_password_reset_source(source_path: Path) -> LoadedArtifact:
         text = source_path.read_text(encoding="utf-8")
         required_markers = (
-            "module: password-reset",
+            "module: account.password-reset",
             "uncertainty: rate-limit",
-            "Should reset requests be rate-limited?",
+            "What rate limit applies per address and network origin?",
         )
         missing = [marker for marker in required_markers if marker not in text]
         if missing:
@@ -643,14 +713,24 @@ def _format_inspection(result: InspectionResult) -> str:
             f"   Question: {prompt.question}",
             f"   Why it matters: {prompt.why_it_matters}",
             f"   Impact areas: {', '.join(decision.diagnostic.impact_areas)}",
-            "   Affected objects:",
         ])
+        if prompt.affected_objects:
+            lines.append("   Affected objects:")
         for object_id in prompt.affected_objects:
             lines.append(f"   - {object_id}")
-        lines.append("   Options:" if prompt.options else "   Options: none defined; add options to the uncertainty or a <name>.decisions.json file.")
+        if prompt.options:
+            lines.append("   Options:")
+        else:
+            lines.extend([
+                "   Options: none defined yet. To add options, either:",
+                "   - add an inline `options:` block to this uncertainty in the .orin file, or",
+                f"   - create {_decisions_sidecar_path(result.source_path).name} next to the source with"
+                f' {{"decisions": {{"{prompt.uncertainty_id}": {{"options": [{{"id": "...", "label": "...", "rule_claims": ["..."]}}]}}}}}}',
+            ])
         for option in prompt.options:
             lines.append(f"   - {option.id}: {option.label}")
-            lines.append(f"     Why choose it: {option.explanation}")
+            if option.explanation:
+                lines.append(f"     Why choose it: {option.explanation}")
             lines.append(f"     Compilation: {option.compilation}")
             for item in option.impact:
                 lines.append(f"     Impact: {item}")
@@ -681,6 +761,7 @@ def _build_parser() -> argparse.ArgumentParser:
         help="Inspect an .orin source or semantic JSON artifact.",
     )
     inspect_parser.add_argument("path")
+    inspect_parser.add_argument("--friendly", action="store_true", help="Exit 0 on any successful run and print a one-line summary.")
 
     decide_parser = subparsers.add_parser(
         "decide",
@@ -690,6 +771,7 @@ def _build_parser() -> argparse.ArgumentParser:
     decide_parser.add_argument("--uncertainty", required=True)
     decide_parser.add_argument("--option")
     decide_parser.add_argument("--write")
+    decide_parser.add_argument("--friendly", action="store_true", help="Map success (exit 4) to exit 0 and print a one-line summary.")
     return parser
 
 
@@ -700,6 +782,13 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "inspect":
             inspection = agent.inspect(args.path)
             print(_format_inspection(inspection))
+            if args.friendly:
+                n = len(inspection.decisions)
+                print(
+                    f"Result: {n} decision(s) still need a human choice."
+                    if n else "Result: nothing blocks this file; no decisions needed."
+                )
+                return EXIT_READY
             return EXIT_BLOCKED if inspection.decisions else EXIT_READY
 
         if args.command == "decide":
@@ -712,6 +801,9 @@ def main(argv: list[str] | None = None) -> int:
             if write_path is not None:
                 agent.write_model(write_path, result.model)
             print(_format_decision_result(result, write_path))
+            if args.friendly:
+                print(f"Result: decision '{result.option.id}' accepted; model is now {result.model.compilation_status()}.")
+                return EXIT_READY
             return EXIT_ACCEPTED
     except InvalidInputError as error:
         print(f"invalid input: {error}", file=sys.stderr)

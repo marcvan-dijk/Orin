@@ -14,8 +14,9 @@ survive? If not, it does not belong in Orin.
 
 ## Run the tests
 
-Python 3.12 and Node 24 are only needed for the tools and tests, not to read
-Orin or the fixtures.
+Versions are listed once in the [README](README.md#try-it). They are only
+needed for the tools and tests, not to read Orin or the fixtures. On Windows
+PowerShell, run each command on one line.
 
 ```text
 # Python implementation and tooling
@@ -64,7 +65,7 @@ CI runs the same commands: `.github/workflows/ci.yml`.
 ## Add an example app
 
 1. Write `examples/<name>.orin`. Use [`docs/ORIN-SYNTAX-GUIDE.md`](docs/ORIN-SYNTAX-GUIDE.md).
-2. Check it: `python tooling/python/orin_cli.py check examples/<name>.orin`.
+2. Check it: `python -m tooling.python.orin_cli check examples/<name>.orin`.
    Unresolved consequential decisions report "blocked" on purpose.
 3. Add matching conformance fixtures (see above) if it should be proven.
 4. Link it from [`docs/README.md`](docs/README.md).

@@ -1,0 +1,258 @@
+{
+  "modelVersion": "0.1.0",
+  "module": {
+    "id": "library-lending/module",
+    "kind": "module",
+    "name": "library-lending",
+    "status": "accepted",
+    "source": {
+      "line": 1
+    },
+    "purpose": "Let members borrow books for a fixed period, return them, pay a fee when they are late, and reserve books that are out."
+  },
+  "objects": [
+    {
+      "id": "library-lending/rule/a-copy-is-on-loan",
+      "kind": "rule",
+      "name": "a-copy-is-on-loan",
+      "status": "accepted",
+      "source": {
+        "line": 7
+      },
+      "claims": [
+        "A copy is on loan to at most one member at a time."
+      ]
+    },
+    {
+      "id": "library-lending/rule/a-loan-has-a-due",
+      "kind": "rule",
+      "name": "a-loan-has-a-due",
+      "status": "accepted",
+      "source": {
+        "line": 8
+      },
+      "claims": [
+        "A loan has a due date 14 days after it starts."
+      ]
+    },
+    {
+      "id": "library-lending/rule/a-late-fee-accrues-for",
+      "kind": "rule",
+      "name": "a-late-fee-accrues-for",
+      "status": "accepted",
+      "source": {
+        "line": 9
+      },
+      "claims": [
+        "A late fee accrues for each day a loan is overdue and never exceeds the price of the book."
+      ]
+    },
+    {
+      "id": "library-lending/rule/a-member-with-unpaid-fees",
+      "kind": "rule",
+      "name": "a-member-with-unpaid-fees",
+      "status": "accepted",
+      "source": {
+        "line": 10
+      },
+      "claims": [
+        "A member with unpaid fees above the fee limit cannot borrow."
+      ]
+    },
+    {
+      "id": "library-lending/rule/a-returned-loan-cannot-be",
+      "kind": "rule",
+      "name": "a-returned-loan-cannot-be",
+      "status": "accepted",
+      "source": {
+        "line": 11
+      },
+      "claims": [
+        "A returned loan cannot be returned again."
+      ]
+    },
+    {
+      "id": "library-lending/rule/a-reservation-is-held-for",
+      "kind": "rule",
+      "name": "a-reservation-is-held-for",
+      "status": "accepted",
+      "source": {
+        "line": 12
+      },
+      "claims": [
+        "A reservation is held for the first member in the queue when a copy is returned."
+      ]
+    },
+    {
+      "id": "library-lending/workflow/borrow-book",
+      "kind": "workflow",
+      "name": "borrow-book",
+      "status": "accepted",
+      "source": {
+        "line": 14
+      },
+      "inputs": [
+        "member",
+        "copy"
+      ]
+    },
+    {
+      "id": "library-lending/workflow/return-book",
+      "kind": "workflow",
+      "name": "return-book",
+      "status": "accepted",
+      "source": {
+        "line": 23
+      },
+      "inputs": [
+        "loan"
+      ]
+    },
+    {
+      "id": "library-lending/example/on-time-loan",
+      "kind": "example",
+      "name": "on-time-loan",
+      "status": "accepted",
+      "source": {
+        "line": 31
+      },
+      "claims": [
+        "A member with no fees and an available copy.",
+        "The member borrows the copy.",
+        "A loan exists with a due date 14 days later and the copy is on loan."
+      ]
+    },
+    {
+      "id": "library-lending/example/late-return",
+      "kind": "example",
+      "name": "late-return",
+      "status": "accepted",
+      "source": {
+        "line": 39
+      },
+      "claims": [
+        "A loan that is 3 days overdue.",
+        "The member returns the copy.",
+        "The loan is returned and a late fee for 3 days is charged."
+      ]
+    },
+    {
+      "id": "library-lending/example/fee-block",
+      "kind": "example",
+      "name": "fee-block",
+      "status": "accepted",
+      "source": {
+        "line": 47
+      },
+      "claims": [
+        "A member whose unpaid fees are above the fee limit.",
+        "The member tries to borrow a copy.",
+        "The loan is refused."
+      ]
+    },
+    {
+      "id": "library-lending/example/reserved-return",
+      "kind": "example",
+      "name": "reserved-return",
+      "status": "accepted",
+      "source": {
+        "line": 55
+      },
+      "claims": [
+        "A returned copy with two members waiting in the reservation queue.",
+        "The copy is returned.",
+        "The copy is held for the first member in the queue."
+      ]
+    },
+    {
+      "id": "library-lending/uncertainty/reservation-hold-expiry",
+      "kind": "uncertainty",
+      "name": "reservation-hold-expiry",
+      "status": "accepted",
+      "source": {
+        "line": 63
+      },
+      "claims": [
+        "What happens when the first member in the queue does not collect a held copy?"
+      ],
+      "consequential": true,
+      "authority": "human"
+    },
+    {
+      "id": "library-lending/evidence/blocked",
+      "kind": "evidence",
+      "name": "blocked",
+      "status": "blocked",
+      "source": {
+        "line": 63
+      },
+      "statement": "The reservation-hold-expiry decision is unresolved."
+    },
+    {
+      "id": "library-lending/uncertainty/renewal-with-reservation",
+      "kind": "uncertainty",
+      "name": "renewal-with-reservation",
+      "status": "accepted",
+      "source": {
+        "line": 68
+      },
+      "claims": [
+        "May a member renew a loan when another member has reserved the book?"
+      ],
+      "consequential": true,
+      "authority": "human"
+    },
+    {
+      "id": "library-lending/uncertainty/lost-book-fee",
+      "kind": "uncertainty",
+      "name": "lost-book-fee",
+      "status": "unresolved",
+      "source": {
+        "line": 73
+      },
+      "claims": [
+        "What is charged when a book is never returned and the late fee cap is reached?"
+      ],
+      "consequential": false,
+      "authority": "human"
+    },
+    {
+      "id": "library-lending/rule/hold-expiry",
+      "kind": "rule",
+      "name": "hold-expiry",
+      "status": "accepted",
+      "claims": [
+        "An uncollected hold expires 3 days after the copy is offered.",
+        "An expired hold passes to the next member in the queue."
+      ]
+    },
+    {
+      "id": "library-lending/example/hold-expires-to-next",
+      "kind": "example",
+      "name": "hold-expires-to-next",
+      "status": "accepted",
+      "expects": [
+        "hold-expired",
+        "copy-offered-to-next-member"
+      ]
+    },
+    {
+      "id": "library-lending/rule/renewal-with-reservation",
+      "kind": "rule",
+      "name": "renewal-with-reservation",
+      "status": "accepted",
+      "claims": [
+        "A loan cannot be renewed while the book has a reservation."
+      ]
+    },
+    {
+      "id": "library-lending/example/renewal-refused",
+      "kind": "example",
+      "name": "renewal-refused",
+      "status": "accepted",
+      "expects": [
+        "renewal-refused"
+      ]
+    }
+  ]
+}

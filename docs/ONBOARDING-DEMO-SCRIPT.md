@@ -13,7 +13,7 @@ slowly and use short sentences.
 | 2:00 | Run the second `decide` with `three-per-hour-per-address`, then `diff out/five.json out/three.json` | "I change my mind. Only one rule line changes. The examples stay true." |
 | 2:20 | Run `python -m tooling.python.orin_cli generate out/three.json --target python --out out/generated` | "The decision is made, so Orin generates code." |
 | 2:25 | Run `python implementations/python/password_reset_proof.py` | "The same meaning gives two different implementation plans. The meaning does not change." |
-| 2:45 | Optional, needs Node 22.6+: run the TypeScript test, show `# pass 4` | "Evidence checks the implementation. Code can change. Intent, decisions and evidence stay." |
+| 2:45 | Optional, needs Node (see README Requirements): run the TypeScript test, show `# pass 4` | "Evidence checks the implementation. Code can change. Intent, decisions and evidence stay." |
 | 2:55 | End card: `docs/ONBOARDING.md` | "Try the 10-minute walkthrough." |
 
 Before recording: run `mkdir -p out`. After: delete `out/`.

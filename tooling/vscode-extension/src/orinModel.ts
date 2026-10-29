@@ -1,4 +1,7 @@
-export type OrinSymbolKind = "module" | "workflow" | "rule" | "example" | "uncertainty";
+// Declaration keywords that open a top-level `keyword: name` block; extend here for new syntax.
+export const BLOCK_KEYWORDS = ["module", "workflow", "example", "uncertainty", "rule", "capability", "state", "type"] as const;
+
+export type OrinSymbolKind = (typeof BLOCK_KEYWORDS)[number] | "option";
 
 export interface OrinSymbol {
   kind: OrinSymbolKind;
@@ -14,14 +17,15 @@ export interface OrinOutline {
   symbols: OrinSymbol[];
 }
 
-const BLOCK = /^(module|workflow|example|uncertainty):\s*(.*?)\s*$/;
+const BLOCK = new RegExp(`^(${BLOCK_KEYWORDS.join("|")}):\\s*(.*?)\\s*$`);
+const OPTION = /^\s+option:\s*(.*?)\s*$/;
 const FIELD = /^\s+(purpose|actor):\s*(.*?)\s*$/;
 
 function isTopLevel(line: string): boolean {
   return /^[A-Za-z]/.test(line);
 }
 
-const BRACE_BLOCK = /^\s*(module|workflow|example|uncertainty|rule)\s+([^\s{]+)\s*\{/;
+const BRACE_BLOCK = /^\s*(module|workflow|example|uncertainty|rule|capability|state|type)\s+([^\s{]+)\s*\{/;
 const QUOTED = /^\s*(purpose|outcome|actor)\s+"((?:[^"\\]|\\.)*)"/;
 
 // Brace-style outline (`workflow name { ... }`); a workflow's `outcome` serves as its purpose.
@@ -100,6 +104,11 @@ export function parseOutline(text: string): OrinOutline {
     }
     if (line.trim() === "") continue;
 
+    const option = current?.kind === "uncertainty" ? OPTION.exec(line) : null;
+    if (option) {
+      symbols.push({ kind: "option", name: option[1], startLine: i, endLine: i });
+      continue;
+    }
     if (section === "purpose" && !current) {
       modulePurpose = modulePurpose ? `${modulePurpose} ${line.trim()}` : line.trim();
     } else if (section === "rules" && !current) {

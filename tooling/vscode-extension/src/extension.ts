@@ -21,6 +21,10 @@ const SYMBOL_KINDS: Record<string, vscode.SymbolKind> = {
   rule: vscode.SymbolKind.Constant,
   example: vscode.SymbolKind.Event,
   uncertainty: vscode.SymbolKind.Variable,
+  capability: vscode.SymbolKind.Interface,
+  state: vscode.SymbolKind.EnumMember,
+  type: vscode.SymbolKind.Class,
+  option: vscode.SymbolKind.Field,
 };
 
 type OrinDiagnostic = { code: string; message: string; line?: number };

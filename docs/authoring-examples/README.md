@@ -3,8 +3,7 @@
 Each example is a plain-English request and the `.orin` file an AI should
 write from it. See `../AUTHORING-WITH-AI.md` for the method.
 
-All files load with `implementations/python/orin_parser.py`
-(`OrinParser().parse_file(path)`). The only diagnostics are `ORIN-E041`,
+All files load with the Orin checker. The only diagnostics are `ORIN-E041`,
 one per open uncertainty. That is intended: the AI did not guess.
 
 ## 1. Tip calculator → `tip-calculator.orin`
@@ -65,6 +64,17 @@ parses every example and checks the only diagnostics are `ORIN-E041`, one per
 
 ## Note on syntax
 
-`../../examples/password-reset.orin` uses the readable outline style. The
-current Python loader parses that style only for that one file. Any other
-file must use the brace style shown here to load today.
+All five files use the outline style (`key: name`), the same layout as
+`../../examples/password-reset.orin`. Older files may use a brace style
+(`module name { ... }`); it still loads but is legacy. Do not write new files
+in it.
+
+## Check one file
+
+From the repository root:
+
+```text
+python -m tooling.python.orin_cli check docs/authoring-examples/tip-calculator.orin
+```
+
+It lists each open uncertainty as `ORIN-E041`. That is expected here.

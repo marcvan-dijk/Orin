@@ -923,6 +923,23 @@ capture important decisions and which parts add unnecessary friction.
     Exact next step: make the outline parser build full models without a
     fixture (start with shared-tasks), then run the onboarding walkthrough with
     a real first-time user for the Phase 2 go/no-go.
+68. [done] Passes 2 and 3 (20 parallel workstreams): fixture-free outline
+    parsing for password-reset, expense-approval, shared-tasks and a new
+    library-lending stress example (Python and TypeScript parsers, BOM-safe);
+    outline style is the canonical syntax, brace style is legacy; new syntax
+    `failure:`, `recovery:`, `after:`, `proved-by:`; model-driven and
+    prose-driven Python codegen; agent sidecar decisions, `--friendly`, chained
+    decides; VS Code extension updated to the new syntax; parity check covers
+    all examples (19/19, E043 gating ported to TypeScript); decision-change
+    proof demo and `docs/PROOF-OF-VALUE.md`; two novice dry runs; security
+    reviews with no open findings.
+    Remaining gaps: TypeScript model-driven codegen (not delivered; only the
+    expense generator with `stay-submitted`); Python expense-approval codegen is
+    a fixed template; `generate` errors for non-demo models are unclear;
+    `.decisions.json` has no worked example; the two `decide` tools use
+    different flags; no test with a real first-time user.
+    Exact next step: run the onboarding walkthrough with a real first-time
+    user, then fix the friction items in `docs/LANGUAGE-GAPS-FOUND.md`.
 
 ### Current status after reevaluation
 
