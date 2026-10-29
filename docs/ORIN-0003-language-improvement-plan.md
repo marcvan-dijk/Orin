@@ -888,9 +888,58 @@ capture important decisions and which parts add unnecessary friction.
 65. [done] ORIN-0006 Phase 2.4 prototype: proposal/accept/reject flow in
     `implementations/python/orin_proposal.py` with tests and
     `docs/COLLABORATIVE-AUTHORING-PROTOTYPE.md`.
-    Exact next step: finish Phase 2.2 (declare `orin.pythonPath`, install deps
-    and compile the extension), then run the onboarding walkthrough with a real
-    first-time user to decide the Phase 2 go/no-go.
+66. [done] Usability push: unified `orin_cli` (check/readiness/inspect/decide/
+    examples); Python and TypeScript password-reset code generators with
+    blocked-model refusal; CI workflow; Python/TypeScript parity check (also
+    aligned the ORIN-E044 message); `.orin` parse errors with line, column and
+    fix hints; VS Code extension finished (setting, diagnostics, quick fix);
+    expense-approval example; `docs/AUTHORING-WITH-AI.md`; and
+    `docs/LANGUAGE-REFERENCE.md`.
+    Gaps found: (a) the `.orin` loader only reads outline style
+    (`module: name`) for password-reset, so `examples/expense-approval.orin` does
+    not parse; (b) the agent hardcodes decision prompts per module, so it
+    reports expense-approval as ready although the model is blocked;
+    (c) the generated Python module has no rate limit.
+    Exact next step: generalize the `.orin` loader to outline style and make
+    agent decision prompts data-driven, then run the onboarding walkthrough
+    with a real first-time user for the Phase 2 go/no-go.
+67. [done] Closed item 66 gaps with 15 parallel workstreams: outline-style
+    `.orin` loading for any file; data-driven agent decision prompts (options on
+    the uncertainty or `<name>.decisions.json`), fixing expense-approval being
+    reported ready; Python codegen enforces the rate limit and supports
+    expense-approval; TypeScript codegen CLI and expense-approval; resolved
+    expense-approval fixtures and decision doc; CLI `new` and `generate`; VS Code
+    quick fix applies the decision; proposal flow connected to agent options with
+    JSON decision records; source-error conformance fixtures; extra authoring
+    examples; onboarding doc test; end-to-end novice demo. Security review
+    fixes: `orin.pythonPath` is machine-scoped; generated TypeScript sanitizes
+    the module id.
+    Remaining gaps: (a) outline parser relies on `.structured.json` fixtures
+    for password-reset/expense-approval and cannot yet build full models from
+    `examples/shared-tasks.minimal.orin` (expected-failure test records what
+    is missing); (b) `generate` for Python ignores `--decision`; (c) the
+    onboarding doc has an `<owner>` clone placeholder; (d) demo substitutes the
+    full conformance model because the `.orin`-derived model lacks one rule.
+    Exact next step: make the outline parser build full models without a
+    fixture (start with shared-tasks), then run the onboarding walkthrough with
+    a real first-time user for the Phase 2 go/no-go.
+68. [done] Passes 2 and 3 (20 parallel workstreams): fixture-free outline
+    parsing for password-reset, expense-approval, shared-tasks and a new
+    library-lending stress example (Python and TypeScript parsers, BOM-safe);
+    outline style is the canonical syntax, brace style is legacy; new syntax
+    `failure:`, `recovery:`, `after:`, `proved-by:`; model-driven and
+    prose-driven Python codegen; agent sidecar decisions, `--friendly`, chained
+    decides; VS Code extension updated to the new syntax; parity check covers
+    all examples (19/19, E043 gating ported to TypeScript); decision-change
+    proof demo and `docs/PROOF-OF-VALUE.md`; two novice dry runs; security
+    reviews with no open findings.
+    Remaining gaps: TypeScript model-driven codegen (not delivered; only the
+    expense generator with `stay-submitted`); Python expense-approval codegen is
+    a fixed template; `generate` errors for non-demo models are unclear;
+    `.decisions.json` has no worked example; the two `decide` tools use
+    different flags; no test with a real first-time user.
+    Exact next step: run the onboarding walkthrough with a real first-time
+    user, then fix the friction items in `docs/LANGUAGE-GAPS-FOUND.md`.
 
 ### Current status after reevaluation
 
@@ -910,9 +959,9 @@ capture important decisions and which parts add unnecessary friction.
   1.2 fixture baseline; item 59 completed ORIN-0006 Phase 1.3 executable case
   verification; item 60 completed ORIN-0006 Phase 1.4 semantic-equivalence
   tightening; item 61 completed ORIN-0006 Phase 1.5 model-fit audit).
-- **Exact next step:** finish ORIN-0006 Phase 2.2 (declare `orin.pythonPath`,
-  compile the extension), then run the onboarding walkthrough with a real
-  first-time user for the Phase 2 go/no-go.
+- **Exact next step:** make the outline parser build full models without a
+  fixture (start with shared-tasks), then run the onboarding walkthrough with a
+  real first-time user for the Phase 2 go/no-go (see item 67).
 
 ## Test strategy
 

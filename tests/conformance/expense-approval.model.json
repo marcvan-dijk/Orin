@@ -1,0 +1,66 @@
+{
+  "module": {
+    "id": "finance.expense-approval/module",
+    "name": "finance.expense-approval",
+    "purpose": "Let people claim work expenses that are approved by someone with sufficient authority and never by the claimant."
+  },
+  "objects": [
+    {
+      "id": "finance.expense-approval/rule/approver-limit-covers-amount",
+      "name": "approver-limit-covers-amount",
+      "claims": ["An expense is approved only by an approver whose limit covers its amount."]
+    },
+    {
+      "id": "finance.expense-approval/rule/no-self-decision",
+      "name": "no-self-decision",
+      "claims": ["A person cannot approve or reject their own expense."]
+    },
+    {
+      "id": "finance.expense-approval/rule/decision-is-final",
+      "name": "decision-is-final",
+      "claims": ["A decided expense cannot be decided again."]
+    },
+    {
+      "id": "finance.expense-approval/rule/rejection-has-reason",
+      "name": "rejection-has-reason",
+      "claims": ["A rejection records a reason visible to the submitter."]
+    },
+    {
+      "id": "finance.expense-approval/workflow/submit-expense",
+      "name": "submit-expense",
+      "steps": [
+        "record expense as submitted",
+        "route to an eligible approver",
+        "record the approver's decision"
+      ]
+    },
+    {
+      "id": "finance.expense-approval/example/within-limit",
+      "name": "within-limit",
+      "expects": ["expense-approved"]
+    },
+    {
+      "id": "finance.expense-approval/example/over-limit",
+      "name": "over-limit",
+      "expects": ["approval-refused", "expense-stays-submitted"]
+    },
+    {
+      "id": "finance.expense-approval/example/self-approval",
+      "name": "self-approval",
+      "expects": ["approval-refused"]
+    },
+    {
+      "id": "finance.expense-approval/example/rejection",
+      "name": "rejection",
+      "expects": ["expense-rejected", "reason-visible-to-submitter"]
+    },
+    {
+      "id": "finance.expense-approval/uncertainty/no-eligible-approver",
+      "name": "no-eligible-approver",
+      "consequential": true,
+      "question": "What happens when no one other than the submitter has a limit covering the amount?",
+      "authority": "human"
+    }
+  ],
+  "unresolved": ["finance.expense-approval/uncertainty/no-eligible-approver"]
+}

@@ -1,0 +1,105 @@
+module: finance.expense-approval
+
+purpose:
+  Let people claim work expenses that are approved by someone with sufficient authority and never by the claimant.
+
+rule: approver-limit-covers-amount
+  claims:
+    - An expense is approved only by an approver whose limit covers its amount.
+
+rule: no-self-decision
+  claims:
+    - A person cannot approve or reject their own expense.
+
+rule: decision-is-final
+  claims:
+    - A decided expense cannot be decided again.
+
+rule: rejection-has-reason
+  claims:
+    - A rejection records a reason visible to the submitter.
+
+workflow: submit-expense
+  input:
+    amount
+    description
+  claims:
+    - Every submitted expense is routed only to approvers other than the submitter.
+
+example: within-limit
+  given:
+    An approver with a limit of 500 and an expense of 120 from someone else.
+  when:
+    The approver approves the expense.
+  then:
+    The expense becomes approved.
+
+example: over-limit
+  given:
+    An approver with a limit of 500 and an expense of 900.
+  when:
+    The approver tries to approve the expense.
+  then:
+    The approval is refused and the expense stays submitted.
+
+example: self-approval
+  given:
+    An approver with a sufficient limit who submitted the expense.
+  when:
+    The approver tries to approve the expense.
+  then:
+    The approval is refused.
+
+example: rejection
+  given:
+    A submitted expense and an eligible approver.
+  when:
+    The approver rejects it with a reason.
+  then:
+    The expense becomes rejected and the submitter can see the reason.
+
+uncertainty: no-eligible-approver
+  blocking: yes
+  question:
+    What happens when no one other than the submitter has a limit covering the amount?
+  why-it-matters:
+    This decides whether an expense can stall, be escalated, or be refused when only the submitter's limit covers it, without weakening the rule that nobody decides their own expense.
+  affects:
+    - submit-expense
+    - no-self-decision
+    - approver-limit-covers-amount
+  rule: no-eligible-approver-handling
+  option: escalate-to-higher-authority
+    label: Escalate the expense to an approver with a higher limit, never the submitter.
+    explanation: Keeps claims moving while preserving separation of duties.
+    effects:
+      - adds an escalation rule
+      - keeps no-self-decision intact
+    impact:
+      - submit-expense routing gains an escalation outcome
+    rule-claims:
+      - When no approver other than the submitter has a limit covering the amount, the expense is escalated to an approver with a higher limit.
+      - An escalated expense is never routed to its submitter.
+    example: no-eligible-approver-escalates
+      expects:
+        - expense-escalated
+        - approval-refused-for-submitter
+  option: reject-as-unapprovable
+    label: Reject the expense automatically with a reason that no eligible approver exists.
+    explanation: Gives the submitter a prompt, explicit outcome at the cost of manual resubmission.
+    effects:
+      - adds an automatic rejection rule
+    impact:
+      - rejection-has-reason applies to automatic rejections
+    rule-claims:
+      - When no approver other than the submitter has a limit covering the amount, the expense is rejected with a reason visible to the submitter.
+    example: no-eligible-approver-rejects
+      expects:
+        - expense-rejected
+        - reason-visible-to-submitter
+  option: defer
+    label: Defer the decision and keep compilation blocked.
+    explanation: Useful only when the human is not ready to choose a policy yet.
+    effects:
+      - leaves the consequential uncertainty unresolved
+    compilation: blocked

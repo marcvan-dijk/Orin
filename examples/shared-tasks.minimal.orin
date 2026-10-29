@@ -1,0 +1,138 @@
+module: shared-tasks.minimal
+
+purpose:
+  Minimal shared-tasks semantic slice for post-MVP ORIN-0006 Phase 1.2.
+
+type: person-id
+type: list-id
+type: task-id
+
+entity: person
+  identity:
+    id person-id
+
+entity: task-list
+  identity:
+    id list-id
+
+entity: task
+  identity:
+    id task-id
+
+relation: owns
+  between:
+    person
+    task-list
+  cardinality: one-to-many
+
+relation: member-of
+  between:
+    person
+    task-list
+  cardinality: many-to-many
+
+relation: contains
+  between:
+    task-list
+    task
+  cardinality: one-to-many
+
+relation: assigned-to
+  between:
+    person
+    task
+  cardinality: one-to-many
+
+state: open
+
+state: completed
+
+capability: complete-task
+
+capability: write-task-state
+
+effect: persistent-entity-store.write.task-state
+  requires:
+    write-task-state
+  durability: strong
+
+workflow: complete-task
+  actor: actor
+  input:
+    actor person
+    task task
+  output:
+    task task
+  requires:
+    complete-task
+  uses:
+    persistent-entity-store.write.task-state
+  actor-capabilities:
+    actor complete-task
+    actor write-task-state
+  transitions:
+    open -> completed
+
+rule: only-members-can-complete-tasks
+  requires:
+    member-of
+    assigned-to
+    complete-task
+  claims:
+    - Non-members attempting completion fail with unauthorized.
+    - If task has an assignee, actor must match assignee or fail with not-assigned.
+
+rule: completion-is-terminal
+  requires:
+    completed
+    complete-task
+  claims:
+    - Completed tasks do not transition back to open.
+    - Repeated completion attempts fail with already-completed.
+
+rule: relationship-constraints
+  requires:
+    owns
+    member-of
+    contains
+    assigned-to
+  claims:
+    - Task-list ownership is single-owner and non-empty.
+    - Owners are implicit members of their lists.
+    - Tasks are created in exactly one list and cannot be moved in this slice.
+
+example: happy-path-member-completes-assigned-task
+  requires:
+    complete-task
+    only-members-can-complete-tasks
+  then:
+    task.state = completed
+    result remains observable in subsequent queries
+
+example: authorization-failure-non-member
+  requires:
+    complete-task
+    only-members-can-complete-tasks
+  then:
+    failure = unauthorized
+    task.state remains open
+
+example: terminal-state-repeated-completion
+  requires:
+    complete-task
+    completion-is-terminal
+  then:
+    failure = already-completed
+    task.state remains completed
+
+example: missing-entity-task-not-found
+  requires:
+    complete-task
+  then:
+    failure = task-not-found
+    no state changes occur
+
+uncertainty: non-member-completion
+  blocking: yes
+  question:
+    What happens if a non-member tries to complete a task?

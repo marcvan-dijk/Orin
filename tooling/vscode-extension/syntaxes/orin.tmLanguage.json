@@ -14,7 +14,7 @@
     "section": {
       "patterns": [
         {
-          "match": "^(\\s*)(module|purpose|context|import|type|state|capability|effect|rules|rule|workflow|example|uncertainty|decision|target|evidence|policy|implementation|input|output|steps|given|when|then|always|requires|authority|question|status|options|answer)(:)(?:[ \\t]+([^\\s/][^\\n]*?))?[ \\t]*$",
+          "match": "^(\\s*)(module|purpose|context|import|type|state|capability|effect|rules|rule|workflow|example|uncertainty|decision|target|evidence|policy|implementation|input|output|steps|given|when|then|always|requires|authority|question|status|options|answer|option|claims|why-it-matters|affects|label|explanation|effects|impact|rule-claims|compilation|expects|imports|policies)(:)(?:[ \\t]+([^\\s/][^\\n]*?))?[ \\t]*$",
           "captures": {
             "2": { "name": "keyword.control.orin" },
             "3": { "name": "punctuation.separator.key-value.orin" },

@@ -1,0 +1,120 @@
+module: library-lending
+
+purpose:
+  Let members borrow books for a fixed period, return them, pay a fee when they are late, and reserve books that are out.
+
+rules:
+  - A copy is on loan to at most one member at a time.
+    proved-by: copy-already-on-loan
+  - A loan has a due date 14 days after it starts.
+    proved-by: on-time-loan
+  - A late fee accrues for each day a loan is overdue and never exceeds the price of the book.
+    proved-by: late-return, fee-capped
+  - A member with unpaid fees above the fee limit cannot borrow.
+    proved-by: fee-block
+  - A returned loan cannot be returned again.
+    proved-by: double-return
+  - A reservation is held for the first member in the queue when a copy is returned.
+    proved-by: reserved-return
+
+workflow: borrow-book
+  input:
+    member
+    copy
+  steps:
+    check the member may borrow
+    record the loan with its due date
+    mark the copy as on loan
+  failure:
+    The loan is refused and nothing is recorded.
+  recovery:
+    The member may try again once the cause is cleared.
+  after:
+    A loan exists with a due date.
+    The copy is on loan to the member.
+
+workflow: return-book
+  input:
+    loan
+  steps:
+    record the loan as returned
+    charge any late fee
+    offer the copy to the first reservation
+  failure:
+    The loan stays on loan and no fee is charged.
+  recovery:
+    The return may be repeated until it is recorded.
+  after:
+    The loan is returned.
+    Any late fee is charged once.
+
+example: on-time-loan
+  given:
+    A member with no fees and an available copy.
+  when:
+    The member borrows the copy.
+  then:
+    A loan exists with a due date 14 days later and the copy is on loan.
+
+example: late-return
+  given:
+    A loan that is 3 days overdue.
+  when:
+    The member returns the copy.
+  then:
+    The loan is returned and a late fee for 3 days is charged.
+
+example: fee-block
+  given:
+    A member whose unpaid fees are above the fee limit.
+  when:
+    The member tries to borrow a copy.
+  then:
+    The loan is refused.
+
+example: reserved-return
+  given:
+    A returned copy with two members waiting in the reservation queue.
+  when:
+    The copy is returned.
+  then:
+    The copy is held for the first member in the queue.
+
+example: copy-already-on-loan
+  given:
+    A copy that is on loan to one member.
+  when:
+    Another member tries to borrow the same copy.
+  then:
+    The loan is refused.
+
+example: fee-capped
+  given:
+    A loan overdue for longer than the price of the book allows in fees.
+  when:
+    The member returns the copy.
+  then:
+    The late fee equals the price of the book.
+
+example: double-return
+  given:
+    A loan that is already returned.
+  when:
+    The member returns it again.
+  then:
+    The return is refused.
+
+uncertainty: reservation-hold-expiry
+  blocking: yes
+  question:
+    What happens when the first member in the queue does not collect a held copy?
+
+uncertainty: renewal-with-reservation
+  blocking: yes
+  question:
+    May a member renew a loan when another member has reserved the book?
+
+uncertainty: lost-book-fee
+  blocking: no
+  question:
+    What is charged when a book is never returned and the late fee cap is reached?

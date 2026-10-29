@@ -58,6 +58,26 @@ explicit choice adds a rule and example to the revised model, then
 re-validates it (`eligible`; re-inspecting the output reports ready).
 Options: `membership-required`, `assignee-may-complete` (`defer` stays blocked).
 
+### Data-driven decisions
+
+Any model's blocking, consequential uncertainty can carry its own decision
+data; password-reset and shared-tasks keep built-in fallbacks. Data is read
+from the uncertainty object itself (`why_it_matters`, `affected_objects`,
+`options`, optional `rule: {id, name}`) and from a sidecar file found by
+convention next to the model: `<name>.decisions.json` (for
+`expense-approval.model.json`, `expense-approval.decisions.json`). Inline data
+wins over the sidecar, which wins over built-ins. Sidecar shape:
+
+```json
+{"decisions": {"<uncertainty-id>": {"why_it_matters": "...",
+  "options": [{"id": "...", "label": "...", "impact": ["..."],
+    "rule_claims": ["..."], "examples": [{"id": "...", "kind": "example"}]}]}}}
+```
+
+An option with `"compilation": "blocked"` (e.g. `defer`) keeps the decision
+unresolved. A blocking uncertainty with no options is still reported as blocked
+(exit `2`).
+
 ## Exit codes
 
 - `0`: ready, no blocking consequential decisions remain
@@ -75,3 +95,31 @@ This first slice is intentionally narrow:
   artifact for deterministic offline analysis
 - new uncertainty families can be added by registering new decision prompts and
   semantic patch handlers without rewriting the CLI
+
+## Orin CLI (`orin_cli`)
+
+One entry point for novices; stdlib only.
+
+```bash
+python -m tooling.python.orin_cli check tests/conformance/shared-tasks.model.json
+python -m tooling.python.orin_cli readiness examples/password-reset.orin [--json]
+python -m tooling.python.orin_cli inspect examples/password-reset.orin
+python -m tooling.python.orin_cli decide <file> --option <id> --out <file>
+python -m tooling.python.orin_cli examples tests/conformance/shared-tasks.model.json
+python -m tooling.python.orin_cli new my-app [--out dir]
+python -m tooling.python.orin_cli generate model.json --decision decision.json --target python|typescript --out dir
+```
+
+- `check` validates a `.orin` or model `.json`, lists diagnostics with IDs, and ends with a "Next step" line (e.g. the exact `decide` command for the first open decision).
+- `readiness` says READY or BLOCKED and groups findings into "Must decide now (blocking)" and "Optional hardening", each code with a one-line plain-English meaning.
+- `inspect` delegates to `implementations/python/orin_agent_core.py`.
+- `decide <file> --option <id> --out <file>` finds the open decision that offers the option (or pass `--uncertainty`), applies it through `python -m tooling.python.orin_agent` (using its `--friendly` flag when available), writes the updated model, and prints a plain summary. Exit `0` on success, `3` if the option or file is invalid.
+- Every command has `--help` with an example; top-level `--help` ends with the exit-code legend.
+- `examples` runs the matching `tests/conformance/<name>.cases.json`, if any.
+- `new` writes a minimal valid `<name>.orin` (one rule, workflow, example, open uncertainty).
+- `generate` shells out to `implementations/python/codegen` or `implementations/typescript/src/codegen/cli.ts` (typescript needs `node`; reports "not available" if missing). `--decision` takes an option id (as shown by `inspect`) or a `.json` file `{"option": "<id>"}` (a raw TS decision file also works), for both targets. If the model is blocked and no decision is given, the open decisions and option ids are printed and the exit code is `2`. The python target applies the option via `orin_agent_core`, writes `<model>.resolved.json` into `--out`, then generates. The typescript target translates the option to its decision JSON (password-reset options; expense-approval accepts `stay-submitted`).
+
+Exit codes: `0` ok/ready, `1` problems or failing examples, `2` blocked
+(decisions required), `3` invalid input or usage.
+
+Test: `python -m unittest tooling.python.test_orin_cli`

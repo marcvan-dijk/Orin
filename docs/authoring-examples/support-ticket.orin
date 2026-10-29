@@ -1,0 +1,37 @@
+module: support-ticket
+
+purpose:
+  Let a small team move customer problems from first report to resolution without losing any.
+
+rules:
+  - A ticket is always in exactly one state: open, in-progress, waiting-on-customer, resolved or closed.
+  - A ticket moves open to in-progress, in-progress to waiting-on-customer or resolved, waiting-on-customer back to in-progress, and resolved to closed.
+  - A ticket cannot jump from open straight to resolved or closed.
+  - A closed ticket cannot change state.
+
+workflow: move-ticket
+  input:
+    ticket-title
+  output:
+    The ticket is in its new state, or the person is told that the move is not allowed.
+
+example: start-work
+  given:
+    An open ticket.
+  when:
+    A team member starts work on it.
+  then:
+    The ticket is in-progress.
+
+example: skip-ahead
+  given:
+    An open ticket.
+  when:
+    A team member marks it resolved.
+  then:
+    The system refuses and says the ticket must be in-progress first.
+
+uncertainty: reopening
+  blocking: yes
+  question:
+    Can a resolved or closed ticket be reopened if the customer writes back?

@@ -1,0 +1,42 @@
+module: book-lending
+
+purpose:
+  Let a small club lend its books to members and know who has what.
+
+rules:
+  - A book that is on loan cannot be lent to another member.
+  - A member can have at most 3 books on loan at once.
+  - Returning a book makes it available to lend again.
+
+workflow: lend-book
+  input:
+    book-title
+    member-name
+  output:
+    The book is recorded as on loan to the member, or the person is told why not.
+
+example: lend-available-book
+  given:
+    The book is available and the member has 2 books.
+  when:
+    The member borrows the book.
+  then:
+    The book is recorded as on loan to the member.
+
+example: lend-fourth-book
+  given:
+    The member already has 3 books on loan.
+  when:
+    The member borrows another book.
+  then:
+    The system refuses and says the limit of 3 has been reached.
+
+uncertainty: overdue-books
+  blocking: yes
+  question:
+    Should there be a due date, and what happens when a book is late?
+
+uncertainty: who-can-record
+  blocking: yes
+  question:
+    Can any member record loans, or only a librarian?

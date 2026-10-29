@@ -1,0 +1,123 @@
+{
+  "modelVersion": "0.1.0",
+  "module": {
+    "id": "finance.expense-approval/module",
+    "kind": "module",
+    "name": "finance.expense-approval",
+    "status": "accepted",
+    "purpose": "Let people claim work expenses that are approved by someone with sufficient authority and never by the claimant."
+  },
+  "objects": [
+    {
+      "id": "finance.expense-approval/evidence/blocked",
+      "kind": "evidence",
+      "name": "blocked",
+      "status": "blocked",
+      "statement": "The no-eligible-approver decision is unresolved."
+    },
+    {
+      "id": "finance.expense-approval/example/within-limit",
+      "kind": "example",
+      "name": "within-limit",
+      "status": "accepted",
+      "claims": [
+        "An approver with a limit of 500 and an expense of 120 from someone else.",
+        "The approver approves the expense.",
+        "The expense becomes approved."
+      ]
+    },
+    {
+      "id": "finance.expense-approval/example/over-limit",
+      "kind": "example",
+      "name": "over-limit",
+      "status": "accepted",
+      "claims": [
+        "An approver with a limit of 500 and an expense of 900.",
+        "The approver tries to approve the expense.",
+        "The approval is refused and the expense stays submitted."
+      ]
+    },
+    {
+      "id": "finance.expense-approval/example/self-approval",
+      "kind": "example",
+      "name": "self-approval",
+      "status": "accepted",
+      "claims": [
+        "An approver with a sufficient limit who submitted the expense.",
+        "The approver tries to approve the expense.",
+        "The approval is refused."
+      ]
+    },
+    {
+      "id": "finance.expense-approval/example/rejection",
+      "kind": "example",
+      "name": "rejection",
+      "status": "accepted",
+      "claims": [
+        "A submitted expense and an eligible approver.",
+        "The approver rejects it with a reason.",
+        "The expense becomes rejected and the submitter can see the reason."
+      ]
+    },
+    {
+      "id": "finance.expense-approval/rule/approver-limit-covers-amount",
+      "kind": "rule",
+      "name": "approver-limit-covers-amount",
+      "status": "accepted",
+      "claims": [
+        "An expense is approved only by an approver whose limit covers its amount."
+      ]
+    },
+    {
+      "id": "finance.expense-approval/rule/no-self-decision",
+      "kind": "rule",
+      "name": "no-self-decision",
+      "status": "accepted",
+      "claims": [
+        "A person cannot approve or reject their own expense."
+      ]
+    },
+    {
+      "id": "finance.expense-approval/rule/decision-is-final",
+      "kind": "rule",
+      "name": "decision-is-final",
+      "status": "accepted",
+      "claims": [
+        "A decided expense cannot be decided again."
+      ]
+    },
+    {
+      "id": "finance.expense-approval/rule/rejection-has-reason",
+      "kind": "rule",
+      "name": "rejection-has-reason",
+      "status": "accepted",
+      "claims": [
+        "A rejection records a reason visible to the submitter."
+      ]
+    },
+    {
+      "id": "finance.expense-approval/uncertainty/no-eligible-approver",
+      "kind": "uncertainty",
+      "name": "no-eligible-approver",
+      "status": "unresolved",
+      "claims": [
+        "What happens when no one other than the submitter has a limit covering the amount?"
+      ],
+      "consequential": true,
+      "authority": "human"
+    },
+    {
+      "id": "finance.expense-approval/workflow/submit-expense",
+      "kind": "workflow",
+      "name": "submit-expense",
+      "status": "accepted",
+      "inputs": [
+        "amount",
+        "description"
+      ],
+      "claims": [
+        "Every submitted expense is routed only to approvers other than the submitter."
+      ]
+    }
+  ]
+}

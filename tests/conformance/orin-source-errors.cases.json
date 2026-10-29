@@ -1,0 +1,13 @@
+{
+  "description": "Language-neutral fixtures for .orin source errors. Each case has: id; source (inline .orin text, \\n line breaks); expectedDiagnostic (stable ORIN-P0xx id); line (1-based line the diagnostic must point at). The optional column (1-based) is informational: implementations may report it, but conformance only requires diagnostic id and line.",
+  "cases": [
+    {"id": "missing-module", "source": "purpose \"x\"\n", "expectedDiagnostic": "ORIN-P001", "line": 1, "column": 1},
+    {"id": "unsupported-syntax", "source": "module m {\n  purpose \"x\"\n  bogus thing\n}\n", "expectedDiagnostic": "ORIN-P002", "line": 3, "column": 3},
+    {"id": "unterminated-block", "source": "module m {\n  entity User {\n    purpose \"x\"\n", "expectedDiagnostic": "ORIN-P003", "line": 2},
+    {"id": "missing-quotes", "source": "module m {\n  purpose no quotes\n}\n", "expectedDiagnostic": "ORIN-P004", "line": 2},
+    {"id": "attribute-not-allowed", "source": "module m {\n  entity U {\n    zzz \"x\"\n  }\n}\n", "expectedDiagnostic": "ORIN-P005", "line": 3, "column": 5},
+    {"id": "bad-context-line", "source": "module m {\n  context {\n    bogus \"x\"\n  }\n}\n", "expectedDiagnostic": "ORIN-P006", "line": 3, "column": 5},
+    {"id": "field-missing-type", "source": "module m {\n  type text\n  entity User {\n    field name\n  }\n}\n", "expectedDiagnostic": "ORIN-P008", "line": 4},
+    {"id": "unknown-field-modifier", "source": "module m {\n  type text\n  entity U {\n    field a text weird\n  }\n}\n", "expectedDiagnostic": "ORIN-P009", "line": 4, "column": 5}
+  ]
+}

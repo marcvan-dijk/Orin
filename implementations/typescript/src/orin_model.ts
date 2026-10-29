@@ -121,6 +121,7 @@ export class SemanticModel {
     const readinessReferences = this.collectReadinessReferences(objects, kinds, objectsById);
     const relationReferences = this.collectReadinessRelationReferences(objects, kinds);
     const effectReferenceValidationEnabled = this.effectReferenceValidationEnabled(objects);
+    const capabilityReadinessEnabled = this.capabilityReadinessEnabled(objects, kinds);
 
     for (const obj of objects) {
       if (!obj || typeof obj !== "object") {
@@ -176,7 +177,7 @@ export class SemanticModel {
       if (!obj || typeof obj !== "object" || obj.kind !== "capability") {
         continue;
       }
-      if (typeof obj.id === "string" && !readinessReferences.has(obj.id)) {
+      if (capabilityReadinessEnabled && typeof obj.id === "string" && !readinessReferences.has(obj.id)) {
         diagnostics.push({
           code: "ORIN-E043",
           message: "capability declaration is not referenced by any workflow/rule/example",
@@ -904,6 +905,19 @@ export class SemanticModel {
       });
     }
     return diagnostics;
+  }
+
+  private capabilityReadinessEnabled(objects: Array<Record<string, any>>, kinds: Record<string, string> | Map<string, string>): boolean {
+    const kindOf = (id: string) => (kinds instanceof Map ? kinds.get(id) : kinds[id]);
+    return objects.some((obj) => {
+      if (!obj || typeof obj !== "object" || !READINESS_DRIVER_KINDS.has(obj.kind)) {
+        return false;
+      }
+      if (obj.kind === "workflow" && "actorCapabilities" in obj) {
+        return true;
+      }
+      return Array.isArray(obj.uses) && obj.uses.some((v: unknown) => typeof v === "string" && kindOf(v) === "effect");
+    });
   }
 
   private effectReferenceValidationEnabled(objects: Array<Record<string, any>>): boolean {

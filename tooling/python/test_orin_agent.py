@@ -141,6 +141,63 @@ class SharedTasksDecisionTests(unittest.TestCase):
             OrinDecisionAgent().apply_decision(SHARED_TASKS, NON_MEMBER_UNCERTAINTY_ID, "defer")
 
 
+EXPENSE = ROOT / "tests" / "conformance" / "expense-approval.model.json"
+EXPENSE_UNCERTAINTY = "finance.expense-approval/uncertainty/no-eligible-approver"
+
+
+class DataDrivenDecisionTests(unittest.TestCase):
+    def test_expense_approval_is_blocked_with_sidecar_options(self):
+        inspection = OrinDecisionAgent().inspect(EXPENSE)
+
+        self.assertEqual(inspection.status, "blocked")
+        prompt = inspection.decisions[0].prompt
+        self.assertEqual(prompt.uncertainty_id, EXPENSE_UNCERTAINTY)
+        self.assertTrue(prompt.why_it_matters)
+        self.assertGreaterEqual(len(prompt.options), 2)
+
+    def test_expense_approval_cli_exits_blocked(self):
+        completed = subprocess.run(
+            [sys.executable, *AGENT, "inspect", str(EXPENSE)],
+            cwd=ROOT, text=True, capture_output=True,
+        )
+        self.assertEqual(completed.returncode, EXIT_BLOCKED)
+        self.assertIn(EXPENSE_UNCERTAINTY, completed.stdout)
+        self.assertNotIn("Ready:", completed.stdout)
+
+    def test_sidecar_option_adds_rule_and_example(self):
+        result = OrinDecisionAgent().apply_decision(
+            EXPENSE, EXPENSE_UNCERTAINTY, "escalate-to-higher-authority"
+        )
+        ids = {o.get("id") for o in result.model.document["objects"]}
+        self.assertIn("finance.expense-approval/rule/no-eligible-approver-handling", ids)
+        self.assertIn("finance.expense-approval/example/no-eligible-approver-escalates", ids)
+        self.assertEqual(result.model.compilation_status(), "eligible")
+
+    def test_defer_stays_blocked(self):
+        with self.assertRaises(DecisionRequiredError):
+            OrinDecisionAgent().apply_decision(EXPENSE, EXPENSE_UNCERTAINTY, "defer")
+
+    def test_inline_options_work_without_sidecar(self):
+        import json
+        document = json.loads(EXPENSE.read_text(encoding="utf-8"))
+        for obj in document["objects"]:
+            if obj["id"] == EXPENSE_UNCERTAINTY:
+                obj["why_it_matters"] = "Inline reason."
+                obj["options"] = [{
+                    "id": "refuse",
+                    "label": "Refuse.",
+                    "rule_claims": ["Such an expense is refused."],
+                }]
+        with tempfile.TemporaryDirectory() as temp_dir:
+            path = Path(temp_dir) / "inline.json"
+            path.write_text(json.dumps(document), encoding="utf-8")
+            agent = OrinDecisionAgent()
+            prompt = agent.inspect(path).decisions[0].prompt
+            self.assertEqual(prompt.why_it_matters, "Inline reason.")
+            result = agent.apply_decision(path, EXPENSE_UNCERTAINTY, "refuse")
+            self.assertEqual(result.model.compilation_status(), "eligible")
+
+
 class OrinDecisionAgentCliTests(unittest.TestCase):
     def test_inspect_cli_reports_blocked_exit_code(self):
         completed = subprocess.run(
@@ -201,6 +258,59 @@ class OrinDecisionAgentCliTests(unittest.TestCase):
 
         self.assertEqual(completed.returncode, EXIT_INVALID)
         self.assertIn("unknown decision option", completed.stderr)
+
+
+class FriendlyInspectTests(unittest.TestCase):
+    def _run(self, *args):
+        return subprocess.run(
+            [sys.executable, *AGENT, *args], cwd=ROOT,
+            capture_output=True, text=True, check=False,
+        )
+
+    def test_orin_without_options_shows_question_why_and_hint(self):
+        text = (ROOT / "examples" / "expense-approval.orin").read_text(encoding="utf-8")
+        bare = text[: text.index("  why-it-matters:")]
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as directory:
+            path = Path(directory) / "expense-approval.orin"
+            path.write_text(bare, encoding="utf-8")
+            completed = self._run("inspect", str(path))
+        self.assertEqual(completed.returncode, EXIT_BLOCKED)
+        self.assertIn("Question: What happens when no one other", completed.stdout)
+        self.assertNotIn("Why it matters: \n", completed.stdout + "\n")
+        # options come from the tests/conformance sidecar fallback
+        self.assertIn("Options:", completed.stdout)
+        self.assertIn("escalate-to-higher-authority", completed.stdout)
+
+    def test_second_decide_builds_on_written_model_via_conformance_sidecar(self):
+        lending = "library-lending/uncertainty/"
+        with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as directory:
+            first = Path(directory) / "step1.json"
+            second = Path(directory) / "step2.json"
+            completed = self._run(
+                "decide", str(ROOT / "examples" / "library-lending.orin"),
+                "--uncertainty", lending + "renewal-with-reservation",
+                "--option", "refuse-renewal", "--write", str(first), "--friendly",
+            )
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            completed = self._run(
+                "decide", str(first),
+                "--uncertainty", lending + "reservation-hold-expiry",
+                "--option", "expire-after-3-days", "--write", str(second), "--friendly",
+            )
+            self.assertEqual(completed.returncode, 0, completed.stderr)
+            completed = self._run("inspect", str(second))
+        self.assertIn("no blocking consequential decisions remain", completed.stdout)
+
+    def test_friendly_inspect_and_decide_exit_zero(self):
+        completed = self._run("inspect", str(SOURCE), "--friendly")
+        self.assertEqual(completed.returncode, 0)
+        self.assertIn("Result:", completed.stdout)
+        completed = self._run(
+            "decide", str(MODEL), "--uncertainty", RATE_LIMIT_UNCERTAINTY_ID,
+            "--option", "five-per-15m-per-address-and-origin", "--friendly",
+        )
+        self.assertEqual(completed.returncode, 0)
+        self.assertIn("Result: decision", completed.stdout)
 
 
 if __name__ == "__main__":

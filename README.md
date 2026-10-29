@@ -14,6 +14,31 @@ The project should not lose its meaning.
 
 ---
 
+## Try it
+
+Run from the repository root. This is the first working command:
+
+```text
+python -m tooling.python.orin_cli check examples/password-reset.orin
+python -m tooling.python.orin_cli readiness examples/password-reset.orin
+```
+
+Both say "blocked" on purpose: the `rate-limit` question is still open, and a
+human must choose the answer. Next: [`docs/ONBOARDING.md`](docs/ONBOARDING.md)
+(10 minutes). New words? See the [glossary](docs/GLOSSARY.md).
+
+**Requirements** (one place; other docs point here). Reading Orin needs
+nothing. The tools need **Python 3.12** and, only for the TypeScript parts,
+**Node 24** (what CI uses). Node 22.6 is the lowest version that can run
+`--experimental-strip-types`.
+
+**Windows / PowerShell:** use `python` (or `py`) the same way. Put each command
+on one line: do not use `\` to continue a line. Create folders with
+`mkdir out` (PowerShell: `New-Item -ItemType Directory out`). `diff` is not
+available; use `fc` or `Compare-Object` instead.
+
+---
+
 ## The problem
 
 Software projects contain far more knowledge than their source code.
@@ -190,26 +215,46 @@ It asks, "What must remain true about this software, no matter how it is built?"
 
 ## Start here
 
-You do not need to understand the Python or TypeScript implementation to
-understand the idea.
+The MVP is one small program: **password reset**. Other examples are only
+supporting proof. You do not need Python or TypeScript to read Orin.
+Unknown words: [`docs/GLOSSARY.md`](docs/GLOSSARY.md).
 
-1. Read the current readable program:
-   [`examples/password-reset.orin`](examples/password-reset.orin)
-2. Follow the 5-minute walkthrough:
-   [`docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`](docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md)
-3. Map the proof to exact artifacts:
-   [`tests/conformance/README.md`](tests/conformance/README.md)
-4. Use [`docs/ORIN-0001-intent-spec.md`](docs/ORIN-0001-intent-spec.md) for
-   the detailed conceptual specification.
-5. Use [`docs/README.md`](docs/README.md) for the rest of the document map.
+1. Read the program: [`examples/password-reset.orin`](examples/password-reset.orin)
+2. First walkthrough (10 minutes): [`docs/ONBOARDING.md`](docs/ONBOARDING.md)
+3. Quick demo (5 minutes): [`docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`](docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md)
+4. Language help: [`docs/LANGUAGE-REFERENCE.md`](docs/LANGUAGE-REFERENCE.md)
+5. Write Orin with an AI: [`docs/AUTHORING-WITH-AI.md`](docs/AUTHORING-WITH-AI.md)
+6. All documents: [`docs/README.md`](docs/README.md)
 
-The current example is intentionally small.
+The core idea to see:
 
-The purpose is not to demonstrate a complete application.
+> **Define what is known. Find the important missing decision. Do not silently guess.**
 
-The purpose is to demonstrate the core interaction:
+---
 
-> **Define what is known. Identify what important decision is missing. Do not silently guess.**
+## More commands
+
+Python and TypeScript must agree on the shared fixtures:
+
+```text
+python implementations/python/parity_check.py
+```
+
+CI runs all of this: [`.github/workflows/ci.yml`](.github/workflows/ci.yml).
+To run every test suite or contribute, see [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+Code generators:
+
+- Python generator: [`implementations/python/codegen/README.md`](implementations/python/codegen/README.md)
+- TypeScript generator: [`implementations/typescript/src/codegen/`](implementations/typescript/src/codegen/)
+
+More tools:
+
+- CLI and agent: [`tooling/python/`](tooling/python/README.md)
+- VS Code extension (highlighting, decision warnings): [`tooling/vscode-extension/`](tooling/vscode-extension/README.md)
+- Proof map: [`tests/conformance/README.md`](tests/conformance/README.md)
+- Supporting example (expense approval): [`examples/expense-approval.orin`](examples/expense-approval.orin)
+- Team authoring prototype: [`docs/COLLABORATIVE-AUTHORING-PROTOTYPE.md`](docs/COLLABORATIVE-AUTHORING-PROTOTYPE.md)
 
 ---
 
@@ -259,7 +304,7 @@ while AI increasingly handles:
 
 Orin is still early.
 
-The current repository proves the idea with one narrow password-reset slice.
+The current repository proves the idea with one narrow password-reset slice (the MVP).
 
 The goal is not yet to design a complete programming language or application platform.
 

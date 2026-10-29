@@ -2,7 +2,14 @@ import * as path from "node:path";
 import { execFile } from "node:child_process";
 import * as vscode from "vscode";
 import {
+  AgentDecision,
+  AgentSummary,
+  buildDecideArgs,
+  decideSucceeded,
+  defaultResolvedPath,
+  findUncertaintyLine,
   findWorkflowAt,
+  parseDecisions,
   parseAgentOutput,
   parseOutline,
   workflowHover,
@@ -14,17 +21,179 @@ const SYMBOL_KINDS: Record<string, vscode.SymbolKind> = {
   rule: vscode.SymbolKind.Constant,
   example: vscode.SymbolKind.Event,
   uncertainty: vscode.SymbolKind.Variable,
+  capability: vscode.SymbolKind.Interface,
+  state: vscode.SymbolKind.EnumMember,
+  type: vscode.SymbolKind.Class,
+  option: vscode.SymbolKind.Field,
 };
 
 type OrinDiagnostic = { code: string; message: string; line?: number };
 
+const UNTRUSTED_MESSAGE =
+  "Orin agent and checker are disabled in untrusted workspaces because they run Python from the workspace. Trust this workspace to enable them.";
+
+function requireTrust(interactive: boolean): boolean {
+  if (vscode.workspace.isTrusted) return true;
+  if (interactive) void vscode.window.showWarningMessage(UNTRUSTED_MESSAGE);
+  return false;
+}
+
+const decisionStore = new Map<string, AgentDecision[]>();
+
+function inspectFile(
+  context: vscode.ExtensionContext,
+  file: string,
+  callback: (error: Error | null, stdout: string, stderr: string) => void,
+): void {
+  if (!requireTrust(false)) return;
+  const repository = path.resolve(context.extensionPath, "..", "..");
+  const python = vscode.workspace
+    .getConfiguration("orin")
+    .get<string>("pythonPath", "python");
+  execFile(
+    python,
+    ["-m", "tooling.python.orin_agent", "inspect", file],
+    { cwd: repository },
+    (error, stdout, stderr) => callback(error, stdout, stderr),
+  );
+}
+
+function refreshDecisionDiagnostics(
+  context: vscode.ExtensionContext,
+  document: vscode.TextDocument,
+  collection: vscode.DiagnosticCollection,
+): void {
+  if (document.languageId !== "orin" || document.uri.scheme !== "file") return;
+  inspectFile(context, document.uri.fsPath, (error, stdout) => {
+    if (error && !stdout) return;
+    const decisions = parseDecisions(stdout);
+    decisionStore.set(document.uri.toString(), decisions);
+    const text = document.getText();
+    collection.set(
+      document.uri,
+      decisions.map((decision) => {
+        const line = Math.min(
+          findUncertaintyLine(text, decision.id),
+          document.lineCount - 1,
+        );
+        const diagnostic = new vscode.Diagnostic(
+          document.lineAt(line).range,
+          `Unresolved decision: ${decision.question}`,
+          vscode.DiagnosticSeverity.Warning,
+        );
+        diagnostic.source = "orin-agent";
+        diagnostic.code = decision.id;
+        return diagnostic;
+      }),
+    );
+  });
+}
+
 export function activate(context: vscode.ExtensionContext): void {
+  const decisionDiagnostics =
+    vscode.languages.createDiagnosticCollection("orin-decisions");
+  context.subscriptions.push(decisionDiagnostics);
+  const refresh = (document: vscode.TextDocument) =>
+    refreshDecisionDiagnostics(context, document, decisionDiagnostics);
+  context.subscriptions.push(
+    vscode.workspace.onDidOpenTextDocument(refresh),
+    vscode.workspace.onDidSaveTextDocument(refresh),
+    vscode.workspace.onDidCloseTextDocument((d) => {
+      decisionDiagnostics.delete(d.uri);
+      decisionStore.delete(d.uri.toString());
+    }),
+  );
+  vscode.workspace.textDocuments.forEach(refresh);
+  context.subscriptions.push(
+    vscode.workspace.onDidGrantWorkspaceTrust(() =>
+      vscode.workspace.textDocuments.forEach(refresh),
+    ),
+  );
+
+  const showOptions = vscode.commands.registerCommand(
+    "orin.showDecisionOptions",
+    async (uri: vscode.Uri, decisionId: string) => {
+      const decision = decisionStore
+        .get(uri.toString())
+        ?.find((d) => d.id === decisionId);
+      if (!decision || !requireTrust(true)) return;
+      const picked = await vscode.window.showQuickPick(
+        decision.options.map((o) => ({
+          label: o.id,
+          description: o.compilation,
+          detail: [o.description, o.whyChoose].filter(Boolean).join(" — "),
+        })),
+        { title: decision.question, placeHolder: decision.whyItMatters },
+      );
+      if (!picked) return;
+      const target = await vscode.window.showSaveDialog({
+        defaultUri: vscode.Uri.file(defaultResolvedPath(uri.fsPath)),
+        filters: { "Orin semantic model": ["json"] },
+        title: `Write revised model for "${picked.label}"`,
+      });
+      if (!target) return;
+      const repository = path.resolve(context.extensionPath, "..", "..");
+      const python = vscode.workspace
+        .getConfiguration("orin")
+        .get<string>("pythonPath", "python");
+      execFile(
+        python,
+        buildDecideArgs(uri.fsPath, decisionId, picked.label, target.fsPath),
+        { cwd: repository },
+        async (error, stdout, stderr) => {
+          const code = (error as { code?: number } | null)?.code;
+          if (!decideSucceeded(error ? code : 0)) {
+            void vscode.window.showErrorMessage(
+              `Orin decide failed: ${stderr || stdout || error?.message}`,
+            );
+            return;
+          }
+          const resolved = await vscode.workspace.openTextDocument(target);
+          await vscode.window.showTextDocument(resolved, { preview: false });
+          refresh(resolved);
+          refresh(await vscode.workspace.openTextDocument(uri));
+          inspectFile(context, target.fsPath, (err, out) => {
+            if (err && !out) return;
+            updateStatus(parseAgentOutput(out));
+          });
+        },
+      );
+    },
+  );
+  context.subscriptions.push(
+    showOptions,
+    vscode.languages.registerCodeActionsProvider(
+      { language: "orin" },
+      {
+        provideCodeActions(document, _range, ctx) {
+          return ctx.diagnostics
+            .filter((d) => d.source === "orin-agent")
+            .map((d) => {
+              const action = new vscode.CodeAction(
+                "Show decision options",
+                vscode.CodeActionKind.QuickFix,
+              );
+              action.diagnostics = [d];
+              action.command = {
+                command: "orin.showDecisionOptions",
+                title: "Show decision options",
+                arguments: [document.uri, String(d.code)],
+              };
+              return action;
+            });
+        },
+      },
+      { providedCodeActionKinds: [vscode.CodeActionKind.QuickFix] },
+    ),
+  );
+
   const diagnostics = vscode.languages.createDiagnosticCollection("orin");
   context.subscriptions.push(diagnostics);
 
   const analyze = vscode.commands.registerCommand(
     "orin.analyzeCurrentFile",
     () => {
+      if (!requireTrust(true)) return;
       const document = vscode.window.activeTextEditor?.document;
       if (!document || document.languageId !== "orin") {
         void vscode.window.showInformationMessage("Open an .orin file first.");
@@ -129,8 +298,21 @@ export function activate(context: vscode.ExtensionContext): void {
   const output = vscode.window.createOutputChannel("Orin Agent");
   context.subscriptions.push(output);
 
+  const updateStatus = (summary: AgentSummary) => {
+    status.text =
+      summary.status === "ready"
+        ? "$(check) Orin: ready"
+        : summary.status === "blocked"
+          ? `$(error) Orin: blocked (${summary.decisions.length})`
+          : "$(question) Orin: unknown";
+    status.tooltip = summary.decisions.join("\n") || "No open decisions";
+    status.command = "orin.inspectWithAgent";
+    status.show();
+  };
+
   context.subscriptions.push(
     vscode.commands.registerCommand("orin.inspectWithAgent", () => {
+      if (!requireTrust(true)) return;
       const document = vscode.window.activeTextEditor?.document;
       if (!document || document.languageId !== "orin") {
         void vscode.window.showInformationMessage("Open an .orin file first.");
@@ -154,16 +336,7 @@ export function activate(context: vscode.ExtensionContext): void {
           const summary = parseAgentOutput(stdout);
           output.clear();
           output.appendLine(stdout);
-          const blocked = summary.status === "blocked";
-          status.text =
-            summary.status === "ready"
-              ? "$(check) Orin: ready"
-              : blocked
-                ? `$(error) Orin: blocked (${summary.decisions.length})`
-                : "$(question) Orin: unknown";
-          status.tooltip = summary.decisions.join("\n") || "No open decisions";
-          status.command = "orin.inspectWithAgent";
-          status.show();
+          updateStatus(summary);
           if (summary.decisions.length > 0) {
             output.show(true);
             void vscode.window.showWarningMessage(

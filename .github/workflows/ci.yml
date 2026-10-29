@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      # Node is required so node-dependent tests and parity never skip silently.
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - name: Require Node >= 22.6
+        run: node -e 'const [a,b]=process.versions.node.split(".").map(Number); if (a<22||(a===22&&b<6)) { console.error("Node >= 22.6 required"); process.exit(1) }'
+      - run: python -m unittest discover -s implementations/python -t .
+      - run: python -m unittest discover -s tooling/python -t .
+      - name: TypeScript parity (must not skip)
+        run: |
+          python implementations/python/parity_check.py | tee parity.out
+          ! grep -E "SKIP|NOTICE" parity.out
+
+  typescript:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      - run: node --test --experimental-strip-types implementations/typescript/src/*.test.ts implementations/typescript/src/codegen/*.test.ts
+
+  vscode-extension:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: tooling/vscode-extension
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: npm
+          cache-dependency-path: tooling/vscode-extension/package-lock.json
+      - run: npm ci
+      - run: npm run compile
+      - run: npm test
+
+  password-reset-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+      # The proof tests themselves run in the python and typescript jobs.
+      - run: python implementations/python/password_reset_proof.py
+      - run: node --experimental-strip-types implementations/typescript/src/password_reset_proof.ts
+
+  ci-summary:
+    if: always()
+    needs: [python, typescript, vscode-extension, password-reset-proof]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Require all jobs to succeed
+        run: |
+          [ "${{ contains(needs.*.result, 'failure') || contains(needs.*.result, 'cancelled') || contains(needs.*.result, 'skipped') }}" = "false" ]
