@@ -22,7 +22,7 @@ jobs:
         with:
           python-version: "3.12"
       # Node is required so node-dependent tests and parity never skip silently.
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
       - name: Require Node >= 22.6
@@ -39,7 +39,7 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
       - run: node --test --experimental-strip-types implementations/typescript/src/*.test.ts implementations/typescript/src/codegen/*.test.ts
@@ -52,7 +52,7 @@ jobs:
         working-directory: tooling/vscode-extension
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
           cache: npm
@@ -69,7 +69,7 @@ jobs:
       - uses: actions/setup-python@v7
         with:
           python-version: "3.12"
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: "24"
       # The proof tests themselves run in the python and typescript jobs.
