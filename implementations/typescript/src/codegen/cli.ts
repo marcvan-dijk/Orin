@@ -1,6 +1,8 @@
 import { SemanticModel } from "../orin_model.ts";
 import { GenerationRefused, generatePasswordReset } from "./generate_password_reset.ts";
 import { generateExpenseApproval } from "./generate_expense_approval.ts";
+import { generateGeneric } from "./generic.ts";
+import { checkedModuleId } from "./sanitize.ts";
 
 export class CliError extends Error {}
 
@@ -25,7 +27,10 @@ export function generate(modelText: string, decisionText: string): { file: strin
   }
   const id = String(model.document.module?.id ?? "");
   const gen = GENERATORS[id];
-  if (!gen) throw new CliError(`no generator for module "${id}"; supported: ${Object.keys(GENERATORS).join(", ")}`);
+  if (!gen) {
+    const stem = checkedModuleId(model).replace(/[^A-Za-z0-9]+/g, "_").replace(/^_+|_+$/g, "") || "model";
+    return { file: `${stem}.generated.ts`, source: generateGeneric(model) };
+  }
   return { file: gen.file, source: gen.run(model, decision) };
 }
 

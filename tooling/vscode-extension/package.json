@@ -57,7 +57,10 @@
     },
     "menus": {
       "commandPalette": [
-        { "command": "orin.showDecisionOptions", "when": "false" }
+        {
+          "command": "orin.showDecisionOptions",
+          "when": "false"
+        }
       ]
     },
     "commands": [
@@ -76,11 +79,17 @@
         "title": "Orin: Inspect with Orin Agent",
         "category": "Orin"
       }
+    ],
+    "snippets": [
+      {
+        "language": "orin",
+        "path": "./snippets/orin.code-snippets.json"
+      }
     ]
   },
   "scripts": {
     "compile": "tsc -p ./",
-    "test": "tsc -p ./ && node out/orinModel.test.js",
+    "test": "tsc -p ./ && node out/orinModel.test.js && node out/orinIntellisense.test.js",
     "vscode:prepublish": "npm run compile"
   },
   "devDependencies": {

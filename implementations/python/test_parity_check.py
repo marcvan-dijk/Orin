@@ -30,6 +30,17 @@ class ParityCheckTests(unittest.TestCase):
         self.assertEqual(rows[0][2], "SKIP")
         self.assertEqual(rows[-1][0], "NOTICE")
 
+    def test_compare_parse_detects_readiness_and_decided_model(self):
+        a = {"diagnostics": [], "document": {}, "compilation": "eligible", "readiness": {"a": 1}, "canonical": {}}
+        self.assertIsNone(parity_check.compare_parse(a, dict(a)))
+        self.assertEqual(parity_check.compare_parse(a, {**a, "readiness": {}}), "readiness differs")
+        self.assertEqual(parity_check.compare_parse(a, {**a, "canonical": {"x": 1}}), "decided model differs")
+        self.assertEqual(parity_check.compare_parse(a, {**a, "compilation": "fail"}), "compilation differs")
+
+    def test_examples_parity(self):
+        rows, failures = parity_check.run_examples()
+        self.assertEqual(failures, 0, rows)
+
     def test_full_parity(self):
         rows, failures = parity_check.run()
         self.assertEqual(failures, 0, rows)

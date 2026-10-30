@@ -185,6 +185,12 @@ come back as `ORIN-P000` with the `ORIN-Pxxx` text inside.
 | E042, E043, E045 | An `effect` / `capability` / `relation` is never used by a workflow, rule or example. |
 | E044 | A `state` is not used in any transition (checked only if some transition exists). |
 | E046 | A rule contradicts itself. |
+| E047 | Two rules say opposite things under the same condition (`when ...`). Python only for now. |
+| E048 | An example expects what a rule it belongs to forbids. Python only for now. |
+| E052 | A `type:` section has a bad line: bad `one of:` list, bad `number:` range, or an unknown line. Allowed lines: `one of: a, b`, `number: 0 to 100` (or `at least N`, `at most N`), `optional`. Python only for now. |
+| E053 | A rule or example writes `name = value`, but the value is not in the `one of:` list of that type. Python only for now. |
+| E054 | A rule or example writes `name = value`, but the value is not a number, or is outside the `number:` range. Python only for now. |
+| E055 | A rule or example uses a missing value (`none`, `empty`) for a type that is not `optional`. Python only for now. |
 
 ## Readiness (ORIN-R…)
 

@@ -1,0 +1,14 @@
+module: shared-people
+
+purpose:
+  Shared ideas about people that other modules reuse.
+
+type: person-id
+
+entity: person
+  identity:
+    id person-id
+
+rule: no-self-decision
+  claims:
+    - A person cannot decide their own request.

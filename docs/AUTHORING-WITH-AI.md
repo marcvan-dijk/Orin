@@ -153,11 +153,51 @@ choices, each with what it would change. Then record the choice and let the
 tool update the model.
 
 Options live in a file next to the model, named `<name>.decisions.json`
-(for example `expense-approval.decisions.json`). It maps each uncertainty
-name to why it matters and a list of options. Each option has an `id`, a
-`label`, its `impact`, and the rule it adds. An option such as `defer` can
-be marked `"compilation": "blocked"`, which keeps the question open. The
-exact shape is in `tooling/python/README.md`.
+(for example `expense-approval.decisions.json`). The key is the full id of the
+open question: `<module>/uncertainty/<name>`. A short name is not accepted.
+Worked example for `signup.model.json`, saved as `signup.decisions.json`:
+
+```json
+{
+  "decisions": {
+    "event-signup/uncertainty/full-event": {
+      "why_it_matters": "Decides what a person sees when the event is full.",
+      "options": [
+        {
+          "id": "waitlist",
+          "label": "Put the person on a waiting list.",
+          "impact": ["Signup has a third outcome: waitlisted"],
+          "rule_claims": [
+            "When an event is full, a new signup is added to the waiting list."
+          ]
+        },
+        {
+          "id": "refuse",
+          "label": "Refuse the signup with a clear message.",
+          "impact": ["Signup is refused when the event is full"],
+          "rule_claims": [
+            "When an event is full, a new signup is refused."
+          ]
+        },
+        {
+          "id": "defer",
+          "label": "Not decided yet.",
+          "impact": [],
+          "compilation": "blocked"
+        }
+      ]
+    }
+  }
+}
+```
+
+Each option has an `id`, a `label`, its `impact`, and the rules it adds
+(`rule_claims`). An option marked `"compilation": "blocked"` keeps the
+question open. More detail: `tooling/python/README.md`. Run `inspect` to
+check the file: the options should be listed.
+
+You can also write the options inside the `.orin` file with `why:`, `affects:`
+and `option: <text>` lines under the open question. Then no sidecar file is needed.
 
 Then, from the repository root:
 
@@ -168,20 +208,30 @@ python -m tooling.python.orin_cli decide MODEL --uncertainty NAME --option ID --
 python -m tooling.python.orin_cli generate MODEL --decision ID --target python --out DIR
 ```
 
-- `check` finds mistakes and lists open uncertainties.
+- `new NAME [--out DIR]` writes a small valid starter `.orin` file. Edit it,
+  then run `check`. (The starter uses the older brace layout. Rewrite it in
+  outline style, as in the cheat sheet above.)
+- `check` finds mistakes and lists open questions.
 - `readiness` says ready or blocked, and which decisions are still needed.
 - `decide` applies one chosen option and writes the updated model.
 - `generate` builds code (`--target python` or `typescript`) once nothing
-  blocks it.
+  blocks it. `--decision` is an option id or a `.json` file like
+  `{"option": "<id>"}`. For the example programs
+  it writes full code. For your own program it writes a generic skeleton: one
+  function per rule, a state machine from the workflow, and the examples as
+  checks. Rules it cannot turn into code raise `NotImplementedRule`.
 
-`check` and `readiness` take a `.orin` file. `generate` takes a model file
+`check` and `readiness` take a `.orin` file or a model file. `generate` takes a model file
 (`*.model.json`), the machine-readable form of the program. Run
 `decide --help` for the current options. Exit code `0` means ready; `2` means a decision is still needed.
+`orin_agent decide` is the same step and exits `4` when the decision is
+accepted; `orin_cli decide` exits `0`. Use `--out` with `orin_cli decide`
+and `--write` with `orin_agent decide`.
 
 ## Handing over
 
 Implementation work should begin only when the person has read the file
-and either resolved the uncertainties or explicitly accepted building
+and either answered the open questions or explicitly accepted building
 around them. Orin files stay the source of truth: if behaviour changes,
 change the `.orin` first.
 

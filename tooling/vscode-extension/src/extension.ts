@@ -1,6 +1,7 @@
 import * as path from "node:path";
 import { execFile } from "node:child_process";
 import * as vscode from "vscode";
+import { completionsAt, findDefinition, findReferences, Span } from "./orinIntellisense";
 import {
   AgentDecision,
   AgentSummary,
@@ -31,6 +32,10 @@ type OrinDiagnostic = { code: string; message: string; line?: number };
 
 const UNTRUSTED_MESSAGE =
   "Orin agent and checker are disabled in untrusted workspaces because they run Python from the workspace. Trust this workspace to enable them.";
+
+function toRange(s: Span): vscode.Range {
+  return new vscode.Range(s.line, s.start, s.line, s.end);
+}
 
 function requireTrust(interactive: boolean): boolean {
   if (vscode.workspace.isTrusted) return true;
@@ -276,6 +281,32 @@ export function activate(context: vscode.ExtensionContext): void {
               selection,
             );
           });
+      },
+    }),
+    vscode.languages.registerCompletionItemProvider(selector, {
+      provideCompletionItems(document, position) {
+        return completionsAt(document.getText(), position).map((c) => {
+          const item = new vscode.CompletionItem(
+            c.label,
+            c.kind === "keyword" ? vscode.CompletionItemKind.Keyword : vscode.CompletionItemKind.Reference,
+          );
+          item.insertText = c.insertText;
+          item.detail = c.detail;
+          return item;
+        });
+      },
+    }),
+    vscode.languages.registerDefinitionProvider(selector, {
+      provideDefinition(document, position) {
+        const span = findDefinition(document.getText(), position);
+        return span ? new vscode.Location(document.uri, toRange(span)) : undefined;
+      },
+    }),
+    vscode.languages.registerReferenceProvider(selector, {
+      provideReferences(document, position, ctx) {
+        return findReferences(document.getText(), position, ctx.includeDeclaration).map(
+          (s) => new vscode.Location(document.uri, toRange(s)),
+        );
       },
     }),
     vscode.languages.registerHoverProvider(selector, {

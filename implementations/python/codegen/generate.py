@@ -17,7 +17,7 @@ if str(_PYTHON_DIR) not in sys.path:
     sys.path.insert(0, str(_PYTHON_DIR))
 
 from orin_model import SemanticModel  # noqa: E402
-from . import model_driven, prose_driven  # noqa: E402
+from . import generic, model_driven, prose_driven  # noqa: E402
 
 OUTPUT_NAME = "password_reset_generated.py"
 WORKFLOW_ID = "account.password-reset/workflow/request-reset"
@@ -106,8 +106,15 @@ def _has_object(model: SemanticModel, object_id: str) -> bool:
 
 
 def _is_model_driven(model: SemanticModel) -> bool:
-    return not _is_expense(model) and not _has_object(model, WORKFLOW_ID) \
-        and model_driven.has_transition_workflows(model.document)
+    if _is_expense(model) or _has_object(model, WORKFLOW_ID) \
+            or not model_driven.has_transition_workflows(model.document):
+        return False
+    try:
+        model_driven.derive_ir(model.document)
+    except model_driven.ModelDrivenError as error:
+        # workflows without actor/subject inputs are outside model-driven scope: the generic generator takes them
+        return "needs an actor input" not in str(error)
+    return True
 
 
 def _is_prose(model: SemanticModel) -> bool:
@@ -116,10 +123,17 @@ def _is_prose(model: SemanticModel) -> bool:
         and prose_driven.has_prose_rules(model.document)
 
 
+def _is_generic(model: SemanticModel) -> bool:
+    """Fallback: no dedicated generator matches, but the model has rules, workflows or examples."""
+    return not _is_expense(model) and not _has_object(model, WORKFLOW_ID) \
+        and _module_id(model) != "account.password-reset/module" \
+        and not _is_model_driven(model) and not _is_prose(model)
+
+
 def output_name(model: SemanticModel) -> str:
     if _is_expense(model):
         return EXPENSE_OUTPUT_NAME
-    if _is_model_driven(model) or _is_prose(model):
+    if _is_model_driven(model) or _is_prose(model) or _is_generic(model):
         return model_driven.output_stem(model.document.get("module", {})) + ".py"
     return OUTPUT_NAME
 
@@ -138,10 +152,23 @@ def _derive_prose(model: SemanticModel) -> dict:
         raise GenerationError(str(error)) from error
 
 
+def _derive_generic(model: SemanticModel) -> dict:
+    if not generic.has_content(model.document):
+        raise GenerationError(
+            f"no generator for module {sanitize_id(_module_id(model) or 'unknown')}: it has no rules, "
+            "workflows or examples to generate from")
+    try:
+        return generic.derive_ir(model.document)
+    except generic.GenericError as error:
+        raise GenerationError(str(error)) from error
+
+
 def generate_report(model: SemanticModel) -> dict | None:
     """Report of derived and NotImplementedRule rules for model-driven output; None for template output."""
     if _is_prose(model):
         return prose_driven.report(str(_module_id(model)), _derive_prose(model))
+    if _is_generic(model):
+        return generic.report(str(_module_id(model)), _derive_generic(model))
     if not _is_model_driven(model):
         return None
     return model_driven.report(str(_module_id(model)), _derive(model))
@@ -174,6 +201,8 @@ def generate_source(model: SemanticModel) -> str:
             "MODULE": json.dumps(module_id),
             "IR": prose_driven.render_ir(_derive_prose(model)),
         })
+    if _is_generic(model):
+        return generic.render(module_id, _derive_generic(model))
     _object(model, WORKFLOW_ID)
     _object(model, SINGLE_USE_RULE_ID)
     _object(model, NO_DISCLOSURE_RULE_ID)

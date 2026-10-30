@@ -1,0 +1,25 @@
+module: leave-request
+
+purpose:
+  Let people ask for time off, decided by someone else.
+
+imports:
+  - ./shared-people.orin as people
+
+type: request-id
+
+entity: leave
+  identity:
+    id request-id
+
+rule: manager-decides
+  requires:
+    people:rule/no-self-decision
+  claims:
+    - Only a manager who is not the requester can decide a leave request.
+
+workflow: request-leave
+  input:
+    requester people:person
+  claims:
+    - A new request waits for a manager.

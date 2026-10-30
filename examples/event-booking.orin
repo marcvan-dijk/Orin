@@ -1,0 +1,95 @@
+module: event-booking
+
+purpose:
+  Let attendees book seats at an event with a fixed capacity, join a waiting list when it is full, and cancel with a refund that depends on how early they cancel.
+
+rules:
+  - An event never has more confirmed bookings than its capacity.
+    proved-by: full-event-waits, seat-booked
+  - An attendee who books a full event joins the waiting list in order of request.
+    proved-by: full-event-waits
+  - When a confirmed booking is cancelled, the first attendee on the waiting list gets the seat.
+    proved-by: cancel-promotes
+  - An attendee holds at most one booking for the same event.
+    proved-by: duplicate-booking
+  - A cancelled booking cannot be cancelled again.
+    proved-by: double-cancel
+
+workflow: book-seat
+  input:
+    attendee
+    event
+  steps:
+    check the attendee has no booking for the event
+    confirm a seat if one is free, otherwise add the attendee to the waiting list
+  failure:
+    No booking and no waiting list entry is recorded.
+  recovery:
+    The attendee may try again.
+  after:
+    The attendee has a confirmed booking or a place on the waiting list.
+
+workflow: cancel-booking
+  input:
+    booking
+  steps:
+    mark the booking as cancelled
+    refund the attendee by the cancellation policy
+    offer the freed seat to the first attendee on the waiting list
+  failure:
+    The booking stays confirmed and nothing is refunded.
+  recovery:
+    The cancellation may be repeated until it is recorded.
+  after:
+    The booking is cancelled.
+    The refund is paid once.
+
+example: seat-booked
+  given:
+    An event with a free seat.
+  when:
+    An attendee books a seat.
+  then:
+    The booking is confirmed.
+
+example: full-event-waits
+  given:
+    An event where all seats are confirmed.
+  when:
+    An attendee books a seat.
+  then:
+    The attendee is added to the end of the waiting list and no seat is confirmed.
+
+example: cancel-promotes
+  given:
+    A full event with two attendees on the waiting list.
+  when:
+    A confirmed attendee cancels.
+  then:
+    The first attendee on the waiting list gets the seat.
+
+example: duplicate-booking
+  given:
+    An attendee who already has a booking for the event.
+  when:
+    The attendee books the same event again.
+  then:
+    The booking is refused.
+
+example: double-cancel
+  given:
+    A booking that is already cancelled.
+  when:
+    The attendee cancels it again.
+  then:
+    The cancellation is refused.
+
+uncertainty: refund-amount
+  blocking: yes
+  question:
+    How much is refunded when a booking is cancelled, and how does it depend on how long before the event the attendee cancels?
+
+uncertainty: waitlist-offer-expiry
+  blocking: yes
+  question:
+    What happens when the first attendee on the waiting list does not accept the offered seat in time?

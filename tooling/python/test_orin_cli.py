@@ -76,10 +76,10 @@ class NewGenerateTests(unittest.TestCase):
         self.assertEqual(run("generate", "nope.json", "--target", "python", "--out", "x")[0], 3)
 
     def test_generate_typescript_needs_decision(self):
-        code, _, err = run("generate", str(CONF / "shared-tasks.model.json"),
+        code, out, err = run("generate", str(CONF / "password-reset.model.json"),
                            "--target", "typescript", "--out", "x")
-        self.assertEqual(code, 3)
-        self.assertTrue(err)
+        self.assertEqual(code, 2)
+        self.assertTrue(out or err)
 
     def test_generate_python_delegates(self):
         with tempfile.TemporaryDirectory(dir=Path(__file__).parent) as d:

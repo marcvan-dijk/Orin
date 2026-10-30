@@ -462,7 +462,10 @@ function simpleOutlineDocument(sections: Section[]): Doc {
           continue;
         }
         const claim = text.startsWith("- ") ? text.slice(2).trim() : text;
-        lastRule = add("rule", slug(claim), number, { claims: [claim] });
+        const base = slug(claim);
+        let ruleName = base;
+        for (let count = 2; objects.some((o) => o.id === `${name}/rule/${ruleName}`); count++) ruleName = `${base}-${count}`;
+        lastRule = add("rule", ruleName, number, { claims: [claim] });
       }
     } else if (key === "workflow") {
       const blocks = subBlocks(body);

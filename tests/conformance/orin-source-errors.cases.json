@@ -8,6 +8,8 @@
     {"id": "attribute-not-allowed", "source": "module m {\n  entity U {\n    zzz \"x\"\n  }\n}\n", "expectedDiagnostic": "ORIN-P005", "line": 3, "column": 5},
     {"id": "bad-context-line", "source": "module m {\n  context {\n    bogus \"x\"\n  }\n}\n", "expectedDiagnostic": "ORIN-P006", "line": 3, "column": 5},
     {"id": "field-missing-type", "source": "module m {\n  type text\n  entity User {\n    field name\n  }\n}\n", "expectedDiagnostic": "ORIN-P008", "line": 4},
-    {"id": "unknown-field-modifier", "source": "module m {\n  type text\n  entity U {\n    field a text weird\n  }\n}\n", "expectedDiagnostic": "ORIN-P009", "line": 4, "column": 5}
+    {"id": "unknown-field-modifier", "source": "module m {\n  type text\n  entity U {\n    field a text weird\n  }\n}\n", "expectedDiagnostic": "ORIN-P009", "line": 4, "column": 5},
+    {"id": "misspelled-keyword", "source": "module m {\n  entitty U {\n  }\n}\n", "expectedDiagnostic": "ORIN-P002", "line": 2, "column": 3},
+    {"id": "misspelled-attribute", "source": "module m {\n  entity U {\n    purpse \"x\"\n  }\n}\n", "expectedDiagnostic": "ORIN-P005", "line": 3, "column": 5}
   ]
 }

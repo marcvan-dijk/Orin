@@ -97,3 +97,17 @@ Language-neutral proof artifacts live in this folder; execution commands stay in
 | Where is the blocked proof? | `password-reset.cases.json` (`account.password-reset/case/unresolved-rate-limit`), `password-reset.model.json` | `python implementations/python/password_reset_proof.py` | JSON includes `"blockedCompilation": "blocked"`. |
 | Where is the stable behavior proof? | `password-reset.cases.json`, `implementations/python/conformance_runner.py`, `implementations/typescript/src/conformance_runner.ts` | `node --test --experimental-strip-types implementations/typescript/src/password_reset_proof.test.ts` | Test passes, including the password-reset behavior cases. |
 | Where is the evidence that implementations can differ without changing behavior? | `password-reset.policies.json`, `implementations/python/password_reset_proof.py`, `implementations/typescript/src/password_reset_proof.ts` | `python implementations/python/password_reset_proof.py` | JSON includes `"canonicalMeaningStableAcrossVariants": true` and at least two distinct `variants[*].derivedArtifact` entries. |
+
+## Model JSON Schema
+
+`model.schema.json` (JSON Schema draft 2020-12) describes the shape of the
+semantic model: `module`, `objects` (every object kind: value-type,
+entity-type, relation, state, capability, effect, workflow, example, target,
+uncertainty, rule, evidence, plus the older compact form without `kind`) and
+`unresolved`. It checks shape only; link and readiness checks stay in Orin
+validation. It applies to `*.model.json`, `*.decided.json` and
+`*.structured.json`. When you add a model field, update the schema too.
+
+A small Python checker (`implementations/python/schema_check.py`) and its test
+(`implementations/python/test_schema_check.py`) check all these fixtures:
+`python -m unittest implementations.python.test_schema_check`

@@ -36,3 +36,13 @@ test("source error conformance cases", () => {
     );
   }
 });
+
+test("two blocking uncertainties and same-slug rules parse with distinct ids", () => {
+  const text = "module: demo\n\npurpose:\n  Do a thing.\n\nrules:\n  - Things are done once only here.\n  - Things are done once only there.\n\n"
+    + "uncertainty: first\n  blocking: yes\n  question:\n    One?\n\nuncertainty: second\n  blocking: yes\n  question:\n    Two?\n";
+  const objects = new OrinParser().parseOutline(text).document.objects as any[];
+  const ids = objects.map((o) => o.id);
+  assert.equal(new Set(ids).size, ids.length);
+  assert.deepEqual(ids.filter((i) => i.includes("/rule/")), ["demo/rule/things-are-done-once-only", "demo/rule/things-are-done-once-only-2"]);
+  assert.ok(ids.includes("demo/uncertainty/second"));
+});

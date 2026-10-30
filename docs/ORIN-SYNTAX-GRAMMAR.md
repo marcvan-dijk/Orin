@@ -81,14 +81,24 @@ given       = "given:" { TEXT } ;
 when        = "when:"  { TEXT } ;
 then        = "then:"  { TEXT } ;
 
-uncertainty = "uncertainty:" NAME { blocking | question } ;
+uncertainty = "uncertainty:" NAME { blocking | question | why | affects | option } ;
 blocking    = "blocking:" ( "yes" | "no" | "true" | "false" ) ;
 question    = "question:" { TEXT } ;
+why         = "why:" { TEXT } ;                    (* or "why-it-matters:" *)
+affects     = "affects:" NAME { "," NAME } ;       (* rule or workflow names; one per line also works *)
+option      = "option:" { TEXT } { option-field } ;
+option-field = ( "label:" | "explanation:" | "effects:" | "impact:" ) { TEXT } ;
 ```
 
 An uncertainty is blocking only if `blocking:` is `yes` or `true`. A missing
 `blocking:` means not blocking. Several lines under a label are joined with
 spaces. The label may also hold its text on the same line.
+
+`why:`, `affects:` and `option:` keep a decision inside the `.ori` file, so no
+`.decisions.json` sidecar is needed. Each `option:` is one answer. Its text is
+the label, and its id is made from the first words of the text. `affects:`
+names are matched to rules and workflows. `inspect` and the agent show these
+fields. If a structured fixture is borrowed for the file, it is used instead.
 
 ### 3.2 Declaration-mode sections
 
@@ -192,8 +202,8 @@ Outline style cannot yet express the following. Brace style (legacy) or the
 JSON fixtures in `tests/conformance/` carry them today.
 
 - Entity fields other than the `identity:` fields (no plain `field`).
-- Namespaced imports (`import`), `context:`, and implementation `policy`
-  settings.
+- `context:` and implementation `policy` settings. (Imports now work; see
+  below.)
 - Rule ids chosen by the author in summary mode (ids come from the first five
   words of the text).
 - Lifecycle, owner, scope, failure modes, data access and effect
@@ -208,4 +218,22 @@ JSON fixtures in `tests/conformance/` carry them today.
 - Several blocking uncertainties in one summary-mode file currently produce a
   duplicate-id error (`ORIN-E004`, object `evidence/blocked`). This is a loader
   bug, not intended syntax.
-- Multi-file modules and package imports.
+- Package imports (only files next to the importing file are found).
+
+### Imports
+
+```text
+imports:
+  - ./shared-people.orin as people
+  - finance.shared
+```
+
+Each item is a relative path or a module id (found in the same folder), with
+an optional `as alias`. Without `as`, the alias is the last part of the module
+name. Refer to imported things as `alias:name` or `alias:kind/name`, for
+example `people:person` or `people:rule/no-self-decision`, in `requires`,
+`uses`, field/input types and similar places. Errors: `ORIN-I001` missing
+import, `ORIN-I002` cycle, `ORIN-I003` unreadable file, `ORIN-I004` alias used
+twice, `ORIN-I005` unknown or ambiguous qualified name. A bare name without
+a dot, path or `as` (such as `account-store`) that matches no file stays an
+external contract and is not an error.
