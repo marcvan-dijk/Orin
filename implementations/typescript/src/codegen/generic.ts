@@ -30,9 +30,19 @@ export function generateGeneric(model: SemanticModel): string {
   const ofKind = (kind: string) => objects.filter((o) => o.kind === kind && typeof o.id === "string");
   const used = new Set<string>();
 
-  const rules = ofKind("rule").map((o) => ({
-    id: o.id, name: short(o.id), fn: identFor("rule", short(o.id), used), claims: strings(o.claims),
-  }));
+  const rules = ofKind("rule").map((o) => {
+    const claims = strings(o.claims);
+    const match = Array.isArray(o.claims) && o.claims.length === 1 && claims.length === 1
+      ? claims[0].match(/^\s*An event never has more ([a-z][a-z -]*?) than its ([a-z][a-z0-9-]*)\.?\s*$/i)
+      : null;
+    return {
+      id: o.id, name: short(o.id), fn: identFor("rule", short(o.id), used), claims,
+      limitParameter: match?.[2].toLowerCase() ?? null,
+    };
+  });
+  const capacityLimits = Object.fromEntries(
+    rules.filter((r) => r.limitParameter !== null).map((r) => [r.id, r.limitParameter]),
+  );
   const workflows = ofKind("workflow").map((o) => ({
     id: o.id, name: short(o.id), inputs: (Array.isArray(o.inputs) ? o.inputs : []).map((i: any) =>
       typeof i === "string" ? i : String(i?.name ?? "")),
@@ -76,11 +86,28 @@ function hookOrThrow(hooks: Hooks, id: string, claims: readonly string[]): Hook 
   return hook;
 }
 
-${rules.map((r) => `export function ${r.fn}(hooks: Hooks, ...args: any[]): any {
+${Object.keys(capacityLimits).length ? `const CAPACITY_LIMITS: Record<string, string> = ${JSON.stringify(capacityLimits)};
+
+export function withinCapacityLimit(ruleId: string, actual: number, parameters: Record<string, number>): boolean {
+  if (!Object.hasOwn(CAPACITY_LIMITS, ruleId)) throw new Error(\`unknown capacity rule: \${ruleId}\`);
+  const name = CAPACITY_LIMITS[ruleId];
+  const capacity = parameters && Object.hasOwn(parameters, name) ? parameters[name] : undefined;
+  if (typeof actual !== "number" || !Number.isFinite(actual) || actual < 0
+    || typeof capacity !== "number" || !Number.isFinite(capacity) || capacity < 0) {
+    throw new RangeError("actual and capacity must be finite nonnegative numbers");
+  }
+  return actual <= capacity;
+}
+
+` : ""}${rules.map((r) => r.limitParameter !== null
+    ? `export function ${r.fn}(actual: number, parameters: Record<string, number>): boolean {
+  return withinCapacityLimit(${JSON.stringify(r.id)}, actual, parameters);
+}`
+    : `export function ${r.fn}(hooks: Hooks, ...args: any[]): any {
   return hookOrThrow(hooks, ${JSON.stringify(r.id)}, ${JSON.stringify(r.claims)})(...args);
 }`).join("\n\n")}
 
-export const RULE_FUNCTIONS: Record<string, (hooks: Hooks, ...args: any[]) => any> = {
+export const RULE_FUNCTIONS: Record<string, (...args: any[]) => any> = {
 ${rules.map((r) => `  ${JSON.stringify(r.id)}: ${r.fn},`).join("\n")}
 };
 
