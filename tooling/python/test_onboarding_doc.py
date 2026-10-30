@@ -15,9 +15,9 @@ COPIED = ("tooling", "tests", "examples", "implementations")
 
 # (command fragment, expected exit code, text expected in output)
 EXPECTATIONS = [
-    ("orin_cli check examples/password-reset.orin", 1, ["PROBLEMS:", "ORIN-E041"]),
-    ("orin_cli readiness examples/", 2, ["BLOCKED:", "ORIN-R201"]),
-    ("inspect examples/password-reset.orin", 2, ["Compilation: blocked", "Affected objects:",
+    ("orin_cli check tests/conformance/password-reset.model.json", 1, ["PROBLEMS:", "ORIN-E041"]),
+    ("orin_cli readiness tests/conformance/password-reset.model.json", 2, ["BLOCKED:", "ORIN-R201"]),
+    ("inspect tests/conformance/password-reset.model.json", 2, ["Compilation: blocked", "Affected objects:",
                                                   "account.password-reset/uncertainty/rate-limit"]),
     ("--option five-per-15m", 4, ["Accepted decision: five-per-15m-per-address-and-origin",
                                   "Updated compilation: eligible"]),

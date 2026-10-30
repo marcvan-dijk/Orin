@@ -29,14 +29,14 @@ plain text. You do not need to know any programming language to read it.
 - `rules`: things that must always be true.
 - `workflow`: the operation, in short steps.
 - `example`: a situation (`given`, `when`, `then`) you can observe.
-- `uncertainty`: an important question that nobody has answered yet.
+- `uncertainty`: an open question that nobody has answered yet.
 
 ## 3. Three ideas: intent, decision, evidence (2 minutes)
 
 | Idea | Meaning | In the example |
 | --- | --- | --- |
 | **Intent** | What the program is for, and what must be true. | `purpose` and `rules` |
-| **Decision** | A choice that changes the result and a human must make. | `uncertainty: rate-limit` |
+| **Decision** | The answer to an open question. A human must make it. | `uncertainty: rate-limit` |
 | **Evidence** | Something you can check to see the intent is kept. | the two `example` blocks and the tests |
 
 Why keep them apart? Intent should not change when code changes. A decision
@@ -45,23 +45,29 @@ if an implementation really keeps the intent.
 
 ## 4. Check the example and run the agent (2 minutes)
 
-First ask the checker if the example is complete:
+From here on, every command uses one file:
+`tests/conformance/password-reset.model.json`. It is the same program as
+`examples/password-reset.orin`, written in a form tools read (the "semantic
+model"; see the [glossary](./GLOSSARY.md)). Use it in steps 4 and 5, and the
+output files in `out/` after that.
+
+First ask the checker if the program is complete:
 
 ```bash
-python -m tooling.python.orin_cli check examples/password-reset.orin
+python -m tooling.python.orin_cli check tests/conformance/password-reset.model.json
 ```
 
-It prints `PROBLEMS:` and the open decision (`ORIN-E041`), and exits `1`.
+It prints `PROBLEMS:` and the open question (`ORIN-E041`), and exits `1`.
 For a longer list of what is missing, run:
 
 ```bash
-python -m tooling.python.orin_cli readiness examples/password-reset.orin
+python -m tooling.python.orin_cli readiness tests/conformance/password-reset.model.json
 ```
 
 It prints `BLOCKED:` and exits `2`. Now ask the agent about the open decision:
 
 ```bash
-python -m tooling.python.orin_agent inspect examples/password-reset.orin
+python -m tooling.python.orin_agent inspect tests/conformance/password-reset.model.json
 ```
 
 The last part of the real output looks like this:
@@ -91,7 +97,7 @@ version of the question than the short text in the `.orin` file.)
 ### What the readiness codes mean
 
 Each line of `readiness` starts with a code. `ORIN-R201` is the one real
-open question here: the `rate-limit` uncertainty. The other `ORIN-R0xx` lines
+open question here: `rate-limit`. The other `ORIN-R0xx` lines
 are optional hardening: extra detail (who may do a thing, what happens on
 failure, which evidence proves a rule) that makes a program safer to build.
 Notes marked `ORIN-R3xx` never block. You can ignore the hardening lines on
@@ -102,9 +108,8 @@ workflow and both examples.
 
 ## 5. Make a decision (2 minutes)
 
-Choose an option. The file `password-reset.model.json` is the same program as
-the `.orin` file, in a form tools read (the "semantic model"; see the
-[glossary](./GLOSSARY.md)). The output goes in `out/`.
+Choose an option. The model file is the same one as in step 4. The output
+goes in `out/`.
 
 ```bash
 mkdir out

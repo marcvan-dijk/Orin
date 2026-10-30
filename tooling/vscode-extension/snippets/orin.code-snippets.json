@@ -1,0 +1,36 @@
+{
+  "New rule": {
+    "prefix": "rule",
+    "body": ["rule: ${1:rule-id}", "  claims:", "    - ${2:What must always be true.}", ""],
+    "description": "Declare a rule"
+  },
+  "New uncertainty": {
+    "prefix": "uncertainty",
+    "body": [
+      "uncertainty: ${1:uncertainty-id}",
+      "  blocking: ${2|yes,no|}",
+      "  question:",
+      "    ${3:What is not decided yet?}",
+      "  option: ${4:option-a}",
+      "    description: ${5:What choosing this means.}",
+      "  option: ${6:defer}",
+      "    description: ${7:Decide later.}",
+      ""
+    ],
+    "description": "Declare an uncertainty with options"
+  },
+  "New example": {
+    "prefix": "example",
+    "body": [
+      "example: ${1:example-id}",
+      "  given:",
+      "    ${2:The starting situation.}",
+      "  when:",
+      "    ${3:What happens.}",
+      "  then:",
+      "    ${4:What can be observed.}",
+      ""
+    ],
+    "description": "Declare an observable example"
+  }
+}

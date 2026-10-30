@@ -29,6 +29,13 @@ jobs:
         run: node -e 'const [a,b]=process.versions.node.split(".").map(Number); if (a<22||(a===22&&b<6)) { console.error("Node >= 22.6 required"); process.exit(1) }'
       - run: python -m unittest discover -s implementations/python -t .
       - run: python -m unittest discover -s tooling/python -t .
+      - name: Check examples (only open questions may fail)
+        run: |
+          for f in examples/*.orin; do
+            python -m tooling.python.orin_cli check "$f" --format json > check.json || [ $? -eq 1 ]
+            python -c 'import json,sys; d=json.load(open("check.json"))["diagnostics"]; bad=[x for x in d if x["code"]!="ORIN-E041"]; print(sys.argv[1], len(d), "open question(s)"); sys.exit(1 if bad else 0)' "$f"
+          done
+          rm -f check.json
       - name: TypeScript parity (must not skip)
         run: |
           python implementations/python/parity_check.py | tee parity.out

@@ -1,0 +1,107 @@
+{
+  "decisions": {
+    "event-booking/uncertainty/refund-amount": {
+      "why_it_matters": "Decides how much money is returned on cancellation and whether late cancellation loses the fee.",
+      "affected_objects": [
+        "event-booking/workflow/cancel-booking"
+      ],
+      "rule": {
+        "id": "event-booking/rule/refund-policy",
+        "name": "refund-policy"
+      },
+      "options": [
+        {
+          "id": "full-refund-7-days",
+          "label": "Full refund if cancelled 7 or more days before the event, none after.",
+          "explanation": "Simple for attendees; organisers lose late seats.",
+          "effects": ["Simple for attendees; organisers lose late seats."],
+          "impact": ["Full refund if cancelled 7 or more days before the event, none after."],
+          "rule_claims": [
+            "A booking cancelled 7 or more days before the event is refunded in full.",
+            "A booking cancelled less than 7 days before the event is not refunded."
+          ],
+          "examples": [
+            {
+              "id": "event-booking/example/early-cancel-full-refund",
+              "kind": "example",
+              "name": "early-cancel-full-refund",
+              "status": "accepted",
+              "expects": ["refund-full"]
+            }
+          ]
+        },
+        {
+          "id": "half-refund-late",
+          "label": "Full refund 7 or more days before, half refund from 1 to 6 days, none on the event day.",
+          "explanation": "Fairer to late cancellers; harder to explain.",
+          "effects": ["Fairer to late cancellers; harder to explain."],
+          "impact": ["Full refund 7 or more days before, half refund from 1 to 6 days, none on the event day."],
+          "rule_claims": [
+            "A booking cancelled 7 or more days before the event is refunded in full.",
+            "A booking cancelled 1 to 6 days before the event is refunded by half.",
+            "A booking cancelled on the event day is not refunded."
+          ],
+          "examples": [
+            {
+              "id": "event-booking/example/late-cancel-half-refund",
+              "kind": "example",
+              "name": "late-cancel-half-refund",
+              "status": "accepted",
+              "expects": ["refund-half"]
+            }
+          ]
+        }
+      ]
+    },
+    "event-booking/uncertainty/waitlist-offer-expiry": {
+      "why_it_matters": "Decides whether a freed seat can sit unused while others wait.",
+      "affected_objects": [
+        "event-booking/workflow/cancel-booking"
+      ],
+      "rule": {
+        "id": "event-booking/rule/waitlist-offer-expiry",
+        "name": "waitlist-offer-expiry"
+      },
+      "options": [
+        {
+          "id": "expire-after-24-hours",
+          "label": "The offer ends after 24 hours and goes to the next attendee.",
+          "explanation": "Keeps seats filled.",
+          "effects": ["Keeps seats filled."],
+          "impact": ["The offer ends after 24 hours and goes to the next attendee."],
+          "rule_claims": [
+            "An offered seat that is not accepted within 24 hours is offered to the next attendee on the waiting list."
+          ],
+          "examples": [
+            {
+              "id": "event-booking/example/offer-expires-to-next",
+              "kind": "example",
+              "name": "offer-expires-to-next",
+              "status": "accepted",
+              "expects": ["offer-passes-to-next"]
+            }
+          ]
+        },
+        {
+          "id": "offer-stays-open",
+          "label": "The offer stays open until the event starts.",
+          "explanation": "Fair to the first attendee; can leave seats empty.",
+          "effects": ["Fair to the first attendee; can leave seats empty."],
+          "impact": ["The offer stays open until the event starts."],
+          "rule_claims": [
+            "An offered seat stays reserved for its attendee until the event starts."
+          ],
+          "examples": [
+            {
+              "id": "event-booking/example/offer-never-expires",
+              "kind": "example",
+              "name": "offer-never-expires",
+              "status": "accepted",
+              "expects": ["seat-stays-reserved"]
+            }
+          ]
+        }
+      ]
+    }
+  }
+}

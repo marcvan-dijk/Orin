@@ -1,0 +1,131 @@
+module: subscription-billing
+
+purpose:
+  Let customers subscribe to a plan, be charged each month, keep access for a grace period when a payment fails, cancel, and pay a fair amount when they change plan.
+
+rules:
+  - A subscription is on exactly one plan at a time.
+    proved-by: plan-change-same-day
+  - A subscription is charged the plan price once for each monthly billing period.
+    proved-by: monthly-charge, no-double-charge
+  - A failed payment starts a grace period of 7 days and access continues during it.
+    proved-by: failed-payment-grace
+  - A subscription whose grace period ends without payment is suspended.
+    proved-by: grace-expired
+  - A cancelled subscription is never charged again.
+    proved-by: cancel-stops-charges
+  - A cancelled subscription keeps access until the end of the paid period.
+    proved-by: cancel-keeps-access
+
+workflow: charge-monthly
+  input:
+    subscription
+  steps:
+    find subscriptions whose billing period has ended
+    charge the plan price
+    start the next billing period
+  failure:
+    The charge is recorded as failed and a grace period starts.
+  recovery:
+    The charge may be tried again during the grace period.
+  after:
+    A paid subscription has a new billing period.
+    A failed subscription has a grace period.
+
+workflow: cancel-subscription
+  input:
+    subscription
+  steps:
+    mark the subscription as cancelled
+    stop future charges
+  failure:
+    The subscription stays active and nothing changes.
+  recovery:
+    The customer may ask to cancel again.
+  after:
+    The subscription is cancelled and has no future charges.
+
+workflow: change-plan
+  input:
+    subscription
+    new-plan
+  steps:
+    work out the proration amount
+    move the subscription to the new plan
+  failure:
+    The subscription stays on the old plan and no amount is charged.
+  recovery:
+    The customer may ask to change plan again.
+  after:
+    The subscription is on the new plan.
+
+example: monthly-charge
+  given:
+    An active subscription on a plan that costs 20 whose billing period has ended.
+  when:
+    The monthly charge runs.
+  then:
+    The customer is charged 20 and a new billing period starts.
+
+example: no-double-charge
+  given:
+    A subscription already charged for the current billing period.
+  when:
+    The monthly charge runs again.
+  then:
+    The customer is not charged a second time.
+
+example: failed-payment-grace
+  given:
+    An active subscription whose monthly payment fails.
+  when:
+    The monthly charge runs.
+  then:
+    A grace period of 7 days starts and the customer keeps access.
+
+example: grace-expired
+  given:
+    A subscription whose grace period ended 1 day ago with no payment.
+  when:
+    The daily check runs.
+  then:
+    The subscription is suspended and access stops.
+
+example: cancel-stops-charges
+  given:
+    A subscription that the customer has cancelled.
+  when:
+    The next billing period would start.
+  then:
+    The customer is not charged.
+
+example: cancel-keeps-access
+  given:
+    A subscription cancelled 10 days before the end of the paid period.
+  when:
+    The customer uses the service on the next day.
+  then:
+    Access is allowed.
+
+example: plan-change-same-day
+  given:
+    A subscription on the basic plan.
+  when:
+    The customer changes to the pro plan.
+  then:
+    The subscription is on the pro plan only.
+
+uncertainty: proration-method
+  blocking: yes
+  question:
+    When a customer upgrades in the middle of a period, is the unused part of the old plan credited by day or by month?
+
+uncertainty: downgrade-timing
+  blocking: yes
+  question:
+    Does a downgrade start now with a credit, or at the end of the billing period?
+
+uncertainty: reactivation-after-suspend
+  blocking: no
+  question:
+    May a suspended customer come back on the old plan price?

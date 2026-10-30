@@ -1,0 +1,333 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://orin.dev/schemas/model.schema.json",
+  "title": "Orin semantic model",
+  "description": "Structure of a language-neutral Orin semantic model document. It checks shape only; semantic checks (links, readiness, contradictions) are done by Orin validation.",
+  "type": "object",
+  "required": ["module", "objects"],
+  "additionalProperties": false,
+  "properties": {
+    "modelVersion": {"type": "string", "minLength": 1},
+    "module": {"$ref": "#/$defs/module"},
+    "objects": {"type": "array", "items": {"$ref": "#/$defs/object"}},
+    "unresolved": {"type": "array", "items": {"type": "string", "minLength": 1}}
+  },
+  "$defs": {
+    "id": {"type": "string", "minLength": 1},
+    "name": {"type": "string", "minLength": 1},
+    "status": {"enum": ["accepted", "unresolved", "resolved", "blocked"]},
+    "source": {
+      "type": "object",
+      "required": ["line"],
+      "additionalProperties": false,
+      "properties": {"line": {"type": "integer", "minimum": 1}}
+    },
+    "strings": {"type": "array", "items": {"type": "string", "minLength": 1}},
+    "typedName": {
+      "type": "object",
+      "required": ["name", "type"],
+      "additionalProperties": false,
+      "properties": {"name": {"$ref": "#/$defs/name"}, "type": {"$ref": "#/$defs/id"}}
+    },
+    "claim": {
+      "anyOf": [
+        {"type": "string", "minLength": 1},
+        {
+          "type": "object",
+          "required": ["text", "negated"],
+          "additionalProperties": false,
+          "properties": {"text": {"type": "string", "minLength": 1}, "negated": {"type": "boolean"}}
+        }
+      ]
+    },
+    "claims": {"type": "array", "items": {"$ref": "#/$defs/claim"}},
+    "module": {
+      "type": "object",
+      "required": ["id", "name"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"const": "module"},
+        "name": {"$ref": "#/$defs/name"},
+        "status": {"$ref": "#/$defs/status"},
+        "source": {"$ref": "#/$defs/source"},
+        "purpose": {"type": "string"},
+        "context": {"type": "object", "additionalProperties": {"type": "string"}},
+        "implementationPolicies": {"type": "object", "additionalProperties": {"type": "string"}},
+        "imports": {"$ref": "#/$defs/strings"}
+      }
+    },
+    "object": {
+      "oneOf": [
+        {"$ref": "#/$defs/compact"},
+        {"$ref": "#/$defs/valueType"},
+        {"$ref": "#/$defs/entityType"},
+        {"$ref": "#/$defs/relation"},
+        {"$ref": "#/$defs/state"},
+        {"$ref": "#/$defs/capability"},
+        {"$ref": "#/$defs/effect"},
+        {"$ref": "#/$defs/workflow"},
+        {"$ref": "#/$defs/example"},
+        {"$ref": "#/$defs/target"},
+        {"$ref": "#/$defs/uncertainty"},
+        {"$ref": "#/$defs/rule"},
+        {"$ref": "#/$defs/evidence"}
+      ]
+    },
+    "compact": {
+      "description": "Older compact form: no kind, the kind comes from the id.",
+      "type": "object",
+      "required": ["id", "name"],
+      "not": {"required": ["kind"]},
+      "additionalProperties": false,
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "name": {"$ref": "#/$defs/name"},
+        "status": {"$ref": "#/$defs/status"},
+        "claims": {"$ref": "#/$defs/claims"},
+        "steps": {"$ref": "#/$defs/strings"},
+        "expects": {"$ref": "#/$defs/strings"},
+        "consequential": {"type": "boolean"},
+        "question": {"type": "string"},
+        "authority": {"type": "string"},
+        "resolution": {"$ref": "#/$defs/id"}
+      }
+    },
+    "valueType": {
+      "type": "object",
+      "required": ["id", "kind", "name", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"const": "value-type"},
+        "name": {"$ref": "#/$defs/name"},
+        "status": {"$ref": "#/$defs/status"},
+        "source": {"$ref": "#/$defs/source"}
+      }
+    },
+    "entityType": {
+      "type": "object",
+      "required": ["id", "kind", "name", "status", "fields"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"const": "entity-type"},
+        "name": {"$ref": "#/$defs/name"},
+        "status": {"$ref": "#/$defs/status"},
+        "source": {"$ref": "#/$defs/source"},
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "type"],
+            "additionalProperties": false,
+            "properties": {
+              "name": {"$ref": "#/$defs/name"},
+              "type": {"$ref": "#/$defs/id"},
+              "identity": {"type": "boolean"}
+            }
+          }
+        },
+        "lifecycle": {
+          "type": "object",
+          "required": ["initialState", "terminalStates"],
+          "additionalProperties": false,
+          "properties": {
+            "initialState": {"$ref": "#/$defs/id"},
+            "terminalStates": {"$ref": "#/$defs/strings"}
+          }
+        }
+      }
+    },
+    "relation": {
+      "type": "object",
+      "required": ["id", "kind", "name", "status", "endpoints", "cardinality"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"const": "relation"},
+        "name": {"$ref": "#/$defs/name"},
+        "status": {"$ref": "#/$defs/status"},
+        "source": {"$ref": "#/$defs/source"},
+        "endpoints": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["type"],
+            "additionalProperties": false,
+            "properties": {"type": {"$ref": "#/$defs/id"}}
+          }
+        },
+        "cardinality": {"enum": ["one-to-one", "one-to-many", "many-to-one", "many-to-many"]}
+      }
+    },
+    "state": {
+      "type": "object",
+      "required": ["id", "kind", "name", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"const": "state"},
+        "name": {"$ref": "#/$defs/name"},
+        "status": {"$ref": "#/$defs/status"},
+        "source": {"$ref": "#/$defs/source"}
+      }
+    },
+    "capability": {
+      "type": "object",
+      "required": ["id", "kind", "name", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"const": "capability"},
+        "name": {"$ref": "#/$defs/name"},
+        "status": {"$ref": "#/$defs/status"},
+        "source": {"$ref": "#/$defs/source"},
+        "owner": {"$ref": "#/$defs/id"},
+        "scope": {"type": "string", "minLength": 1}
+      }
+    },
+    "effect": {
+      "type": "object",
+      "required": ["id", "kind", "name", "status", "requires"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"const": "effect"},
+        "name": {"$ref": "#/$defs/name"},
+        "status": {"$ref": "#/$defs/status"},
+        "source": {"$ref": "#/$defs/source"},
+        "requires": {"$ref": "#/$defs/strings"},
+        "durability": {"enum": ["strong", "volatile"]},
+        "dataAccess": {"$ref": "#/$defs/strings"},
+        "failureModes": {"$ref": "#/$defs/strings"},
+        "retryPolicy": {"type": "string", "minLength": 1},
+        "inputs": {"type": "array", "items": {"$ref": "#/$defs/typedName"}},
+        "outputs": {"type": "array", "items": {"$ref": "#/$defs/typedName"}}
+      }
+    },
+    "workflow": {
+      "type": "object",
+      "required": ["id", "kind", "name", "status", "inputs"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"const": "workflow"},
+        "name": {"$ref": "#/$defs/name"},
+        "status": {"$ref": "#/$defs/status"},
+        "source": {"$ref": "#/$defs/source"},
+        "inputs": {
+          "type": "array",
+          "items": {"anyOf": [{"$ref": "#/$defs/typedName"}, {"type": "string", "minLength": 1}]}
+        },
+        "outputs": {"type": "array", "items": {"$ref": "#/$defs/typedName"}},
+        "actor": {"type": "string", "minLength": 1},
+        "requires": {"$ref": "#/$defs/strings"},
+        "uses": {"$ref": "#/$defs/strings"},
+        "affects": {"$ref": "#/$defs/strings"},
+        "actorCapabilities": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["actor", "capability"],
+            "additionalProperties": false,
+            "properties": {
+              "actor": {"type": "string", "minLength": 1},
+              "capability": {"$ref": "#/$defs/id"}
+            }
+          }
+        },
+        "transitions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["from", "to"],
+            "additionalProperties": false,
+            "properties": {"from": {"$ref": "#/$defs/id"}, "to": {"$ref": "#/$defs/id"}}
+          }
+        },
+        "recoveryBehavior": {"$ref": "#/$defs/strings"},
+        "failureBehavior": {"$ref": "#/$defs/strings"},
+        "postconditions": {"$ref": "#/$defs/strings"},
+        "claims": {"$ref": "#/$defs/claims"}
+      }
+    },
+    "example": {
+      "type": "object",
+      "required": ["id", "kind", "name", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"const": "example"},
+        "name": {"$ref": "#/$defs/name"},
+        "status": {"$ref": "#/$defs/status"},
+        "source": {"$ref": "#/$defs/source"},
+        "demonstrates": {"$ref": "#/$defs/strings"},
+        "requires": {"$ref": "#/$defs/strings"},
+        "expects": {"$ref": "#/$defs/strings"},
+        "claims": {"$ref": "#/$defs/claims"}
+      }
+    },
+    "target": {
+      "type": "object",
+      "required": ["id", "kind", "name", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"const": "target"},
+        "name": {"$ref": "#/$defs/name"},
+        "status": {"$ref": "#/$defs/status"},
+        "source": {"$ref": "#/$defs/source"},
+        "requires": {"$ref": "#/$defs/strings"}
+      }
+    },
+    "uncertainty": {
+      "type": "object",
+      "required": ["id", "kind", "name", "status", "consequential", "authority"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"const": "uncertainty"},
+        "name": {"$ref": "#/$defs/name"},
+        "status": {"$ref": "#/$defs/status"},
+        "source": {"$ref": "#/$defs/source"},
+        "consequential": {"type": "boolean"},
+        "question": {"type": "string"},
+        "authority": {"type": "string", "minLength": 1},
+        "impactAreas": {"$ref": "#/$defs/strings"},
+        "affects": {"$ref": "#/$defs/strings"},
+        "claims": {"$ref": "#/$defs/claims"}
+      }
+    },
+    "rule": {
+      "type": "object",
+      "required": ["id", "kind", "name", "status", "claims"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"const": "rule"},
+        "name": {"$ref": "#/$defs/name"},
+        "status": {"$ref": "#/$defs/status"},
+        "source": {"$ref": "#/$defs/source"},
+        "category": {"type": "string", "minLength": 1},
+        "claims": {"$ref": "#/$defs/claims"},
+        "evidenceLinks": {"$ref": "#/$defs/strings"},
+        "requires": {"$ref": "#/$defs/strings"}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "required": ["id", "kind", "name", "status"],
+      "additionalProperties": false,
+      "properties": {
+        "id": {"$ref": "#/$defs/id"},
+        "kind": {"const": "evidence"},
+        "name": {"$ref": "#/$defs/name"},
+        "status": {"$ref": "#/$defs/status"},
+        "source": {"$ref": "#/$defs/source"},
+        "verifies": {"$ref": "#/$defs/strings"},
+        "statement": {"type": "string"}
+      }
+    }
+  }
+}

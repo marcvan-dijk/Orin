@@ -7,8 +7,12 @@ from typing import Any
 
 try:
     from .orin_model import Diagnostic, SemanticModel
+    from .orin_outline_uncertainty import parse_inline_decision
+    from .orin_suggest import extra_hint
 except ImportError:  # pragma: no cover - direct script compatibility
     from orin_model import Diagnostic, SemanticModel
+    from orin_outline_uncertainty import parse_inline_decision
+    from orin_suggest import extra_hint
 
 
 DECLARATION_KINDS = {
@@ -64,7 +68,7 @@ class OrinSourceError(ValueError):
 
 
 class OrinParser:
-    def parse_file(self, path: str | Path) -> SemanticModel:
+    def parse_file(self, path: str | Path, resolve_imports: bool = True) -> SemanticModel:
         path = Path(path)
         try:
             text = path.read_text(encoding="utf-8").removeprefix("\ufeff")
@@ -79,7 +83,14 @@ class OrinParser:
             return self._load_password_reset_example(path)
         try:
             if self._is_outline(text):
-                return self.parse_outline(text, path)
+                model = self.parse_outline(text, path)
+                if resolve_imports and model.document.get("module", {}).get("imports"):
+                    try:
+                        from .orin_imports import apply_imports
+                    except ImportError:  # pragma: no cover - direct script compatibility
+                        from orin_imports import apply_imports
+                    apply_imports(model, path, self)
+                return model
             return self.parse(text)
         except OrinSourceError as error:
             raise error.with_file(str(path)) from None
@@ -180,6 +191,7 @@ class OrinParser:
             "status": "accepted", "source": {"line": sections[0]["line"]},
         }
         objects: list[dict[str, Any]] = []
+        pending_decisions: list[tuple[dict[str, Any], list[tuple[int, str]]]] = []
 
         def add(kind: str, obj_name: str, line: int, **extra: Any) -> dict[str, Any]:
             obj = {"id": f"{name}/{kind}/{obj_name}", "kind": kind, "name": obj_name,
@@ -200,7 +212,12 @@ class OrinParser:
                         last_rule.setdefault("evidenceLinks", []).extend(links)
                         continue
                     claim = text[2:].strip() if text.startswith("- ") else text
-                    last_rule = add("rule", self._slug(claim), number, claims=[claim])
+                    base = self._slug(claim)
+                    rule_name, count = base, 1
+                    while any(o["id"] == f"{name}/rule/{rule_name}" for o in objects):
+                        count += 1
+                        rule_name = f"{base}-{count}"
+                    last_rule = add("rule", rule_name, number, claims=[claim])
             elif key == "workflow":
                 blocks = self._sub_blocks(body)
                 extra: dict[str, Any] = {}
@@ -219,11 +236,15 @@ class OrinParser:
                 blocks = self._sub_blocks(body)
                 blocking = " ".join(t for _, t in blocks.get("blocking", [])).lower() in ("yes", "true")
                 question = " ".join(t for _, t in blocks.get("question", []))
-                add("uncertainty", value, section["line"], status="unresolved", claims=[question],
-                    consequential=blocking, authority="human")
+                pending_decisions.append((add("uncertainty", value, section["line"], status="unresolved",
+                                              claims=[question], consequential=blocking, authority="human"),
+                                          body))
                 if blocking and not any(o["kind"] == "evidence" for o in objects):
                     add("evidence", "blocked", section["line"], status="blocked",
                         statement=f"The {value} decision is unresolved.")
+        by_name = {o["name"]: o["id"] for o in objects if o["kind"] in ("rule", "workflow")}
+        for obj, body in pending_decisions:
+            obj.update(parse_inline_decision(body, lambda text: by_name.get(text, text)))
         return {"modelVersion": "0.1.0", "module": module, "objects": objects}
 
     _FULL_KEYS = {
@@ -290,8 +311,9 @@ class OrinParser:
             "claims": [self._node_text(top["question"])] if "question" in top else [""],
             "consequential": blocking, "authority": "human",
         }
-        if "why-it-matters" in top:
-            out["why_it_matters"] = self._node_text(top["why-it-matters"])
+        why = top.get("why-it-matters") or top.get("why")
+        if why:
+            out["why_it_matters"] = self._node_text(why)
         if "affects" in top:
             out["affected_objects"] = [ref(t, self._REF_ORDER) for t in self._node_items(top["affects"])]
         if "rule" in top:
@@ -354,6 +376,8 @@ class OrinParser:
             blocks = self._full_blocks(body)
             obj: dict[str, Any] = {"id": f"{name}/{kind}/{value}", "kind": kind, "name": value,
                                    "status": "accepted", "source": {"line": line}}
+            if kind == "value-type" and body:
+                obj["constraintLines"] = [t.strip() for _, t in body]
             if kind == "entity-type" and "identity" in blocks:
                 obj["fields"] = [
                     {"name": f.split()[0], "type": ref(f.split()[1], ("value-type",)), "identity": True}
@@ -449,6 +473,9 @@ class OrinParser:
             source = lines[line - 1] if 0 < line <= len(lines) else ""
             column = len(source) - len(source.lstrip()) + 1 if source else 1
             problem, hint = SOURCE_ERROR_HINTS[code]
+            extra = extra_hint(code, source.strip())
+            if extra:
+                hint = f"{hint}\n  {extra}"
             raise OrinSourceError(code, problem, hint, None, line, column, source.strip() and source.rstrip()) from None
 
     def _parse(self, text: str) -> SemanticModel:

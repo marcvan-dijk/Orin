@@ -37,6 +37,18 @@ on one line: do not use `\` to continue a line. Create folders with
 `mkdir out` (PowerShell: `New-Item -ItemType Directory out`). `diff` is not
 available; use `fc` or `Compare-Object` instead.
 
+**Start your own program:**
+
+```text
+python -m tooling.python.orin_cli new my-app --out specs
+python -m tooling.python.orin_cli check specs/my-app.orin
+```
+
+`new` writes a small valid `.orin` file to edit. `check` tells you what is
+missing and gives the next command. `generate` (see
+[`docs/AUTHORING-WITH-AI.md`](docs/AUTHORING-WITH-AI.md#from-draft-to-code))
+needs a model `.json` file with every question answered, not a `.orin` file.
+
 ---
 
 ## The problem

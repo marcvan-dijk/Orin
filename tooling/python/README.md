@@ -84,6 +84,13 @@ unresolved. A blocking uncertainty with no options is still reported as blocked
 - `2`: blocked by unresolved consequential decisions
 - `3`: invalid input or unknown/malformed decision
 - `4`: explicit decision accepted and revised semantic artifact produced
+  (`orin_agent decide` only; with `--friendly`, success is `0`)
+
+`orin_agent decide` and `orin_cli decide` take the same flags:
+`--option` (or `--decide`), `--out` (or `--write`), and optional
+`--uncertainty` (a full id or a short name). They share the error code `3`.
+On success `orin_cli decide` returns `0`; `orin_agent decide` returns `4`
+unless you add `--friendly`.
 
 ## Current boundary
 
@@ -123,3 +130,15 @@ Exit codes: `0` ok/ready, `1` problems or failing examples, `2` blocked
 (decisions required), `3` invalid input or usage.
 
 Test: `python -m unittest tooling.python.test_orin_cli`
+
+### Machine-readable check output
+
+`python -m tooling.python.orin_cli check FILE --format text|json|sarif|github`
+
+- `text` (default): human output.
+- `json`: `{"file", "diagnostics": [{code, message, file, line, column, severity, hint, objectId}]}`.
+- `sarif`: SARIF 2.1.0 for code-scanning and editors.
+- `github`: `::error file=..,line=..,col=..,title=CODE::message` annotations.
+
+Exit codes are the same as text mode (0 ok, 1 diagnostics). Line and column are
+best effort: the first place the object's name appears in the file, else 1:1.

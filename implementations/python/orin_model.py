@@ -230,7 +230,10 @@ class SemanticModel:
                 SemanticModel._remove_metadata(child)
 
     def diagnostics(self) -> list[Diagnostic]:
-        diagnostics: list[Diagnostic] = []
+        diagnostics: list[Diagnostic] = [
+            Diagnostic(p["code"], p["message"], p.get("objectId"))
+            for p in self.document.get("importDiagnostics", [])
+        ]
         objects = self.document.get("objects", [])
         if not isinstance(objects, list):
             return [Diagnostic("ORIN-E001", "objects must be a list")]
@@ -360,6 +363,19 @@ class SemanticModel:
                         object_id,
                     )
                 )
+        try:
+            from .orin_consistency import consistency_diagnostics
+        except ImportError:
+            from orin_consistency import consistency_diagnostics
+
+        for code, message, conflict_id in consistency_diagnostics(objects):
+            diagnostics.append(Diagnostic(code, message, conflict_id))
+        try:
+            from .orin_types_check import check_types
+        except ImportError:
+            from orin_types_check import check_types
+
+        diagnostics.extend(Diagnostic(c, m, i) for c, m, i in check_types(self.document))
         return diagnostics
 
     def readiness_report(self) -> ReadinessReport:

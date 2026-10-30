@@ -9,8 +9,9 @@
    canonical meaning stays the same.
 4. **Intent**: what the program is for and what must always be true
    (`purpose` and `rules`).
-5. **Uncertainty**: an important question that nobody has answered yet.
-   If it is `blocking`, Orin will not build the program until it is answered.
+5. **Uncertainty**: an open question that nobody has answered yet. In the
+   tools it is also called "blocking": Orin will not build the program until a
+   person answers it.
 6. **Decision**: the human answer to an uncertainty. It is chosen from clear
    options and then recorded.
 7. **Evidence**: something you can check to see that the intent is kept, such

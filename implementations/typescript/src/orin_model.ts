@@ -10,8 +10,8 @@ export type ReadinessDiagnostic = {
   message: string;
   severity: "blocked" | "warning" | "info";
   blocking: boolean;
-  objectId?: string;
-  path?: string;
+  objectId?: string | null;
+  path?: string | null;
   impactAreas: string[];
   affectedObjectPaths: string[];
 };
@@ -93,7 +93,15 @@ export class SemanticModel {
       delete canonical.module.implementationPolicies;
     }
     this.removeMetadata(canonical);
-    canonical.objects = (canonical.objects || []).slice().sort((a: any, b: any) => String(a.id).localeCompare(String(b.id)));
+    const byCodePoint = (a: string, b: string) => (a < b ? -1 : a > b ? 1 : 0);
+    for (const obj of canonical.objects || []) {
+      for (const field of REFERENCE_FIELDS) {
+        if (Array.isArray(obj[field])) {
+          obj[field] = obj[field].slice().sort(byCodePoint);
+        }
+      }
+    }
+    canonical.objects = (canonical.objects || []).slice().sort((a: any, b: any) => byCodePoint(String(a.id ?? ""), String(b.id ?? "")));
     return canonical;
   }
 
@@ -278,6 +286,7 @@ export class SemanticModel {
           message: "semantic model structure is invalid; fix validation errors before readiness analysis",
           severity: "blocked",
           blocking: true,
+          objectId: null,
           path: "/objects",
           impactAreas: [],
           affectedObjectPaths: [],
@@ -865,8 +874,8 @@ export class SemanticModel {
       message: `uncertainty remains unresolved: ${question}`,
       severity: blocking ? "blocked" : "warning",
       blocking,
-      objectId: typeof obj.id === "string" ? obj.id : undefined,
-      path: typeof obj.id === "string" ? this.objectPath(obj.id) : undefined,
+      objectId: typeof obj.id === "string" ? obj.id : null,
+      path: typeof obj.id === "string" ? this.objectPath(obj.id) : null,
       impactAreas: this.impactAreas(obj.impactAreas, fallback),
       affectedObjectPaths: this.collectAffectedObjectPaths(affectedIds, reverseReferences),
     };
@@ -884,6 +893,7 @@ export class SemanticModel {
         message: `implementation preference selected: ${key}=${value}`,
         severity: "info",
         blocking: false,
+        objectId: null,
         path: this.modulePath("implementationPolicies", key),
         impactAreas: [...(IMPLEMENTATION_PREFERENCE_AREAS.get(key) ?? ["operability"])],
         affectedObjectPaths: ["/module"],
@@ -899,6 +909,7 @@ export class SemanticModel {
         message: `implementation preference selected: ${key}=${value}`,
         severity: "info",
         blocking: false,
+        objectId: null,
         path: `/implementationPolicies/${this.escapePointerSegment(key)}`,
         impactAreas: [...(IMPLEMENTATION_PREFERENCE_AREAS.get(key) ?? ["operability"])],
         affectedObjectPaths: ["/implementationPolicies"],

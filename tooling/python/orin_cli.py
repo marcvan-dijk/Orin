@@ -58,6 +58,12 @@ def cmd_check(args) -> int:
     model = _load(args.file)
     diagnostics = model.diagnostics()
     status = model.compilation_status()
+    if getattr(args, "format", "text") != "text":
+        from tooling.python import orin_report
+        out = orin_report.render(args.format, args.file, orin_report.collect(args.file, diagnostics))
+        if out:
+            print(out)
+        return EXIT_PROBLEMS if diagnostics else EXIT_OK
     if not diagnostics:
         print(f"OK: {args.file} is valid (compilation: {status}).")
         print(_next_step(args.file))
@@ -234,6 +240,12 @@ def cmd_new(args) -> int:
     return EXIT_OK
 
 
+def cmd_explain(args) -> int:
+    from tooling.python import orin_explain
+    print(orin_explain.explain_document(_load(args.file).document))
+    return EXIT_OK
+
+
 def cmd_decide(args) -> int:
     path = Path(args.file)
     if not path.is_file():
@@ -309,6 +321,24 @@ def _print_open_decisions(model: Path, inspection) -> None:
     print("Re-run with --decision <option-id> (or a decision .json file).")
 
 
+def cmd_diff(args) -> int:
+    from tooling.python import orin_diff
+    report = orin_diff.diff_models(_load(args.old).canonical(), _load(args.new).canonical())
+    print(json.dumps(report, indent=2) if args.json else orin_diff.render_text(report))
+    return EXIT_OK
+
+
+def cmd_export(args) -> int:
+    from tooling.python import orin_export
+    text = orin_export.export(_load(args.file).document, args.format)
+    if args.out:
+        Path(args.out).write_text(text, encoding="utf-8")
+        print(f"Wrote {args.out}")
+    else:
+        sys.stdout.write(text)
+    return EXIT_OK
+
+
 def cmd_generate(args) -> int:
     model = Path(args.model)
     if not model.is_file():
@@ -317,6 +347,16 @@ def cmd_generate(args) -> int:
     if model.suffix != ".json":
         print("invalid input: generate needs a semantic model .json file", file=sys.stderr)
         return EXIT_INVALID
+    if args.emit == "tests":
+        # Examples do not depend on open decisions, so tests are emitted even when blocked.
+        env = dict(os.environ, PYTHONPATH=os.pathsep.join(
+            [str(ROOT)] + ([os.environ["PYTHONPATH"]] if os.environ.get("PYTHONPATH") else [])))
+        result = subprocess.run(
+            [sys.executable, "-m", "implementations.python.codegen.example_tests", str(model), args.out],
+            cwd=ROOT, env=env, capture_output=True, text=True)
+        sys.stdout.write(result.stdout)
+        sys.stderr.write(result.stderr)
+        return EXIT_OK if result.returncode == 0 else EXIT_INVALID
     agent = core.OrinDecisionAgent()
     inspection = agent.inspect(model)
     blocked = bool(inspection.decisions)
@@ -390,6 +430,12 @@ def cmd_generate(args) -> int:
     return EXIT_PROBLEMS if result.returncode == 1 else EXIT_INVALID
 
 
+def cmd_verify(args) -> int:
+    from tooling.python.orin_verify import verify
+
+    return verify(args.file, args.decide)
+
+
 _LEGEND = ("Exit codes: 0 ok/ready, 1 problems or failing examples, "
            "2 blocked (decisions required), 3 invalid input or usage.")
 _PROG = "python -m tooling.python.orin_cli"
@@ -405,8 +451,11 @@ def _build_parser() -> argparse.ArgumentParser:
                               epilog=f"Example:\n  {_PROG} {example}",
                               formatter_class=argparse.RawDescriptionHelpFormatter, **kw)
 
-    add("check", "validate a .orin or model.json and say what to do next",
-        "check examples/password-reset.orin").add_argument("file")
+    check = add("check", "validate a .orin or model.json and say what to do next",
+                "check examples/password-reset.orin --format json")
+    check.add_argument("file")
+    check.add_argument("--format", choices=("text", "json", "sarif", "github"), default="text",
+                       help="output format for CI and editors (default: text)")
     ready = add("readiness", "ready/blocked: what must be decided now vs optional hardening",
                 "readiness examples/password-reset.orin")
     ready.add_argument("file")
@@ -422,16 +471,62 @@ def _build_parser() -> argparse.ArgumentParser:
     gen.add_argument("--decision", help="decision option id, or a .json file like {\"option\": \"<id>\"}")
     gen.add_argument("--target", required=True, choices=["python", "typescript"])
     gen.add_argument("--out", required=True, help="output directory")
+    gen.add_argument("--emit", choices=["implementation", "tests"], default="implementation",
+                     help="what to write: the implementation (default) or standalone example tests")
+    exp = add("export", "write a readable specification document (md, json or html)",
+              "export examples/password-reset.orin --format html --out spec.html")
+    exp.add_argument("file")
+    exp.add_argument("--format", choices=["md", "json", "html"], default="md")
+    exp.add_argument("--out", help="file to write (default: print to screen)")
     dec = add("decide", "choose an option for an open decision and save the updated model",
               "decide examples/password-reset.orin --option three-per-hour-per-address "
               "--out decided.json")
     dec.add_argument("file")
-    dec.add_argument("--option", required=True, help="option id shown by inspect")
-    dec.add_argument("--out", required=True, help="file to write the updated model to")
+    dec.add_argument("--option", "--decide", required=True, help="option id shown by inspect")
+    dec.add_argument("--out", "--write", required=True, help="file to write the updated model to")
+    dec.add_argument("--friendly", action="store_true",
+                     help="accepted for orin_agent compatibility (success is already exit 0)")
     dec.add_argument("--uncertainty", help="decision id (default: found from the option)")
+    diff = add("diff", "show what meaning changed between two versions",
+               "diff old.orin new.orin")
+    diff.add_argument("old")
+    diff.add_argument("new")
+    diff.add_argument("--json", action="store_true", help="emit the changes as JSON")
+    fmt = add("fmt", "format a .orin file in the canonical style (prints it by default)",
+              "fmt my-app.orin --write")
+    fmt.add_argument("file")
+    fmt.add_argument("--check", action="store_true", help="exit 1 if the file is not formatted")
+    fmt.add_argument("--write", action="store_true", help="rewrite the file in place")
+    ver = add("verify", "generate Python code and run the examples against it",
+              "verify tests/conformance/expense-approval.resolved.model.json")
+    ver.add_argument("file")
+    ver.add_argument("--decide", action="append", default=[], metavar="UNCERTAINTY=OPTION",
+                     help="apply a decision before generating (repeatable)")
+    add("explain", "describe a .orin or model.json in plain English",
+        "explain examples/password-reset.orin").add_argument("file")
+    guide = add("guide", "answer each open question step by step (interactive)",
+                "guide examples/password-reset.orin --answers 1")
+    guide.add_argument("file")
+    guide.add_argument("--answers", help="comma-separated option numbers (no prompts)")
+    guide.add_argument("--out", help="file for the decided model (default: <name>.decided.json)")
     add("inspect", "list open decisions and their option ids",
         "inspect examples/password-reset.orin").add_argument("file")
+    cov = add("coverage", "show which rules have examples, and what is not covered",
+              "coverage examples/library-lending.orin --strict")
+    cov.add_argument("file")
+    cov.add_argument("--json", action="store_true", help="emit the report as JSON")
+    cov.add_argument("--strict", action="store_true", help="exit 1 if a rule has no example")
     return parser
+
+
+def cmd_coverage(args) -> int:
+    from tooling.python import orin_coverage
+    return orin_coverage.run(_load(args.file), args.json, args.strict)
+
+
+def cmd_fmt(args) -> int:
+    from tooling.python import orin_fmt
+    return orin_fmt.main(args.file, check=args.check, write=args.write)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -445,8 +540,17 @@ def main(argv: list[str] | None = None) -> int:
         args = _build_parser().parse_args(argv)
     except SystemExit as exit_:
         return exit_.code if isinstance(exit_.code, int) else EXIT_OK
+    if args.command == "guide":
+        from tooling.python.orin_guide import run_guide
+        answers = args.answers.split(",") if args.answers else None
+        try:
+            return run_guide(args.file, answers, args.out)
+        except (core.AgentError, ValueError, OSError) as error:
+            print(f"invalid input: {error}", file=sys.stderr)
+            return EXIT_INVALID
     handler = {"check": cmd_check, "readiness": cmd_readiness, "examples": cmd_examples,
-               "new": cmd_new, "decide": cmd_decide, "generate": cmd_generate}[args.command]
+               "new": cmd_new, "decide": cmd_decide, "export": cmd_export, "generate": cmd_generate, "diff": cmd_diff,
+               "verify": cmd_verify, "explain": cmd_explain, "coverage": cmd_coverage, "fmt": cmd_fmt}[args.command]
     try:
         return handler(args)
     except core.AgentError as error:

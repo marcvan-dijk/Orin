@@ -54,6 +54,9 @@ for (const path of JSON.parse(process.argv[2])) {
     out[path] = {
       diagnostics: model.diagnostics().map((d) => ({ code: d.code, objectId: d.objectId ?? null, message: d.message })),
       document: strip(JSON.parse(JSON.stringify(model.document))),
+      compilation: model.compilationStatus(),
+      readiness: JSON.parse(JSON.stringify(model.readinessReport())),
+      canonical: strip(JSON.parse(JSON.stringify(model.canonical()))),
     };
   } catch (error) {
     out[path] = error instanceof OrinSourceError ? { sourceError: error.code, line: error.line } : { error: String(error) };
@@ -77,6 +80,9 @@ def python_parse_snapshot(path: Path) -> dict[str, Any]:
         return {
             "diagnostics": [{"code": d.code, "objectId": d.object_id, "message": d.message} for d in model.diagnostics()],
             "document": _strip_source(json.loads(json.dumps(model.document))),
+            "compilation": model.compilation_status(),
+            "readiness": model.readiness_report().to_dict(),
+            "canonical": _strip_source(json.loads(json.dumps(model.canonical()))),
         }
     except OrinSourceError as error:
         return {"sourceError": error.code, "line": error.line}
@@ -100,6 +106,12 @@ def compare_parse(py: dict[str, Any], ts: dict[str, Any]) -> str | None:
         return "diagnostics differ"
     if py.get("document") != ts.get("document"):
         return "model differs"
+    if py.get("compilation") != ts.get("compilation"):
+        return "compilation differs"
+    if py.get("readiness") != ts.get("readiness"):
+        return "readiness differs"
+    if py.get("canonical") != ts.get("canonical"):
+        return "decided model differs"
     if ("sourceError" in py or "error" in py) and py != ts:
         return "error differs"
     return None

@@ -940,6 +940,26 @@ capture important decisions and which parts add unnecessary friction.
     different flags; no test with a real first-time user.
     Exact next step: run the onboarding walkthrough with a real first-time
     user, then fix the friction items in `docs/LANGUAGE-GAPS-FOUND.md`.
+69. [done] Pass 4 (25 parallel workstreams): new CLI commands `fmt`, `explain`,
+    `verify`, `diff`, `coverage`, `guide`, `export`, and `check --format
+    json|sarif|github` (also run in CI); generic Python and TypeScript code
+    generators for any valid model; `generate --emit tests`; inline
+    `why:`/`affects:`/`option:` in outline; working `imports` (ORIN-I001..I005);
+    type constraints (ORIN-E052..E055); rule contradiction checks
+    (ORIN-E047/E048, Python only); friendly parser errors (Python only); JSON
+    Schema for the model; parser fuzz tests; stable rule ids; unified `decide`
+    flags; VS Code completion, go-to-definition and snippets; parity check
+    compares readiness and decided models (21/21); two stress examples
+    (event-booking, subscription-billing) with gap reports
+    `docs/LANGUAGE-GAPS-FOUND-2.md` and `-3.md`.
+    Remaining gaps: TypeScript lacks E047/E048 and parser suggestions; generic
+    generators leave most rules as `NotImplementedRule` hooks; `verify` only
+    runs examples for password-reset and expense-approval; `guide` writes
+    JSON, not `.orin`; the TypeScript parser may not handle inline
+    why/imports/types; no real first-time user test yet.
+    Exact next step: work through the top items in
+    `docs/LANGUAGE-GAPS-FOUND-2.md` and `-3.md`, then run the onboarding
+    walkthrough with a real first-time user.
 
 ### Current status after reevaluation
 

@@ -1,0 +1,69 @@
+{
+  "description": "Rule/rule and rule/example conflicts. ORIN-E047: two rules conflict. ORIN-E048: an example contradicts a rule it belongs to (example requires the rule, or the rule lists the example in evidenceLinks).",
+  "cases": [
+    {
+      "id": "example-shows-what-rule-forbids",
+      "objects": [
+        { "id": "m/rule/no-refund", "kind": "rule", "claims": ["Never refund a paid order."] },
+        { "id": "m/example/refund", "kind": "example", "requires": ["m/rule/no-refund"], "expects": ["refund a paid order"] }
+      ],
+      "expect": [["ORIN-E048", "m/example/refund"]]
+    },
+    {
+      "id": "rule-lists-example-as-evidence",
+      "objects": [
+        { "id": "m/rule/a", "kind": "rule", "claims": ["A paid order does not go back to placed."], "evidenceLinks": ["m/example/back"] },
+        { "id": "m/example/back", "kind": "example", "expects": ["a paid order go back to placed"] }
+      ],
+      "expect": [["ORIN-E048", "m/example/back"]]
+    },
+    {
+      "id": "example-agrees-with-rule",
+      "objects": [
+        { "id": "m/rule/no-refund", "kind": "rule", "claims": ["Never refund a paid order."] },
+        { "id": "m/example/ok", "kind": "example", "requires": ["m/rule/no-refund"], "expects": ["Never refund a paid order"] }
+      ],
+      "expect": []
+    },
+    {
+      "id": "unrelated-example-is-ignored",
+      "objects": [
+        { "id": "m/rule/no-refund", "kind": "rule", "claims": ["Never refund a paid order."] },
+        { "id": "m/example/other", "kind": "example", "expects": ["refund a paid order"] }
+      ],
+      "expect": []
+    },
+    {
+      "id": "same-condition-opposite-outcome",
+      "objects": [
+        { "id": "m/rule/a", "kind": "rule", "claims": ["When the user is a member, the user can edit the list."] },
+        { "id": "m/rule/b", "kind": "rule", "claims": ["If the user is a member then the user cannot edit the list."] }
+      ],
+      "expect": [["ORIN-E047", "m/rule/b"]]
+    },
+    {
+      "id": "same-condition-different-value",
+      "objects": [
+        { "id": "m/rule/a", "kind": "rule", "claims": ["When payment succeeds, order.state = paid"] },
+        { "id": "m/rule/b", "kind": "rule", "claims": ["When payment succeeds, order.state = refunded"] }
+      ],
+      "expect": [["ORIN-E047", "m/rule/b"]]
+    },
+    {
+      "id": "different-conditions-do-not-conflict",
+      "objects": [
+        { "id": "m/rule/a", "kind": "rule", "claims": ["When the user is a member, the user can edit the list."] },
+        { "id": "m/rule/b", "kind": "rule", "claims": ["When the user is a guest, the user cannot edit the list."] }
+      ],
+      "expect": []
+    },
+    {
+      "id": "negated-flag-conflicts-across-rules",
+      "objects": [
+        { "id": "m/rule/a", "kind": "rule", "claims": [{ "text": "Titles must be non-empty.", "negated": false }] },
+        { "id": "m/rule/b", "kind": "rule", "claims": [{ "text": "Titles must be non-empty.", "negated": true }] }
+      ],
+      "expect": [["ORIN-E047", "m/rule/b"]]
+    }
+  ]
+}

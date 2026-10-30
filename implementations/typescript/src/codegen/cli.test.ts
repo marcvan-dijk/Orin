@@ -45,7 +45,9 @@ test("cli exit codes: usage, bad input, refusal", () => {
     writeFileSync(d, "{nope");
     assert.equal(runCli(conf("password-reset.model.json"), d, SCRATCH).status, 2);
     writeFileSync(d, "{}");
-    assert.equal(runCli(conf("shared-tasks.model.json"), d, SCRATCH).status, 2);
+    writeFileSync(d, "{}");
+    writeFileSync(resolve(SCRATCH, "bad.json"), "{nope");
+    assert.equal(runCli(resolve(SCRATCH, "bad.json"), d, SCRATCH).status, 2);
   } finally {
     rmSync(SCRATCH, { recursive: true, force: true });
   }
