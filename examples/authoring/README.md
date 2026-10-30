@@ -1,7 +1,8 @@
 # Authoring examples
 
 Each example is a plain-English request and the `.orin` file an AI should
-write from it. See `../AUTHORING-WITH-AI.md` for the method.
+write from it. See the [authoring guide](../../docs/AUTHORING-WITH-AI.md)
+for the method and the [example catalogue](../README.md) for the primary path.
 
 All files load with the Orin checker. The only diagnostics are `ORIN-E041`,
 one per open uncertainty. That is intended: the AI did not guess.
@@ -58,14 +59,14 @@ dates. Time zone and weekends are `uncertainty` items.
 
 ## Test
 
-`python implementations/python/test_authoring_examples.py` (from that folder)
+`python implementations/python/test_authoring_examples.py` (from the repository root)
 parses every example and checks the only diagnostics are `ORIN-E041`, one per
 `uncertainty`.
 
 ## Note on syntax
 
 All five files use the outline style (`key: name`), the same layout as
-`../../examples/password-reset.orin`. Older files may use a brace style
+[`../password-reset.orin`](../password-reset.orin). Older files may use a brace style
 (`module name { ... }`); it still loads but is legacy. Do not write new files
 in it.
 
@@ -74,7 +75,7 @@ in it.
 From the repository root:
 
 ```text
-python -m tooling.python.orin_cli check docs/authoring-examples/tip-calculator.orin
+python -m tooling.python.orin_cli check examples/authoring/tip-calculator.orin
 ```
 
 It lists each open uncertainty as `ORIN-E041`. That is expected here.

@@ -1,4 +1,4 @@
-"""Runs the commands in docs/ONBOARDING.md so the walkthrough cannot rot.
+"""Runs the commands in examples/docs/password-reset.md so the walkthrough cannot rot.
 
 Run from anywhere: python tooling/python/test_onboarding_doc.py
 """
@@ -10,7 +10,7 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
-DOC = ROOT / "docs" / "ONBOARDING.md"
+DOC = ROOT / "examples" / "docs" / "password-reset.md"
 COPIED = ("tooling", "tests", "examples", "implementations")
 
 # (command fragment, expected exit code, text expected in output)

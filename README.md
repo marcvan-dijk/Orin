@@ -24,7 +24,7 @@ python -m tooling.python.orin_cli readiness examples/password-reset.orin
 ```
 
 Both say "blocked" on purpose: the `rate-limit` question is still open, and a
-human must choose the answer. Next: [`docs/ONBOARDING.md`](docs/ONBOARDING.md)
+human must choose the answer. Next: [password-reset walkthrough](examples/docs/password-reset.md)
 (10 minutes). New words? See the [glossary](docs/GLOSSARY.md).
 
 **Requirements** (one place; other docs point here). Reading Orin needs
@@ -232,11 +232,13 @@ supporting proof. You do not need Python or TypeScript to read Orin.
 Unknown words: [`docs/GLOSSARY.md`](docs/GLOSSARY.md).
 
 1. Read the program: [`examples/password-reset.orin`](examples/password-reset.orin)
-2. First walkthrough (10 minutes): [`docs/ONBOARDING.md`](docs/ONBOARDING.md)
-3. Quick demo (5 minutes): [`docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`](docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md)
-4. Language help: [`docs/LANGUAGE-REFERENCE.md`](docs/LANGUAGE-REFERENCE.md)
-5. Write Orin with an AI: [`docs/AUTHORING-WITH-AI.md`](docs/AUTHORING-WITH-AI.md)
-6. All documents: [`docs/README.md`](docs/README.md)
+2. Follow the [password-reset walkthrough](examples/docs/password-reset.md#beginner-walkthrough);
+   its [deeper proof runbook](examples/docs/password-reset.md#deeper-proof-runbook)
+   provides additional checks.
+3. Learn the language: [language reference](docs/LANGUAGE-REFERENCE.md)
+   and [authoring with AI](docs/AUTHORING-WITH-AI.md).
+4. Browse [Orin documentation](docs/README.md) or the separate
+   [example catalogue](examples/README.md).
 
 The core idea to see:
 
@@ -266,7 +268,7 @@ More tools:
 - VS Code extension (highlighting, decision warnings): [`tooling/vscode-extension/`](tooling/vscode-extension/README.md)
 - Proof map: [`tests/conformance/README.md`](tests/conformance/README.md)
 - Supporting example (expense approval): [`examples/expense-approval.orin`](examples/expense-approval.orin)
-- Team authoring prototype: [`docs/COLLABORATIVE-AUTHORING-PROTOTYPE.md`](docs/COLLABORATIVE-AUTHORING-PROTOTYPE.md)
+- Experimental team authoring: [authoring guide](docs/AUTHORING-WITH-AI.md#experimental-collaborative-authoring-prototype)
 
 ---
 
@@ -326,8 +328,9 @@ The goal is to discover:
 
 Active execution tracking lives in
 [`docs/ORIN-0003-language-improvement-plan.md`](docs/ORIN-0003-language-improvement-plan.md).
-Longer-term or deferred material is listed in
-[`docs/DEFERRED-EVALUATION-BACKLOG.md`](docs/DEFERRED-EVALUATION-BACKLOG.md).
+Longer-term or deferred material is listed in the
+[development backlog](docs/development/BACKLOG.md). Application guides and
+findings are grouped separately in the [example catalogue](examples/README.md).
 
 ---
 
@@ -335,10 +338,14 @@ Longer-term or deferred material is listed in
 
 ```text
 docs/
-    Specifications, execution notes, and deferred evaluation references
+    Orin language guidance and specifications
+    development/     Deferred analysis and historical roadmaps
+    ORIN-0003-...md   Single implementation log and next step
 
 examples/
-    Human-readable Orin programs
+    Existing human-readable Orin programs
+    docs/            Application guides, decisions, and findings
+    authoring/       Small authoring exercises
 
 tests/
     Conformance fixtures and behavioral verification

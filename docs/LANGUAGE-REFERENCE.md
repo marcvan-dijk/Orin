@@ -2,13 +2,62 @@
 
 This is a short guide to writing `.orin` files in **outline style**, as the
 Python loader (`implementations/python/orin_parser.py`) reads it today. The
-exact grammar is in `ORIN-SYNTAX-GRAMMAR.md`. Why outline style is the main
-style is in `DECISION-OUTLINE-SYNTAX.md`. Brace style (`module name { ... }`)
-still loads but is legacy and is not described here.
+exact grammar is in `ORIN-SYNTAX-GRAMMAR.md`. The decision and rationale for
+outline style are in [Why outline style is the main syntax](#outline-style-decision).
+Brace style (`module name { ... }`) still loads but is legacy and is not
+described here.
 
 Orin files say what a program must do: its purpose, its rules, examples you
 can observe, and questions nobody has answered yet. They do not say how to
 build it.
+
+## Reading an outline
+
+An Orin document is a structured outline made of labels, indented content,
+and optional lists. Section labels start at the left edge; indented lines
+belong to the section above them. Lists use `-`, and nested sections express
+the structure within a section. Values are plain text unless a tool or
+compiler interprets them as structured meaning.
+
+Workflow `steps:` are strategy hints for implementation structure. They are
+not, by themselves, required observable sequencing constraints.
+
+For readability, prefer this order:
+
+1. `module`
+2. `purpose`
+3. `rules`
+4. `workflow`
+5. `example`
+6. `uncertainty`
+7. `targets`
+
+Keep the meaning explicit in prose and avoid making the format look like
+general-purpose YAML serialization.
+
+## Outline style decision
+
+Outline style is Orin's main syntax: sections are `key: name` lines with
+indented content. Brace style (`module name { ... }`) is still accepted, but
+is legacy. New examples, documentation, and tools use outline style.
+
+It reads like a document that people who are not programmers can read,
+review, and correct. It carries meaning—purpose, rules, examples, and open
+questions—without code-like punctuation that suggests an implementation.
+Existing examples, guides, and conformance fixtures already use outline
+style, and its grammar is small and independent of any host language.
+
+The loader continues to read brace-style files, so existing files do not
+break. New features go into outline style first and may never reach brace
+style. Outline style cannot yet express everything brace style can; those
+gaps are listed in `ORIN-SYNTAX-GRAMMAR.md` and must be addressed in the
+loader before brace style can be removed. Tests and fixtures should move to
+outline style over time.
+
+Brace style was rejected as the main syntax. Although it was the first style
+the loader parsed and is easy for machines to read, it looks like code,
+requires matching braces and quotes, and encourages authors to think about
+implementation rather than meaning.
 
 ## The basics
 
@@ -24,8 +73,9 @@ build it.
 
 The loader looks at which sections you used.
 
-- **Simple**: only `purpose`, `rules`, `workflow`, `example`, `uncertainty`.
-  This is the easiest way to start. Rules and workflow steps are plain text.
+- **Simple**: only `purpose`, `rules`, `workflow`, `example`, `uncertainty`,
+  and module-level `parameter`. This is the easiest way to start. Rules and
+  workflow steps are plain text.
 - **Detailed**: as soon as you use `type`, `entity`, `relation`, `state`,
   `capability`, `effect` or `rule:` (one rule per section), the file is read
   as a checked model. Names must point to things you declared.
@@ -67,13 +117,31 @@ uncertainty: refund-window
 | Section | What it holds |
 |---|---|
 | `purpose:` | Why the module exists. Text on the same line or indented below. |
+| `parameter: name` | A module-level numeric setting with `type: number` and a named `unit:`. |
 | `rules:` | A list of `- ` statements that must always be true. |
 | `workflow: name` | `input:` (names), `steps:` (guidance, not checked), `failure:`, `recovery:`, `after:` (postconditions). |
 | `example: name` | One observable case: `given:`, `when:`, `then:`. |
-| `uncertainty: name` | `question:` and `blocking: yes` or `no`. |
+| `uncertainty: name` | `question:` and `blocking: yes` or `no`; in simple mode, optional `why:`, `affects:`, and `option:` decision details. |
 
 A blocking uncertainty stops the module from being *ready*. To settle one,
 write the answer as a rule or an example and remove the uncertainty.
+
+## Numeric parameters and capacity limits
+
+Declare a named numeric value and its unit at module level:
+
+```orin
+parameter: capacity
+  type: number
+  unit: seats
+```
+
+The supported capacity-limit claim
+`An event never has more confirmed bookings than its capacity.` is checked
+against the declared `capacity` value by the Python claim-driven and
+TypeScript generic generators. Supply that value as a runtime parameter; it is
+not a project or workflow setting. An undeclared parameter, a non-numeric
+type, or a missing unit gives `ORIN-E056`.
 
 ## Detailed sections
 
@@ -144,7 +212,7 @@ example: pay-once
 | `workflow: name` | `actor:`, `input:` and `output:` (`name type` lines), `requires:`, `uses:`, `actor-capabilities:` (`actor capability` lines), `transitions:` (`from -> to`), `failure:`, `recovery:`, `after:`. |
 | `rule: name` | `requires:` (names it talks about), `claims:` (`- ` statements). |
 | `example: name` | `requires:` and `then:` (the expected result). |
-| `uncertainty: name` | `blocking:` and `question:`. |
+| `uncertainty: name` | In detailed mode, `blocking:` and `question:`. See simple-mode support above. |
 
 Ids are built as `<module>/<kind>/<name>`. Short names are turned into full
 ids for you. A name that was never declared gives `ORIN-E007` or a type error.
@@ -152,9 +220,14 @@ A rule that says both "X" and "not X" gives `ORIN-E046`.
 
 ## Not supported yet
 
-Outline style cannot yet write: plain entity fields, imports, `context`,
-implementation policy, or uncertainty `options:`. See section 6 of `ORIN-SYNTAX-GRAMMAR.md`. Entity
-lifecycle and effect inputs/outputs are also missing, so those items still block.
+Simple-mode uncertainties support inline `why:`, `affects:`, and `option:`
+details. Detailed-mode uncertainties currently support only `blocking:` and
+`question:`. Neither mode records a completed decision as a separate object;
+write the accepted answer as a rule or example and remove the uncertainty.
+
+Outline style also cannot yet write plain entity fields, `context`,
+implementation policy, or several lifecycle/effect details. See section 6 of
+`ORIN-SYNTAX-GRAMMAR.md` for the exact limits.
 
 ## Check errors (ORIN-E…)
 
@@ -191,6 +264,7 @@ come back as `ORIN-P000` with the `ORIN-Pxxx` text inside.
 | E053 | A rule or example writes `name = value`, but the value is not in the `one of:` list of that type. Python only for now. |
 | E054 | A rule or example writes `name = value`, but the value is not a number, or is outside the `number:` range. Python only for now. |
 | E055 | A rule or example uses a missing value (`none`, `empty`) for a type that is not `optional`. Python only for now. |
+| E056 | A module parameter is invalid, or a capacity-limit claim names an undeclared parameter. |
 
 ## Readiness (ORIN-R…)
 
@@ -235,4 +309,3 @@ workflow: return-book
 
 `proved-by:` takes example names (comma separated; also allowed in a `rule:`
 block). R001, R002, R010, R011, R030, R031, R032 still need the JSON form.
-

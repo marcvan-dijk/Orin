@@ -1,5 +1,10 @@
 # Language and tool gaps found: event-booking stress test (round 2)
 
+**Purpose:** Retained findings from a supporting application, not Orin's
+language specification or an active feature queue. The refund/payment rules
+belong to this sample application; they do not describe pricing for Orin.
+See the [example catalogue](../README.md) for the primary proof path.
+
 Method: a novice turned this paragraph into `examples/event-booking.orin`
 (outline style, documented syntax only):
 
@@ -24,15 +29,15 @@ Ranked by severity.
 
 ## High
 
-1. **Capacity cannot be stated as a value.**
-   "An event never has more confirmed bookings than its capacity" is free text,
-   so `generate` makes it a `NotImplementedRule` hook. There is no way to say
-   `capacity` is a named parameter of the event.
-   Repro: `python -m tooling.python.orin_cli decide ...` twice, then
-   `generate b.json --target python --out build`; look at `IR["unimplemented"]`
-   for `an-event-never-has-more` and `parameters: []`.
-   Fix: a documented outline form for named parameters/constants
-   (`parameter: capacity` with a unit/type) and a "limit" claim pattern.
+1. **[done] Capacity is a named value and a checked limit.**
+   Outline now supports a module-level numeric parameter with a unit, and the
+   Python claim-driven and TypeScript generic generators emit runtime checks
+   for the capacity-limit claim. The event-booking rule references `capacity`;
+   the generated IR lists it as a required parameter and does not leave that
+   claim as a `NotImplementedRule` hook. Verified by
+   `python -m unittest implementations.python.test_orin_parameters
+   implementations.python.codegen.test_capacity_limit` and the matching
+   TypeScript parser/validation tests.
 
 2. **Tiered numbers in decision claims are not understood.**
    `refund-policy` ("7 or more days ... in full", "1 to 6 days ... half",
@@ -70,7 +75,7 @@ Ranked by severity.
 6. **Decision-created rules are not linked to evidence, yet readiness is READY.**
    `refund-policy` and `waitlist-offer-expiry` have no `proved-by`.
    Repro: after both decisions, `readiness b.json` prints READY, and
-   `docs/LANGUAGE-GAPS-FOUND.md` item 5 said R040 would block them.
+   `examples/docs/library-lending.md` item 5 said R040 would block them.
    Either the check is too weak or the docs are stale; a novice cannot tell
    whether the decided policy is proved by any example.
 

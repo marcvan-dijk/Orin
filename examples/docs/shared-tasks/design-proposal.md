@@ -4,14 +4,22 @@
 **Version:** 0.1.0
 **Scope:** One broader application slice after the password-reset MVP proves the core thesis
 
-**Execution note:** ORIN-0005 remains deferred roadmap work after MVP
-completion. It is not current execution work; any future implementation tasks
-for this application should first be activated and tracked in `ORIN-0003`.
-See also the docs-only alignment brief:
-`docs/ORIN-0005-shared-tasks-to-ORIN-0004-alignment-brief.md`.
-This document is also listed in
-[`DEFERRED-EVALUATION-BACKLOG.md`](./DEFERRED-EVALUATION-BACKLOG.md) to keep it
-out of the current primary path.
+**Historical proposal:** The model/runtime capability descriptions and proposed
+implementation sequence below describe the state and recommendations when this
+proposal was written, not a current implementation inventory or authorization.
+The broader application remains deferred; the separately evaluated minimal
+slice is documented in the [application overview](./README.md).
+See the [semantic audit and alignment](./semantic-audit.md) for later challenges
+to the proposed representation, and the
+[deferred index](../../../docs/development/BACKLOG.md) and
+[roadmap](../../../docs/development/ORIN-0006-next-evolution-roadmap.md) for work
+status. Future implementation must first be activated in the
+[language improvement plan](../../../docs/ORIN-0003-language-improvement-plan.md).
+
+Language references remain the
+[intent spec](../../../docs/ORIN-0001-intent-spec.md),
+[kernel](../../../docs/ORIN-0002-language-kernel.md), and
+[semantic model](../../../docs/ORIN-0004-semantic-model.md).
 
 ## Decision
 
@@ -43,13 +51,16 @@ lean until the core meaning/ambiguity/equivalence claims are proven.
 
 ## Application behavior
 
-The application has three semantic entities:
+The proposed broader application has three semantic entities:
 
 - `person`: an actor with a stable identity;
 - `task-list`: a persistent collection owned by a person;
 - `task`: a persistent item belonging to one task list.
 
-A task has the states `open`, `in-progress`, and `completed`.
+A task has the proposed states `open`, `in-progress`, and `completed`. The
+completed minimal slice instead uses only `open` and `completed`; its optional
+assignee contract must not be confused with this proposal's assigned-task
+completion scope.
 
 The initial workflows are:
 

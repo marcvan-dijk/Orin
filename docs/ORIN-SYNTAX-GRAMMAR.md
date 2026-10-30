@@ -1,7 +1,8 @@
 # Orin Outline Syntax Grammar
 
 This is the exact grammar of **outline style**, the main way to write Orin
-(see `DECISION-OUTLINE-SYNTAX.md`). It is written from the Python loader
+(see [Why outline style is the main syntax](LANGUAGE-REFERENCE.md#outline-style-decision)).
+It is written from the Python loader
 (`implementations/python/orin_parser.py`) and the files in `examples/`. It
 does not depend on any programming language. For a friendlier guide, see
 `LANGUAGE-REFERENCE.md`.
@@ -45,20 +46,24 @@ The loader picks a mode from the sections it finds:
   `relation:`, `state:`, `capability:`, `effect:` or `rule:` (singular).
   Every section below turns into a typed object, and the file is fully checked.
 - **Summary mode**: used otherwise (only `purpose:`, `rules:`, `workflow:`,
-  `example:`, `uncertainty:`). Workflows and rules become simple objects with
-  text only.
+  `example:`, `uncertainty:`, and optional module-level `parameter:`).
+  Workflows and rules become simple objects with text only.
 
 ## 3. Sections
 
 ```ebnf
-section = purpose | rules | workflow | example | uncertainty
+section = purpose | parameter | rules | workflow | example | uncertainty
         | type | entity | relation | state | capability | effect | rule ;
 
 purpose = "purpose:" ( VALUE | NEWLINE { TEXT-LINE } ) ;
           (* inline text, or indented lines joined with spaces *)
+
+parameter = "parameter:" NAME { parameter-field } ;
+parameter-field = "type: number" | "unit:" NAME ;
+                (* a module-level numeric setting with a named unit *)
 ```
 
-Unknown top-level keys are read but ignored.
+Other unknown top-level keys are read but ignored.
 
 ### 3.1 Summary-mode sections
 
@@ -94,7 +99,13 @@ An uncertainty is blocking only if `blocking:` is `yes` or `true`. A missing
 `blocking:` means not blocking. Several lines under a label are joined with
 spaces. The label may also hold its text on the same line.
 
-`why:`, `affects:` and `option:` keep a decision inside the `.ori` file, so no
+`parameter:` declares a module-level numeric value and its unit. It does not
+switch summary mode to declaration mode. A supported capacity-limit claim has
+the form `An event never has more <measure> than its <parameter>.`; its final
+name must identify a declared numeric parameter with a unit. The generated
+runtime checks the measured count against that parameter.
+
+`why:`, `affects:` and `option:` keep a decision inside the `.orin` file, so no
 `.decisions.json` sidecar is needed. Each `option:` is one answer. Its text is
 the label, and its id is made from the first words of the text. `affects:`
 names are matched to rules and workflows. `inspect` and the agent show these
@@ -206,13 +217,16 @@ JSON fixtures in `tests/conformance/` carry them today.
   below.)
 - Rule ids chosen by the author in summary mode (ids come from the first five
   words of the text).
+- Numeric parameters other than the current `type: number` form, or units with
+  machine-checked dimensional conversion.
 - Lifecycle, owner, scope, failure modes, data access and effect
   inputs/outputs (`ORIN-R001`–`R032`). A document that needs these stays
   `blocked` for them. Workflow `failure:`/`recovery:`/`after:` and rule
   `proved-by:` (`R020`, `R021`, `R050`, `R040`) are supported.
-- Uncertainty `options:` and a recorded decision form. Today a decided
-  question is answered by writing a rule or example and removing the
-  uncertainty.
+- In declaration mode, inline uncertainty `why:`, `affects:`, and `option:`
+  details are not supported; they are available in summary mode. Neither mode
+  has a separate recorded-decision form. To settle a question, write the
+  accepted answer as a rule or example and remove the uncertainty.
 - Mixed modules: in a file with a singular `rule:` or other declarations,
   the plural `rules:` list and `steps:` are not turned into checked objects.
 - Several blocking uncertainties in one summary-mode file currently produce a
