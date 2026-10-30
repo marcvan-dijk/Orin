@@ -1019,12 +1019,35 @@ capture important decisions and which parts add unnecessary friction.
     password-reset path. Before claiming shared cross-backend rate-limit
     coverage, add policy-sensitive conformance cases to that same application;
     do not mistake the current shared-case pass for proof of that policy.
+73. [done] Deepen password-reset evidence without adding an application or
+    language construct. Add ten language-neutral rate-limit cases covering
+    both accepted policies (62 requests per policy), limits, window edges,
+    origin/address isolation, and unknown-account privacy. Execute actual
+    generated Python and TypeScript modules, checking every response, message
+    outcome, and disclosure flag. Correct TypeScript generation to derive the
+    accepted count, window, and origin scope from model rules rather than
+    silently supplying a policy. Integrate the shared cases into the existing
+    decision-change demo and the default parity gate; mismatched, missing, or
+    equally wrong backend observations fail. Python implementation tests
+    (212), tooling tests (110), TypeScript tests (74), parity (41 targets,
+    including 20 generated policy/case combinations), and both original
+    derivation proofs pass. Add a real-beginner observation checklist to the
+    existing application guide; no human observation is claimed.
+    Window-edge cases characterize current generator behavior, not an
+    additional accepted guarantee in the original policy prose.
+    Exact next step: observe a real first-time user on the existing walkthrough
+    and resolve item 74 before treating those window details as durable meaning.
+74. [post-mvp-next] Confirm the password-reset policy's time-window meaning:
+    rolling versus fixed windows and exact expiry boundaries. Record an
+    explicit domain choice in the existing accepted policy claims and align
+    the existing fixture and both generators if needed. Do not silently turn
+    current implementation details into new accepted requirements.
 
 ### Current status after reevaluation
 
 - **Current project scope (password-reset MVP):** complete.
 - **Remaining tasks in current project scope:** `0`.
-- **Open post-MVP backlog tasks in this sequence:** `1` (item 44 workstreams
+- **Open post-MVP backlog tasks in this sequence:** `2` (item 44 workstreams
   44A-44E complete after reconciliation; item 45 documented the decision-
   completion protocol addition in ORIN-0001; item 46 added a strict MVP
   acceptance/stop governance gate; item 47 added an executable docs runbook
@@ -1039,10 +1062,13 @@ capture important decisions and which parts add unnecessary friction.
   verification; item 60 completed ORIN-0006 Phase 1.4 semantic-equivalence
   tightening; item 61 completed ORIN-0006 Phase 1.5 model-fit audit; item 70
   added numeric parameters and generated capacity-limit checks for event-
-  booking).
+  booking; items 71-73 consolidated documentation and deepened password-reset
+  evidence; item 74 records the newly exposed policy-window ambiguity).
 - **Exact next step:** run the consolidated password-reset walkthrough with a
-  real first-time user and fix observed end-to-end friction. Retain the other
-  applications as regression/evaluation evidence, not parallel feature queues.
+  real first-time user and fix observed end-to-end friction; explicitly settle
+  the policy-window ambiguity in item 74 before promoting its characterization
+  tests to accepted guarantees. Retain the other applications as
+  regression/evaluation evidence, not parallel feature queues.
 
 ## Test strategy
 

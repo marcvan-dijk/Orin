@@ -19,3 +19,15 @@ Run focused proof-flow validation with:
 ```bash
 node --test --experimental-strip-types implementations/typescript/src/password_reset_proof.test.ts
 ```
+
+Generated password-reset rate-limit conformance uses the same language-neutral
+cases as Python, under both accepted policy choices:
+
+```bash
+node --test --experimental-strip-types implementations/typescript/src/codegen/password_reset_rate_limit.test.ts
+```
+
+Unlike the reference-runtime proof above, this executes generated code and
+checks each request's confirmation, message delivery, and privacy observations.
+`python implementations/python/parity_check.py` additionally compares both
+generated backends against the shared expectations.

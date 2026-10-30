@@ -177,9 +177,8 @@ for both choices, but do **not** test the rate limit. The decision also changes
 generated runtime behaviour: the first choice permits five requests per 15
 minutes per address and origin; the second permits three per hour per address,
 regardless of origin. Over either limit, no email is sent, but the same
-confirmation is returned. The existing decision-change demo exercises
-additional rate-limit probes; those are demo-only, not shared conformance
-evidence (see [Decision-change evidence](#decision-change-evidence)).
+confirmation is returned. Shared generated-runtime conformance cases now
+exercise both policies; see [Decision-change evidence](#decision-change-evidence).
 
 ### 7. Generate code and run the proof (2 minutes)
 
@@ -242,6 +241,21 @@ Words: [glossary](../../docs/GLOSSARY.md). Next: the deeper sections below.
 Delete only the walkthrough's generated `out/` files when you are done; do not
 remove unrelated work if the directory already existed.
 
+## Real beginner observation
+
+Use the existing walkthrough with a beginner; this is a checklist, not a
+reported user result.
+
+- Let the participant read the meaning, resolve the open rate-limit question,
+  generate an implementation, change the accepted policy, and observe whether
+  generated behaviour differs.
+- Do not coach past friction. Record what confused them and whether they
+  complete the task unaided.
+- Reading the `.orin` file needs no host runtime. Running the walkthrough
+  requires Python; the optional TypeScript check requires Node.
+- Success means the participant can explain the rules and observe changed
+  generated behaviour without reading the implementation.
+
 ## Deeper proof runbook
 
 For a five-minute presentation, read the opening human request, inspect the
@@ -296,11 +310,15 @@ python -m tooling.python.demo_decision_change
 python -m unittest tooling.python.test_demo_decision_change
 ```
 
-The demo applies option A through the public
+The demo applies each option through the public
 `OrinDecisionAgent.apply_decision`, generates with
-`python -m implementations.python.codegen.generate`, and replays shared
-acceptance cases. It then changes only the decision to option B, regenerates,
-replays, and reports the code diff, changed outcomes, and byte-identical blocks.
+`python -m implementations.python.codegen.generate`, and replays the shared
+rate-limit fixture through `replay_case`. It reports `changed_rate_limit_cases`
+and `rate_limits`, along with the code diff and byte-identical blocks.
+[`password-reset.rate-limit.cases.json`](../../tests/conformance/password-reset.rate-limit.cases.json)
+contains 10 cases, 62 requests per policy, and two policies. The eight
+original shared behavior cases remain separate: they contain no rate-limit
+scenarios and remain the scope of the original reference proofs.
 
 ### Measured password-reset result
 
@@ -310,22 +328,23 @@ replays, and reports the code diff, changed outcomes, and byte-identical blocks.
 - 18 of 19 top-level generated blocks stay byte-identical: token expiry,
   single use, no-disclosure, capabilities, and response shape. The nineteenth
   block is the constants header.
-- The eight shared conformance cases pass under both choices; none change,
-  because those cases contain no rate-limit scenarios.
-- Three of six **demo-only** probes change from sent to not-sent: the fourth
-  request in ten minutes from the same origin, from different origins, and
-  twenty minutes after three requests. The first request, sixth in ten minutes,
-  and request after an hour do not change.
+- The new generated-runtime tests apply the shared rate-limit fixture to
+  generated Python and TypeScript. `implementations/python/parity_check.py`
+  verifies both generated runtimes against the shared expectations.
 - A means five requests per fifteen minutes per address **and origin**;
   B means three per hour per address, regardless of origin. Over either limit,
   the person still gets standard confirmation and no message is sent.
+- The fixture follows current implementation behavior. The exact rolling-window
+  boundary is not expressly specified by the original policy prose, so these
+  cases do not establish it as newly accepted language meaning.
 
 ### Honest comparison and limits
 
 The original comparison counted 163 lines in
 `implementations/python/password_reset.py` and 107 in
-`implementations/typescript/src/password_reset.ts`. Those hand-written
-runtimes had no rate limiting; only the proof harnesses exercised it.
+`implementations/typescript/src/password_reset.ts`. At the time, those
+hand-written runtimes had no rate limiting; the original reference proofs
+exercised the eight behavior cases, not the new generated-runtime fixture.
 The fair comparison is a human **adding** the rule, not changing an existing
 constant:
 
@@ -337,12 +356,12 @@ constant:
 | Re-test | Same cases replayed | Author updates examples |
 
 No controlled hand-coding comparison or timing was performed; effort figures
-are estimates. Probe results are not shared conformance evidence. Whether
-option text matches stakeholder intent remains a human judgement. Runtimes
-are in-memory and single-process: persistence, concurrency, clock skew, and
-cheap behaviour-restructuring decisions are not demonstrated.
+are estimates. Whether option text matches stakeholder intent remains a human
+judgement. Runtimes are in-memory and single-process: persistence, concurrency,
+clock skew, and cheap behaviour-restructuring decisions are not demonstrated.
 Python/TypeScript parity of **decision-change** behaviour is not established
-by the proof-run gate above.
+by the original proof-run gate above; the separate generated-runtime parity
+check is described under [Measured password-reset result](#measured-password-reset-result).
 
 The original three-application experiment also ran:
 
