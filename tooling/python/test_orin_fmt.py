@@ -11,7 +11,7 @@ from implementations.python.orin_parser import OrinParser  # noqa: E402
 from tooling.python import orin_cli, orin_fmt  # noqa: E402
 
 FILES = sorted([*(ROOT / "examples").glob("*.orin"),
-                *(ROOT / "docs" / "authoring-examples").glob("*.orin")])
+                *(ROOT / "examples" / "authoring").glob("*.orin")])
 
 
 def _strip_lines(value):

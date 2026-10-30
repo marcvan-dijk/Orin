@@ -11,7 +11,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 from orin_parser import OrinParser, OrinSourceError, analyze
 
 ROOT = Path(__file__).resolve().parents[2]
-FILES = sorted((ROOT / "examples").glob("*.orin")) + sorted((ROOT / "docs" / "authoring-examples").glob("*.orin"))
+FILES = sorted((ROOT / "examples").glob("*.orin")) + sorted((ROOT / "examples" / "authoring").glob("*.orin"))
 KEYWORDS = ["rule", "example", "uncertainty", "decision", "field", "context", "entity", "purpose", "given", "when", "then"]
 JUNK = ["\t", "\ufeff", "é☃𝄞", "x" * 20000, " " * 400, "\r", "\x00", "\u2028"]
 CASE_SECONDS = 2

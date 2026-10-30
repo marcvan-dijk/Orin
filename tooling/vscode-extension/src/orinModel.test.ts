@@ -33,7 +33,7 @@ assert.deepStrictEqual(buildDecideArgs("f.orin", "u", "o", "w.json").slice(3), [
 assert.ok(decideSucceeded(4) && !decideSucceeded(3) && !decideSucceeded(0) && !decideSucceeded(undefined));
 
 const root = path.resolve(__dirname, "..", "..", "..");
-const files = ["examples", path.join("docs", "authoring-examples")].flatMap((dir) =>
+const files = ["examples", path.join("examples", "authoring")].flatMap((dir) =>
   fs.readdirSync(path.join(root, dir)).filter((f) => f.endsWith(".orin")).map((f) => path.join(root, dir, f)),
 );
 assert.ok(files.length >= 8);
@@ -61,7 +61,7 @@ for (const file of files) {
     assert.strictEqual(lines[findUncertaintyLine(text, sym.name)].includes(sym.name), true, `${label}: uncertainty line`);
   }
 }
-const brace = parseOutline(fs.readFileSync(path.join(root, "docs", "authoring-examples", "book-lending.orin"), "utf8"));
+const brace = parseOutline(fs.readFileSync(path.join(root, "examples", "authoring", "book-lending.orin"), "utf8"));
 assert.strictEqual(brace.symbols.filter((x) => x.kind === "rule").length, 3);
 assert.strictEqual(brace.symbols.filter((x) => x.kind === "example").length, 2);
 assert.strictEqual(brace.symbols.filter((x) => x.kind === "uncertainty").length, 2);

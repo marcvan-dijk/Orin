@@ -6,7 +6,7 @@
 
 **Deferred note:** This is a larger future-facing gap analysis. It is retained
 for later evaluation and is not part of Orin's current primary path. See
-[`DEFERRED-EVALUATION-BACKLOG.md`](./DEFERRED-EVALUATION-BACKLOG.md).
+[`docs/development/BACKLOG.md`](BACKLOG.md).
 
 ## Executive conclusion
 

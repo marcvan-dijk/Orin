@@ -6,7 +6,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from orin_parser import analyze
 
-EXAMPLES = Path(__file__).resolve().parents[2] / "docs" / "authoring-examples"
+EXAMPLES = Path(__file__).resolve().parents[2] / "examples" / "authoring"
 
 
 class AuthoringExamplesTests(unittest.TestCase):

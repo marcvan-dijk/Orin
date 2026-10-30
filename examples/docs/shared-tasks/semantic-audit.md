@@ -1,6 +1,7 @@
-# Shared-Tasks Semantic Boundary Audit
+# Shared-Tasks Semantic Audit and ORIN-0004 Alignment
 
-**Status:** Docs-only post-MVP evaluation artifact  
+**Status:** Docs-only post-MVP evaluation artifact
+
 **Scope boundary:** This document audits existing retained shared-tasks fixtures
 and diagnostics only. It does not authorize implementation, fixture rewrites,
 runtime work, parser work, tooling work, or activation of shared-tasks as
@@ -8,18 +9,22 @@ current execution.
 
 ## Audit scope and repository-state note
 
-The current repository proof path is still the password-reset MVP slice.
-Shared-tasks fixture material remains retained advanced material in
-`tests/conformance/`, and the audit was produced before later post-MVP roadmap
-activation was recorded separately in
-[`ORIN-0006-next-evolution-roadmap.md`](./ORIN-0006-next-evolution-roadmap.md).
-At the time of this audit, the relevant supporting docs were the deferred notes
-such as
-[`ORIN-0005-first-complete-application.md`](./ORIN-0005-first-complete-application.md)
-and
-[`ORIN-0005-shared-tasks-to-ORIN-0004-alignment-brief.md`](./ORIN-0005-shared-tasks-to-ORIN-0004-alignment-brief.md).
-The readable shared-tasks authoring example was intentionally removed from the
-current primary path.
+At the time of this audit, the primary proof path was the password-reset MVP
+slice. Shared-tasks fixture material was retained advanced material in
+[`tests/conformance/`](../../../tests/conformance/), and the audit preceded the
+later post-MVP activation recorded separately in
+[the development roadmap](../../../docs/development/ORIN-0006-next-evolution-roadmap.md).
+Its supporting documents were the deferred
+[broader design proposal](./design-proposal.md) and the alignment brief now
+merged below. At that point the readable authoring example had intentionally
+been removed from the primary path. The later
+[minimal example](../../shared-tasks.minimal.orin) and its
+[design/validation overview](./README.md) are separate evidence; the advanced
+fixture audit must not be read as a current implementation inventory.
+
+The broader proposal and alignment remain evaluation material, indexed in the
+[deferred backlog](../../../docs/development/BACKLOG.md). Historical conclusions
+below neither supersede the roadmap nor activate new work.
 
 This audit therefore asks a narrower question than ORIN-0005 asked:
 
@@ -124,10 +129,14 @@ validation codes should be treated as tooling/provenance layers unless a
 specific field is shown to change observable shared-tasks behavior or to encode
 an accepted consequential decision that must block silent AI choice.
 
-## Main conceptual confusions and contradictions with `docs/SEMANTIC-BOUNDARY.md`
+## Main conceptual confusions and contradictions with the semantic boundary
+
+The audit compared the retained fixtures with
+[the password-reset semantic boundary](../password-reset.md#semantic-boundary)
+(originally `examples/docs/password-reset.md`).
 
 1. **Password-reset demoted scaffolding that shared-tasks still treats as core.**
-   `docs/SEMANTIC-BOUNDARY.md` demotes workflow-step scaffolding, effect/capability
+   `examples/docs/password-reset.md` demotes workflow-step scaffolding, effect/capability
    structure, and bookkeeping metadata. The retained shared-tasks material still
    elevates those patterns into large fixture surfaces.
 2. **Readiness/completeness artifacts drift into semantic-seeming model space.**
@@ -190,11 +199,39 @@ an accepted consequential decision that must block silent AI choice.
 
 ## Recommended next step
 
-**The single smallest post-MVP change that would most improve conceptual clarity is: record an explicit project-manager decision in `docs/ORIN-0003-language-improvement-plan.md` choosing whether future shared-tasks work should remain a deferred evaluation artifact or be reactivated for a later, separately authorized semantic-minimization pass before any implementation work begins.**
+The historical recommendation was to record a decision in the
+[language improvement plan](../../../docs/ORIN-0003-language-improvement-plan.md)
+choosing whether shared-tasks should remain deferred evaluation material or be
+reactivated for a separately authorized semantic-minimization pass before
+implementation.
 
 That recommendation has since been answered by the separate post-MVP activation
 recorded in
-[`ORIN-0006-next-evolution-roadmap.md`](./ORIN-0006-next-evolution-roadmap.md).
+[the development roadmap](../../../docs/development/ORIN-0006-next-evolution-roadmap.md).
+
+## ORIN-0005 ↔ ORIN-0004 alignment (historical Item 41)
+
+The docs-only alignment brief mapped the broader proposal onto existing
+[ORIN-0004 declaration kinds](../../../docs/ORIN-0004-semantic-model.md).
+It remained deferred evaluation, not implementation/runtime authorization.
+This mapping records the proposal's decomposition, not a resolution of the
+audit's uncertainties about mandatory schemas, capabilities, or effects.
+
+| Proposed semantic addition | ORIN-0004 kinds | Durable requirement | Host/runtime choices outside meaning |
+| --- | --- | --- | --- |
+| Entity schema with identity + typed fields | `entity-type`, `value-type`, `rule` | Stable identity; typed, required/optional and mutability constraints where observable | Storage shape, ORM/class layout, serialization |
+| Relationship cardinality + ownership | `relation`, `entity-type`, `rule` | Endpoints, ownership and cardinality affecting validity/authorization | Join tables, indexes, foreign-key strategy |
+| Explicit transition contract | `workflow`, `state`, `rule` | Allowed transitions, guards and failures, including terminal completion | Locks, transactions, retry technique |
+| Typed workflow I/O + failures | `workflow`, `value-type`, `rule`, `effect` | Named typed inputs, outputs, stable failures and validation semantics | Transport, status codes, wire format |
+| Actor-bound authorization | `workflow`, `capability`, `relation`, `rule`, `entity-type` | Actor identity and authorization against actor/object relationships | Tokens, sessions, middleware, role service |
+| Persistence durability/read-write boundary | `effect`, `entity-type`, `relation`, `workflow` | Changes surviving invocations and read/write boundaries | Database product, files, managed service, caching |
+
+The brief concluded that no new top-level `database`, `API`, `role`, or `UI`
+concept was required: the proposed step mostly refined existing `entity-type`,
+`relation`, `workflow`, `state`, `capability`, `effect`, and `rule` kinds.
+Behavioral requirements must remain semantic claims; runtime/lowering choices
+remain implementation policy. Its next-increment guard was to activate work
+through ORIN-0003, never through the brief alone.
 
 ## Non-authorization statement
 

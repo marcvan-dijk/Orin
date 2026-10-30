@@ -235,4 +235,42 @@ and either answered the open questions or explicitly accepted building
 around them. Orin files stay the source of truth: if behaviour changes,
 change the `.orin` first.
 
-See `authoring-examples/` for five complete requests and their results.
+See the [authoring exercises](../examples/authoring/README.md) for five
+requests and their results.
+
+## Experimental: collaborative authoring prototype
+
+The collaborative-authoring prototype is an experiment, not part of Orin's
+canonical language or semantic model. Its stdlib-only implementation is
+`implementations/python/orin_proposal.py` (ORIN-0006 Phase 2.4).
+
+A **Proposal** contains object-level `add`, `remove`, or `replace` changes
+and a rationale. `diff(model, proposal)` shows the changes. A **Review**
+supports `accept(rationale)`, `reject(rationale)`, `explain(question, answer)`,
+and `counter(changes, rationale)` (a proposed edit). Inputs are never
+mutated; accepting returns a new model.
+
+`proposal_from_decision_option(model, prompt, option, rationale=None)` can
+turn an `orin_agent_core` decision option into a proposal: it resolves the
+uncertainty when present, adds or replaces rules with the option's claims,
+and adds its examples. The default rationale is the option's label and
+explanation. A blocked option such as `defer` raises `ValueError`; no
+decision is made and the uncertainty stays open. Accepting applies the
+proposal; rejecting leaves the model and uncertainty unchanged.
+
+`save_decisions(path, records)` and `load_decisions(path)` persist prototype
+decision records as a plain JSON list (a missing file loads as `[]`). Each
+record has exactly an outcome (`accepted` or `rejected`), subject object ids,
+a list of changes, and non-empty rationale. Only accept/reject produce
+records. There are no status or timestamp fields; explanations and
+counter-proposals are conversation, not model content. Persisting decisions
+as model `decision` objects remains an open question.
+
+Run the prototype tests with:
+
+```text
+python -m unittest implementations.python.test_orin_proposal
+```
+
+These APIs and records are experimental authoring-tool behavior. They do not
+add syntax, semantic concepts, workflow states, or provenance fields to Orin.

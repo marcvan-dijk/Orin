@@ -16,6 +16,20 @@ to prove that a small Orin program can express intent, detect unresolved risk,
 execute acceptance examples, produce evidence, and lower to more than one
 implementation target without losing its declared behavior.
 
+## Current direction
+
+Deepen the existing password-reset end-to-end proof instead of adding more
+application domains. A language/tool gap found by a supporting example is
+evidence for evaluation, not an automatic next feature. The historical
+increments and roadmap below record how the project arrived here; the latest
+entry and "Current status after reevaluation" determine the next step.
+
+Language guidance and specifications live in [docs](README.md).
+Application walkthroughs, decisions, and findings live in
+[examples](../examples/README.md). Deferred planning is grouped under
+[development](development/BACKLOG.md); this file remains the single progress
+tracker.
+
 ## Current assessment
 
 The repository has a clear language thesis, a provisional example, and the
@@ -551,7 +565,7 @@ capture important decisions and which parts add unnecessary friction.
     progressive formalization and reviewable semantic changes.
 17. [done] Revise ORIN-0001 and ORIN-0002 based on implementation findings.
 18. [done] Define the first complete application proposal in
-    `docs/ORIN-0005-first-complete-application.md`.
+    `examples/docs/shared-tasks/design-proposal.md`.
 19. [done] Add the language-neutral shared-task semantic fixture and focused
     validator tests.
 20. [done] Implement the deterministic shared-task runtime and stateful
@@ -569,7 +583,7 @@ capture important decisions and which parts add unnecessary friction.
     workflows and validate the resulting authorization and durability
     contracts.
 24. [done] Refocus the repository around the meaning-first thesis with a
-    strict password-reset MVP center: add `docs/REFOCUS-ASSESSMENT.md`,
+    strict password-reset MVP center: add `docs/development/BACKLOG.md`,
     tighten README/MVP/roadmap positioning, move tooling detail behind
     supporting/internal framing, and trim non-semantic noise from the primary
     example.
@@ -593,7 +607,7 @@ capture important decisions and which parts add unnecessary friction.
     proof invariants and execute all non-compile conformance fixture assertions
     against the resolved model.
 29. [done] Add `docs/README.md` as the documentation entry point so
-    `REFOCUS-ASSESSMENT.md` is the first guideline, `ORIN-0003` is the single
+    `docs/development/BACKLOG.md` is the first guideline, `ORIN-0003` is the single
     done/next execution tracker, and roadmap/MVP docs remain supporting
     references.
 30. [done] Keep the TypeScript proof runner executable directly with
@@ -652,16 +666,16 @@ capture important decisions and which parts add unnecessary friction.
 40. [done] Clarify post-MVP scope governance in docs so `ORIN-0003` remains the
     active execution tracker, `ORIN-0004` stays a long-term foundational spec,
     and `ORIN-0005` stays deferred roadmap work after the password-reset MVP.
-    Updated `docs/README.md`, `docs/IMPLEMENTATION-ROADMAP.md`,
+    Updated `docs/README.md`, `docs/development/BACKLOG.md`,
     `docs/ORIN-0004-semantic-model.md`, and
-    `docs/ORIN-0005-first-complete-application.md` without changing
+    `examples/docs/shared-tasks/design-proposal.md` without changing
     implementation/runtime behavior.
 41. [done] Add a docs-only post-MVP alignment brief that maps the first
     ORIN-0005 shared-tasks semantic additions onto ORIN-0004 declaration kinds,
     explicitly separating semantic requirements from host/runtime
     implementation choices before any new implementation increment is started.
     Added
-    `docs/ORIN-0005-shared-tasks-to-ORIN-0004-alignment-brief.md`.
+    `examples/docs/shared-tasks/semantic-audit.md`.
 42. [done] Review and accept the item 41 alignment brief as the semantic
     baseline for the first post-MVP semantic completeness implementation
     increment.
@@ -712,17 +726,17 @@ capture important decisions and which parts add unnecessary friction.
     readers can find the protocol role and current tracker status.
 46. [done] Add a director control gate for the 1-day password-reset MVP demo and
     a hard out-of-scope stop rule in existing roadmap docs. Updated
-    `docs/MVP-PLAN.md` with a strict pass/fail gate (including explicit
+    `docs/development/BACKLOG.md` with a strict pass/fail gate (including explicit
     ORIN-0001 decision-completion handling for `rate-limit`) and updated
-    `docs/IMPLEMENTATION-ROADMAP.md` with the matching stop rule that blocks
+    `docs/development/BACKLOG.md` with the matching stop rule that blocks
     post-MVP implementation expansion.
 47. [done] Add an executable docs runbook for the password-reset proof path with
     exact Python and TypeScript command sequence, expected outcomes, explicit
     pass/fail acceptance gate, and a concise out-of-scope stop rule for a
-    first-time reader. Added `docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`, linked
+    first-time reader. Added `examples/docs/password-reset.md`, linked
     it from `docs/README.md`, and validated the listed commands against current
     fixtures/tests.
-    Exact next step: run `docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md` unchanged
+    Exact next step: run `examples/docs/password-reset.md` unchanged
     with a new reader and capture only blocking command/output mismatches.
 48. [done] Add fixture-local newcomer demo evidence mapping so MVP claims are
     directly traceable from conformance artifacts without broadening scope.
@@ -745,7 +759,7 @@ capture important decisions and which parts add unnecessary friction.
     documentation friction discovered in quickstart navigation. Updated
     `README.md` to distinguish minimal proof checks from the full 1-day demo
     gate sequence and linked the executable runbook
-    `docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md` directly from the quickstart.
+    `examples/docs/password-reset.md` directly from the quickstart.
     Re-ran the full demo command sequence unchanged to confirm command/output
     expectations.
     Exact next step: execute the runbook with a real first-time reader and
@@ -754,7 +768,7 @@ capture important decisions and which parts add unnecessary friction.
     novice can start from the human request, inspect the readable Orin program,
     notice the unresolved `rate-limit` decision, and then run the existing
     proof commands. Updated `README.md`, `docs/README.md`,
-    `docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`, and
+    `examples/docs/password-reset.md`, and
     `tests/conformance/README.md` to center that story path without changing
     the underlying proof mechanism.
     Exact next step: run the 5-minute beginner walkthrough with a real
@@ -765,13 +779,13 @@ capture important decisions and which parts add unnecessary friction.
     parked for later evaluation instead of competing with the current core.
     Simplified `README.md` into a concise entrypoint, rewrote `docs/README.md`
     into strict authoritative-now / execution-now / deferred-later sections,
-    added `docs/DEFERRED-EVALUATION-BACKLOG.md`, trimmed duplicated strategy
-    docs (`docs/IMPLEMENTATION-ROADMAP.md`, `docs/MVP-PLAN.md`,
-    `docs/REFOCUS-ASSESSMENT.md`) into short retained-reference notes, and
-    added deferred-path framing to `docs/ORIN-0005-first-complete-application.md`,
-    `docs/ORIN-0005-shared-tasks-to-ORIN-0004-alignment-brief.md`,
-    `docs/ORIN-PRIMARY-PROGRAMMING-GAP-ANALYSIS.md`, and
-    `docs/SKILLS-INTEGRATION.md`.
+    added `docs/development/BACKLOG.md`, trimmed duplicated strategy
+    docs (`docs/development/BACKLOG.md`, `docs/development/BACKLOG.md`,
+    `docs/development/BACKLOG.md`) into short retained-reference notes, and
+    added deferred-path framing to `examples/docs/shared-tasks/design-proposal.md`,
+    `examples/docs/shared-tasks/semantic-audit.md`,
+    `docs/development/ORIN-PRIMARY-PROGRAMMING-GAP-ANALYSIS.md`, and
+    `docs/development/BACKLOG.md`.
     Exact next step: run the trimmed README/docs path with a first-time reader
     and patch only any remaining wording or navigation friction that blocks the
     current password-reset proof path.
@@ -781,7 +795,7 @@ capture important decisions and which parts add unnecessary friction.
     version of the original vision/problem/example/current-experiment framing
     while keeping detailed specification and deferred material linked out to
     `docs/ORIN-0001-intent-spec.md`, `docs/README.md`, and
-    `docs/DEFERRED-EVALUATION-BACKLOG.md`.
+    `docs/development/BACKLOG.md`.
     Exact next step: check the root README with a first-time visitor and trim
     only any remaining duplication that still distracts from the current
     password-reset proof path.
@@ -800,7 +814,7 @@ capture important decisions and which parts add unnecessary friction.
 55. [done] Complete subtraction-focused semantic-boundary cleanup for the
     password-reset proof by demoting scaffolding/provenance from canonical core
     meaning and making readiness explicitly computed. Added
-    `docs/SEMANTIC-BOUNDARY.md`, updated ORIN-0001/syntax/conformance/readme
+    `examples/docs/password-reset.md`, updated ORIN-0001/syntax/conformance/readme
     docs with durable-vs-scaffolding guidance, simplified
     `tests/conformance/password-reset.model.json` to behavior-focused claims,
     and updated Python/TypeScript proof + runner/model logic to use computed
@@ -808,7 +822,7 @@ capture important decisions and which parts add unnecessary friction.
     `compute_readiness_gates/computeReadinessGates`) rather than stored compile
     metadata.
     Follow-on result: the separate post-MVP shared-tasks audit is now captured
-    in `docs/SHARED-TASKS-SEMANTIC-BOUNDARY-AUDIT.md` as a docs-only evaluation
+    in `examples/docs/shared-tasks/semantic-audit.md` as a docs-only evaluation
     artifact. That audit does not authorize implementation.
 56. [done] Implement the first offline Orin agent vertical slice as a focused
     authoring/decision-support tool for the password-reset `rate-limit`
@@ -823,7 +837,7 @@ capture important decisions and which parts add unnecessary friction.
     password-reset example so future agent-guided decisions can operate on more
     than the current proof slice without falling back to fixture-backed loading.
 57. [done] Complete ORIN-0006 Phase 1.1 by defining the minimal shared-tasks
-    design slice in `docs/SHARED-TASKS-MINIMAL-DESIGN.md`. The design fixes the
+    design slice in `examples/docs/shared-tasks/README.md`. The design fixes the
     smallest multi-entity proof scope (`Person`, `TaskList`, `Task`), three
     observable relationships (`owns`, `member-of`, `contains`), one workflow
     (`complete-task`), explicit pre/postconditions, deterministic failures, and
@@ -865,7 +879,7 @@ capture important decisions and which parts add unnecessary friction.
     documenting whether the minimal shared-tasks executable slice stayed within
     ORIN-0002 kinds without introducing new core concepts.
 61. [done] Complete ORIN-0006 Phase 1.5 model-fit audit by adding
-    `docs/SHARED-TASKS-MODEL-VALIDATION.md`, confirming the minimal shared-tasks
+    `examples/docs/shared-tasks/README.md`, confirming the minimal shared-tasks
     executable slice used only existing ORIN-0002 kinds, required no new
     top-level declarations, and maintained deterministic cross-language
     behavior/evidence through Phase 1.4 parity checks.
@@ -882,12 +896,12 @@ capture important decisions and which parts add unnecessary friction.
     VS Code extension. Extension TypeScript is not yet compiled in CI
     (`node_modules` not installed); `orin.pythonPath` is not yet declared in
     `package.json`.
-64. [done] ORIN-0006 Phase 2.3: added `docs/ONBOARDING.md` and
-    `docs/ONBOARDING-DEMO-SCRIPT.md`. No general code generator exists, so the
+64. [done] ORIN-0006 Phase 2.3: added `examples/docs/password-reset.md` and
+    `examples/docs/password-reset.md`. No general code generator exists, so the
     "generate backend" step runs the existing two-plan proof.
 65. [done] ORIN-0006 Phase 2.4 prototype: proposal/accept/reject flow in
     `implementations/python/orin_proposal.py` with tests and
-    `docs/COLLABORATIVE-AUTHORING-PROTOTYPE.md`.
+    `docs/AUTHORING-WITH-AI.md`.
 66. [done] Usability push: unified `orin_cli` (check/readiness/inspect/decide/
     examples); Python and TypeScript password-reset code generators with
     blocked-model refusal; CI workflow; Python/TypeScript parity check (also
@@ -931,7 +945,7 @@ capture important decisions and which parts add unnecessary friction.
     prose-driven Python codegen; agent sidecar decisions, `--friendly`, chained
     decides; VS Code extension updated to the new syntax; parity check covers
     all examples (19/19, E043 gating ported to TypeScript); decision-change
-    proof demo and `docs/PROOF-OF-VALUE.md`; two novice dry runs; security
+    proof demo and `examples/docs/password-reset.md`; two novice dry runs; security
     reviews with no open findings.
     Remaining gaps: TypeScript model-driven codegen (not delivered; only the
     expense generator with `stay-submitted`); Python expense-approval codegen is
@@ -939,7 +953,7 @@ capture important decisions and which parts add unnecessary friction.
     `.decisions.json` has no worked example; the two `decide` tools use
     different flags; no test with a real first-time user.
     Exact next step: run the onboarding walkthrough with a real first-time
-    user, then fix the friction items in `docs/LANGUAGE-GAPS-FOUND.md`.
+    user, then fix the friction items in `examples/docs/library-lending.md`.
 69. [done] Pass 4 (25 parallel workstreams): new CLI commands `fmt`, `explain`,
     `verify`, `diff`, `coverage`, `guide`, `export`, and `check --format
     json|sarif|github` (also run in CI); generic Python and TypeScript code
@@ -951,15 +965,60 @@ capture important decisions and which parts add unnecessary friction.
     flags; VS Code completion, go-to-definition and snippets; parity check
     compares readiness and decided models (21/21); two stress examples
     (event-booking, subscription-billing) with gap reports
-    `docs/LANGUAGE-GAPS-FOUND-2.md` and `-3.md`.
+    `examples/docs/event-booking.md` and `examples/docs/subscription-billing.md`.
     Remaining gaps: TypeScript lacks E047/E048 and parser suggestions; generic
     generators leave most rules as `NotImplementedRule` hooks; `verify` only
     runs examples for password-reset and expense-approval; `guide` writes
     JSON, not `.orin`; the TypeScript parser may not handle inline
     why/imports/types; no real first-time user test yet.
     Exact next step: work through the top items in
-    `docs/LANGUAGE-GAPS-FOUND-2.md` and `-3.md`, then run the onboarding
+    `examples/docs/event-booking.md` and `examples/docs/subscription-billing.md`, then run the onboarding
     walkthrough with a real first-time user.
+70. [done] Add module-level numeric parameters with units to outline syntax
+    and the language-neutral model; validate capacity-limit claims with
+    ORIN-E056; generate runnable capacity checks in Python and TypeScript;
+    update event-booking, the model schema, language reference, grammar, and
+    gap report. Python validation:
+    `python -m unittest implementations.python.test_orin_parameters implementations.python.codegen.test_capacity_limit implementations.python.codegen.test_library_lending implementations.python.test_schema_check implementations.python.test_parity_check`
+    (27 passed). TypeScript validation:
+    `node --test --experimental-strip-types implementations/typescript/src/orin_parser.test.ts implementations/typescript/src/shared_tasks_validation.test.ts implementations/typescript/src/codegen/generic.test.ts`
+    (44 passed).
+    Exact next step: implement the next ranked event-booking gap, tiered
+    numeric refund-policy claims from `examples/docs/event-booking.md`, then
+    resume the fixture-free shared-tasks parser and Phase 2 onboarding path.
+    Superseded by item 71: example findings no longer automatically define the
+    next language feature.
+71. [done] Separate language documentation from application material.
+    Consolidate application walkthroughs and domain decisions under
+    `examples/docs/`, move the small authoring exercises to
+    `examples/authoring/`, merge overlapping syntax/authoring guides, and group
+    historical planning and analysis under `docs/development/`. Keep existing
+    application program and conformance fixture paths stable; update incoming
+    references and path-dependent tests. `docs/README.md` and
+    `examples/README.md` define each area's purpose; `CONTRIBUTING.md` defines
+    placement rules.
+    Verified 153 local Markdown links and heading anchors, the executable
+    onboarding walkthrough and relocated-example consumers (15 Python tests),
+    and the VS Code extension tests. Top-level documentation reduced from 36
+    files to 9 without changing existing application or conformance paths.
+    Exact next step: run the consolidated password-reset walkthrough with a
+    real first-time user; address observed friction in that existing path
+    before adding another example or application-specific language feature.
+72. [done] Validate and preserve the existing language and documentation
+    milestones without adding another domain. Python implementation tests
+    (198), tooling tests (110), TypeScript tests (68), both editor suites,
+    cross-backend parity (21 targets), and both password-reset derivation
+    proofs pass. An agent-executed walkthrough confirmed that changing the
+    accepted rate-limit decision changes generated runtime behavior. Clarify
+    the existing walkthrough: registered/unknown-account examples prove
+    consistent confirmation responses, while demo-only rate-limit probes
+    demonstrate policy differences. The eight shared password-reset cases
+    pass under both choices but do not cover rate-limit behavior.
+    This is automated execution evidence, not an observed beginner session.
+    Exact next step: observe a real first-time user on the existing
+    password-reset path. Before claiming shared cross-backend rate-limit
+    coverage, add policy-sensitive conformance cases to that same application;
+    do not mistake the current shared-case pass for proof of that policy.
 
 ### Current status after reevaluation
 
@@ -978,10 +1037,12 @@ capture important decisions and which parts add unnecessary friction.
   Phase 1.1 minimal shared-tasks design spec; item 58 completed ORIN-0006 Phase
   1.2 fixture baseline; item 59 completed ORIN-0006 Phase 1.3 executable case
   verification; item 60 completed ORIN-0006 Phase 1.4 semantic-equivalence
-  tightening; item 61 completed ORIN-0006 Phase 1.5 model-fit audit).
-- **Exact next step:** make the outline parser build full models without a
-  fixture (start with shared-tasks), then run the onboarding walkthrough with a
-  real first-time user for the Phase 2 go/no-go (see item 67).
+  tightening; item 61 completed ORIN-0006 Phase 1.5 model-fit audit; item 70
+  added numeric parameters and generated capacity-limit checks for event-
+  booking).
+- **Exact next step:** run the consolidated password-reset walkthrough with a
+  real first-time user and fix observed end-to-end friction. Retain the other
+  applications as regression/evaluation evidence, not parallel feature queues.
 
 ## Test strategy
 
