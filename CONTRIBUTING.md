@@ -44,6 +44,15 @@ CI runs the same commands: `.github/workflows/ci.yml`.
 ## Repository layout
 
 - `docs/`, `examples/`, `tests/conformance/` are language-neutral.
+- `docs/` explains Orin: language reference, grammar, authoring, and specifications.
+- `examples/` holds sample programs and all application-specific documentation.
+  Put guides, domain decisions, and findings under `examples/docs/`; small
+  authoring exercises belong in `examples/authoring/`.
+- `docs/development/` holds deferred analysis and historical roadmaps.
+  `docs/ORIN-0003-language-improvement-plan.md` remains the single progress
+  tracker and exact-next-step record.
+- Merge into an existing topic guide before adding a document. Keep application
+  findings separate from language rules and from active priorities.
 - Host-language code goes under `implementations/<language>/` or `tooling/`.
 - The language-neutral core (`orin/` if present, and `tests/conformance/`) must
   not import host-language code or hold package metadata or test runners.
@@ -64,8 +73,13 @@ CI runs the same commands: `.github/workflows/ci.yml`.
 
 ## Add an example app
 
-1. Write `examples/<name>.orin`. Use [`docs/ORIN-SYNTAX-GUIDE.md`](docs/ORIN-SYNTAX-GUIDE.md).
+1. First show what question an existing application cannot answer. Prefer
+   deepening the password-reset end-to-end proof over adding another domain.
+   If a new example is justified, write `examples/<name>.orin` using the
+   [language reference](docs/LANGUAGE-REFERENCE.md).
 2. Check it: `python -m tooling.python.orin_cli check examples/<name>.orin`.
    Unresolved consequential decisions report "blocked" on purpose.
 3. Add matching conformance fixtures (see above) if it should be proven.
-4. Link it from [`docs/README.md`](docs/README.md).
+4. Put its explanation, domain decisions, and findings together in
+   `examples/docs/<name>.md` and link it from
+   [`examples/README.md`](examples/README.md), not the language documentation index.

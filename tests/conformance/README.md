@@ -16,7 +16,7 @@ If you are trying to understand the MVP quickly, start here:
 2. **Visible unresolved ambiguity:** [`password-reset.model.json`](./password-reset.model.json) (`account.password-reset/uncertainty/rate-limit`)
 3. **Blocked proof evidence:** [`password-reset.cases.json`](./password-reset.cases.json) (`account.password-reset/case/unresolved-rate-limit`)
 4. **Implementation-variation evidence:** [`password-reset.policies.json`](./password-reset.policies.json)
-5. **Executable walkthrough:** [`../../docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md`](../../docs/PASSWORD-RESET-MVP-DEMO-RUNBOOK.md)
+5. **Executable walkthrough:** [`../../examples/docs/password-reset.md`](../../examples/docs/password-reset.md#deeper-proof-runbook)
 
 You do not need to read Python or TypeScript first. The beginner path is to inspect the Orin program and these fixtures before looking at host-language runners.
 

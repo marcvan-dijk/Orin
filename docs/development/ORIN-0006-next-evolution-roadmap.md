@@ -1,9 +1,17 @@
 # ORIN-0006: Next Evolution Roadmap
 
-**Status:** Active post-MVP roadmap  
+**Status:** Retained post-MVP roadmap; not the active task list  
 **Version:** 0.1.0  
 **Date:** September 2026  
 **Trigger:** After Track B semantic boundary audit completion
+
+This roadmap preserves the reasoning and proposed phases from September
+2026. Some phases have since been implemented; the success checklists below
+are intended criteria, not verified claims of completion. Current progress
+and priorities live in
+[ORIN-0003](../ORIN-0003-language-improvement-plan.md). Application-specific
+designs and findings live under [examples](../../examples/README.md), not in
+the language documentation.
 
 ## Strategic thesis
 
@@ -23,7 +31,7 @@ This roadmap focuses on three sequential pillars:
 
 ### 1.1 Minimal shared-tasks design spec
 
-**Deliverable:** `docs/SHARED-TASKS-MINIMAL-DESIGN.md`
+**Deliverable:** `examples/docs/shared-tasks/README.md`
 
 Define the absolute smallest shared-tasks application that tests Orin beyond password-reset:
 
@@ -82,7 +90,7 @@ Verify that the TypeScript implementation produces identical observable results 
 
 ### 1.5 Audit: Does it fit the model?
 
-**Deliverable:** `docs/SHARED-TASKS-MODEL-VALIDATION.md`
+**Deliverable:** `examples/docs/shared-tasks/README.md`
 
 Document:
 - Which ORIN-0002 kinds were used and whether any new ones were needed.
@@ -131,7 +139,7 @@ Enhance the agent to:
 
 ### 2.3 First-user onboarding
 
-**Deliverable:** `docs/ONBOARDING.md` + demo video script
+**Deliverable:** `examples/docs/password-reset.md` + demo video script
 
 Write a 10-minute walkthrough:
 - Clone the repo.
@@ -177,7 +185,8 @@ Candidates:
 
 ### 3.2 Application design
 
-**Deliverable:** `docs/ORIN-APP-{domain}.md`
+**Deliverable:** Application notes under `examples/docs/`, only if the
+existing primary proof cannot answer the question.
 
 Write the application in plain English:
 - What are the core entities?
@@ -225,7 +234,7 @@ Generated code should:
 
 ### 3.6 Impact report
 
-**Deliverable:** `docs/ORIN-APP-{domain}-RETROSPECTIVE.md`
+**Deliverable:** Findings in the same application's guide under `examples/docs/`.
 
 Document:
 - What worked?
@@ -244,7 +253,7 @@ After each phase, update:
 - `ORIN-0001`: Add or clarify protocol patterns discovered in practice.
 - `ORIN-0002`: Refine the semantic kernel based on what worked and what tempted to bloat.
 - `ORIN-0003`: Log completed work and update next steps.
-- `SEMANTIC-BOUNDARY.md`: Add domain-specific examples of durable vs. scaffolding.
+- `examples/docs/password-reset.md`: Add domain-specific examples of durable vs. scaffolding.
 
 ### Testing discipline
 
@@ -316,14 +325,9 @@ Before implementing, decide:
 
 ---
 
-## Next immediate step
+## Current execution
 
-**Activate Phase 1.1:** Define minimal shared-tasks design spec.
-
-Owner: Coding agent  
-Timeline: 1-2 days  
-Deliverable: `docs/SHARED-TASKS-MINIMAL-DESIGN.md`  
-Blocker: None—proceed immediately
-
-After Phase 1.1 is complete and reviewed, activate Phase 1.2.
-
+Phase 1.1 and later increments are recorded in
+[ORIN-0003](../ORIN-0003-language-improvement-plan.md). Use its current next
+step rather than restarting historical roadmap phases. No new application
+or language feature is activated by this document.

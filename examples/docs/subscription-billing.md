@@ -1,5 +1,10 @@
 # Language and tool gaps found #3: subscription-billing stress test
 
+**Purpose:** Retained findings from a supporting application, not Orin's
+language specification or an active feature queue. Subscription charges
+belong to this sample application, not to the use of Orin.
+See the [example catalogue](../README.md) for the primary proof path.
+
 Method: a novice wrote `examples/subscription-billing.orin` (plans, monthly
 charge, failed-payment grace period, cancellation, proration) in outline style,
 using only syntax from `LANGUAGE-REFERENCE.md`. Then ran
