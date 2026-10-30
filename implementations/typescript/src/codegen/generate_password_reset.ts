@@ -3,7 +3,31 @@ import { GenerationRefused, checkedModuleId, readiness } from "./sanitize.ts";
 
 export const RATE_LIMIT_UNCERTAINTY = "account.password-reset/uncertainty/rate-limit";
 
-export type RateLimitDecision = { maxRequests: number; windowSeconds: number };
+export type RateLimitDecision = {
+  maxRequests: number;
+  windowSeconds: number;
+  scope?: "address" | "address-and-origin";
+};
+
+function acceptedDecision(model: SemanticModel): RateLimitDecision {
+  const rule = model.document.objects?.find(
+    (object: any) => object.id === "account.password-reset/rule/reset-request-rate-limit",
+  );
+  if (rule?.status === "accepted" && Array.isArray(rule.claims)) {
+    for (const claim of rule.claims) {
+      if (typeof claim !== "string") continue;
+      const match = /^Password reset requests are limited to (\d+) attempts? per (?:(\d+) )?(second|minute|hour)s? for the same email address( and network origin\.|, regardless of network origin\.)$/.exec(claim);
+      if (!match) continue;
+      const units = { second: 1, minute: 60, hour: 3600 };
+      return {
+        maxRequests: Number(match[1]),
+        windowSeconds: Number(match[2] ?? 1) * units[match[3] as keyof typeof units],
+        scope: match[4].includes("and network origin") ? "address-and-origin" : "address",
+      };
+    }
+  }
+  throw new GenerationRefused("cannot derive rate limit from accepted reset-request-rate-limit rule");
+}
 
 export { GenerationRefused };
 
@@ -17,10 +41,14 @@ function resolved(model: SemanticModel): SemanticModel {
 
 // Emits a standalone, dependency-free TypeScript module. Output is a pure
 // function of (model identity, decision) and contains no timestamps.
-export function generatePasswordReset(model: SemanticModel, decision: RateLimitDecision): string {
+export function generatePasswordReset(model: SemanticModel, decision?: RateLimitDecision | null): string {
+  decision ??= acceptedDecision(model);
   if (!Number.isInteger(decision?.maxRequests) || decision.maxRequests < 1
     || !Number.isInteger(decision?.windowSeconds) || decision.windowSeconds < 1) {
     throw new GenerationRefused("rate-limit decision requires positive integer maxRequests and windowSeconds");
+  }
+  if (decision.scope !== undefined && decision.scope !== "address" && decision.scope !== "address-and-origin") {
+    throw new GenerationRefused("unsupported rate-limit scope");
   }
   const moduleId = checkedModuleId(model);
   const gates = readiness(resolved(model));
@@ -30,9 +58,10 @@ export function generatePasswordReset(model: SemanticModel, decision: RateLimitD
     );
   }
   return `// Generated from ${moduleId}. Do not edit.
-// Resolved ${RATE_LIMIT_UNCERTAINTY}: ${decision.maxRequests} requests per ${decision.windowSeconds}s per address.
+// Resolved ${RATE_LIMIT_UNCERTAINTY}: ${decision.maxRequests} requests per ${decision.windowSeconds}s per ${decision.scope ?? "address"}.
 
 export const RATE_LIMIT = { maxRequests: ${decision.maxRequests}, windowSeconds: ${decision.windowSeconds} } as const;
+export const RATE_LIMIT_PER_ORIGIN = ${decision.scope === "address-and-origin"};
 export const TOKEN_TTL_SECONDS = 15 * 60;
 
 export class TokenRejected extends Error {}
@@ -61,20 +90,21 @@ export class PasswordReset {
     this.ports = ports;
   }
 
-  requestReset(email: string, now = 0): ResetResult {
+  requestReset(email: string, now = 0, origin = ""): ResetResult {
     const result: ResetResult = {
       response: "standard-confirmation",
       resetMessage: "not-sent",
       accountExistenceDisclosed: false,
       resetToken: "",
     };
-    const recent = (this.hits.get(email) ?? []).filter((t) => now - t < RATE_LIMIT.windowSeconds);
+    const key = JSON.stringify(RATE_LIMIT_PER_ORIGIN ? [email, origin] : [email]);
+    const recent = (this.hits.get(key) ?? []).filter((t) => now - t < RATE_LIMIT.windowSeconds);
     if (recent.length >= RATE_LIMIT.maxRequests) {
-      this.hits.set(email, recent);
+      this.hits.set(key, recent);
       return result;
     }
     recent.push(now);
-    this.hits.set(email, recent);
+    this.hits.set(key, recent);
 
     let exists = false;
     try {

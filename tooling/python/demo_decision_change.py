@@ -6,9 +6,9 @@ created inside the repo and removed.
 
 Apps: password-reset (default), expense-approval, shared-tasks
 (`--app NAME`). Shared conformance cases are replayed unchanged under every
-option. Where the repo has no shared case for the decision (rate limit; the
-option-specific expense and shared-tasks outcomes) the probes are DEMO-ONLY,
-labelled as such in the output, and not part of tests/conformance/.
+option. Password-reset rate-limit observations come from shared conformance
+cases. The option-specific expense and shared-tasks probes remain DEMO-ONLY,
+labelled as such in the output, and are not part of tests/conformance/.
 """
 
 from __future__ import annotations
@@ -29,29 +29,15 @@ ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT))
 
 from implementations.python.orin_agent_core import OrinDecisionAgent  # noqa: E402
+from implementations.python.codegen.password_reset_rate_limit import replay_case  # noqa: E402
 
 MODEL = ROOT / "tests" / "conformance" / "password-reset.model.json"
 CASES = ROOT / "tests" / "conformance" / "password-reset.cases.json"
+RATE_LIMIT_CASES = ROOT / "tests" / "conformance" / "password-reset.rate-limit.cases.json"
 UNCERTAINTY = "account.password-reset/uncertainty/rate-limit"
 OPTION_A = "five-per-15m-per-address-and-origin"
 OPTION_B = "three-per-hour-per-address"
 MODULE = "password_reset_generated.py"
-
-# DEMO-ONLY probes (no shared rate-limit cases exist).
-# (id, description, [(seconds, origin), ...]); outcome is the last request's resetMessage.
-PROBES = [
-    ("first-request", "first request from an address", [(0, "o1")]),
-    ("fourth-in-10-minutes-same-origin", "4th request within 10 minutes, same origin",
-     [(0, "o1"), (60, "o1"), (120, "o1"), (180, "o1")]),
-    ("fourth-from-different-origin", "4th request within 10 minutes, each from a different origin",
-     [(0, "o1"), (60, "o2"), (120, "o3"), (180, "o4")]),
-    ("fourth-after-20-minutes", "4th request 20 minutes after the first three",
-     [(0, "o1"), (30, "o1"), (60, "o1"), (1200, "o1")]),
-    ("sixth-in-10-minutes-same-origin", "6th request within 10 minutes, same origin",
-     [(i * 60, "o1") for i in range(6)]),
-    ("request-after-one-hour", "request one hour after three earlier ones",
-     [(0, "o1"), (1, "o1"), (2, "o1"), (3600, "o1")]),
-]
 
 MEANING = {
     OPTION_A: "Each email address may request at most 5 resets per 15 minutes from any one network "
@@ -77,15 +63,6 @@ def _load(path: Path, name: str):
     mod = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(mod)
     return mod
-
-
-def _probe(mod, requests) -> str:
-    rt = mod.PasswordResetRuntime(mod.AccountStore({"person@example.com"}), mod.EmailProvider())
-    caps = {mod.PERSON_CAPABILITY, mod.SEND_MESSAGE_CAPABILITY}
-    result = None
-    for now, origin in requests:
-        result = rt.request_reset("person@example.com", caps, now=now, origin=origin)
-    return result.reset_message
 
 
 def _shipped_cases(mod) -> dict[str, str]:
@@ -135,15 +112,25 @@ def run_demo(say=print) -> dict:
         say("\n".join(diff) or "  (no change)")
 
         shipped = {k: _shipped_cases(m) for k, m in mods.items()}
-        probes = {k: {pid: _probe(m, reqs) for pid, _, reqs in PROBES} for k, m in mods.items()}
-        say("\n(2) DEMO-ONLY probes (not shared conformance cases; last request's resetMessage):")
+        rate_fixture = json.loads(RATE_LIMIT_CASES.read_text(encoding="utf-8"))
+        rate_results = {}
+        for label, option in (("A", OPTION_A), ("B", OPTION_B)):
+            rate_results[label] = {}
+            for case in rate_fixture["cases"]:
+                actual = replay_case(mods[label], case)
+                expected = case["then"][option]
+                if actual != expected:
+                    raise AssertionError(f"shared rate-limit case {case['id']} failed under {option}: {actual} != {expected}")
+                rate_results[label][case["id"]] = actual
+        say("\n(2) Shared rate-limit conformance cases (all requests' resetMessages):")
         changed = []
-        for pid, desc, _ in PROBES:
-            a, b = probes["A"][pid], probes["B"][pid]
+        for case in rate_fixture["cases"]:
+            case_id = case["id"]
+            a, b = rate_results["A"][case_id]["resetMessages"], rate_results["B"][case_id]["resetMessages"]
             mark = "CHANGES" if a != b else "same"
             if a != b:
-                changed.append(pid)
-            say(f"  {mark:7} {pid}: {desc}: A={a} B={b}")
+                changed.append(case_id)
+            say(f"  {mark:7} {case_id}: A={a} B={b}")
         shipped_changed = [c for c in shipped["A"] if shipped["A"][c] != shipped["B"][c]]
         say(f"  shipped conformance cases: A {list(shipped['A'].values()).count('pass')}/{len(shipped['A'])} pass, "
             f"B {list(shipped['B'].values()).count('pass')}/{len(shipped['B'])} pass; "
@@ -160,8 +147,8 @@ def run_demo(say=print) -> dict:
             f"{len(differing)} block(s) differ (the constants header; only the three RATE_LIMIT_* lines changed).")
         for b in differing:
             say("  differing block begins: " + b.strip().splitlines()[0][:80])
-        return {"diff_lines": len(diff), "changed_probes": changed, "shipped": shipped,
-                "probes": probes, "total_blocks": len(blocks_a), "unchanged_blocks": len(unchanged),
+        return {"diff_lines": len(diff), "changed_rate_limit_cases": changed, "shipped": shipped,
+                "rate_limits": rate_results, "total_blocks": len(blocks_a), "unchanged_blocks": len(unchanged),
                 "differing_blocks": differing, "diff": diff, "src": src}
     finally:
         shutil.rmtree(scratch, ignore_errors=True)

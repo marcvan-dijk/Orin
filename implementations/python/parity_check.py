@@ -3,7 +3,8 @@
 For every model referenced by a tests/conformance fixture (validation cases,
 readiness extension cases, and *.cases.json), both implementations compute the
 compilation status, diagnostics, and readiness report; outputs must be equal.
-TypeScript is skipped with a notice when node is unavailable.
+Password-reset rate-limit cases also execute both generated runtimes against
+shared expected observations. This generated-runtime check requires Node.
 """
 
 import json
@@ -18,10 +19,13 @@ from orin_model import SemanticModel
 from orin_parser import OrinParser, OrinSourceError
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT))
 CONFORMANCE = ROOT / "tests" / "conformance"
 EXAMPLES = ROOT / "examples"
 TS_PARSER = ROOT / "implementations" / "typescript" / "src" / "orin_parser.ts"
 TS_MODEL = ROOT / "implementations" / "typescript" / "src" / "orin_model.ts"
+RATE_LIMIT_CASES = CONFORMANCE / "password-reset.rate-limit.cases.json"
+TS_RATE_LIMIT = ROOT / "implementations" / "typescript" / "src" / "codegen" / "password_reset_rate_limit.ts"
 
 TS_SCRIPT = """
 import { readFileSync } from "node:fs";
@@ -226,11 +230,54 @@ def run(conformance: Path = CONFORMANCE, node: str | None = None) -> tuple[list[
     return rows, failures
 
 
+def run_rate_limits(
+    fixture_path: Path = RATE_LIMIT_CASES, node: str | None = None,
+) -> tuple[list[tuple[str, str, str]], int]:
+    """Compare actual generated-runtime observations, not just model snapshots."""
+    node = node if node is not None else shutil.which("node")
+    if not node:
+        return [("password-reset rate-limit", "node is required for generated-runtime parity", "FAIL")], 1
+    from implementations.python.codegen.password_reset_rate_limit import run_fixture
+
+    python_results = run_fixture(fixture_path)
+    result = subprocess.run(
+        [node, "--experimental-strip-types", str(TS_RATE_LIMIT), str(fixture_path)],
+        capture_output=True, text=True, check=False, timeout=120,
+    )
+    if result.returncode:
+        return [("password-reset rate-limit", "-", f"FAIL {result.stderr.strip()}")], 1
+    typescript_results = json.loads(result.stdout)
+    fixture = json.loads(fixture_path.read_text(encoding="utf-8"))
+    expected_results = {
+        policy["id"]: {case["id"]: case["then"][policy["id"]] for case in fixture["cases"]}
+        for policy in fixture["policies"]
+    }
+    rows: list[tuple[str, str, str]] = []
+    failures = 0
+    for policy in sorted(set(expected_results) | set(python_results) | set(typescript_results)):
+        expected_cases = expected_results.get(policy, {})
+        py_cases = python_results.get(policy, {})
+        ts_cases = typescript_results.get(policy, {})
+        for case_id in sorted(set(expected_cases) | set(py_cases) | set(ts_cases)):
+            matches = (
+                case_id in expected_cases and case_id in py_cases and case_id in ts_cases
+                and py_cases[case_id] == ts_cases[case_id] == expected_cases[case_id]
+            )
+            failures += not matches
+            rows.append((case_id, policy, "PASS" if matches else "FAIL generated observations differ from expected"))
+    if not rows:
+        return [("password-reset rate-limit", "-", "FAIL no generated observations")], 1
+    return rows, failures
+
+
 def main() -> int:
     rows, failures = run()
     example_rows, example_failures = run_examples()
     rows += example_rows
     failures += example_failures
+    rate_rows, rate_failures = run_rate_limits()
+    rows += rate_rows
+    failures += rate_failures
     width = max((len(r[0]) for r in rows), default=10)
     mwidth = max((len(r[1]) for r in rows), default=10)
     print(f"{'fixture/case'.ljust(width)}  {'model'.ljust(mwidth)}  parity")
