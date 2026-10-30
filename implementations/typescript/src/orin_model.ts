@@ -221,6 +221,7 @@ export class SemanticModel {
         }
       }
     }
+    diagnostics.push(...this.collectLimitParameterDiagnostics(objects));
     diagnostics.push(...this.collectRuleContradictionDiagnostics(objects));
     return diagnostics;
   }
@@ -605,6 +606,54 @@ export class SemanticModel {
           message: `rule contains contradictory claims: ${proposition}`,
           objectId: obj.id,
         });
+      }
+    }
+    return diagnostics;
+  }
+
+  private collectLimitParameterDiagnostics(objects: Array<Record<string, any>>): Diagnostic[] {
+    const diagnostics: Diagnostic[] = [];
+    const declared = this.document.module?.parameters;
+    const parameters = Array.isArray(declared) ? declared : [];
+    const moduleId = this.document.module?.id;
+    const report = (message: string) => diagnostics.push({ code: "ORIN-E056", message, objectId: moduleId });
+    if (declared !== undefined && !Array.isArray(declared)) {
+      report("module parameters must be a list");
+    }
+    const names = new Set<string>();
+    for (const parameter of parameters) {
+      if (!parameter || typeof parameter !== "object" || Array.isArray(parameter)
+        || typeof parameter.name !== "string" || !parameter.name.trim()) {
+        report("module parameter must declare a non-empty name");
+        continue;
+      }
+      const name = parameter.name;
+      if (names.has(name)) report(`duplicate module parameter: ${name}`);
+      names.add(name);
+      if (parameter.type !== "number") report(`limit parameter must have type number: ${name}`);
+      if (typeof parameter.unit !== "string" || !parameter.unit.trim()) {
+        report(`limit parameter must declare a non-empty unit: ${name}`);
+      }
+    }
+    const limitReference = /^\s*an event never has more [a-z][a-z -]*? than its ([a-z][a-z0-9-]*)\.?\s*$/i;
+    for (const obj of objects) {
+      if (!obj || typeof obj !== "object" || obj.kind !== "rule" || typeof obj.id !== "string") continue;
+      for (const claim of Array.isArray(obj.claims) ? obj.claims : []) {
+        if (typeof claim !== "string") continue;
+        const match = claim.match(limitReference);
+        if (!match) continue;
+
+        const parameterName = match[1].toLowerCase();
+        const matches = parameters.filter((parameter: any) =>
+          parameter && typeof parameter === "object" && parameter.name === parameterName
+        );
+        if (matches.length === 0) {
+          diagnostics.push({
+            code: "ORIN-E056",
+            message: `limit claim refers to undeclared module parameter: ${parameterName}`,
+            objectId: obj.id,
+          });
+        }
       }
     }
     return diagnostics;

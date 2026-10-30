@@ -3,6 +3,10 @@ module: event-booking
 purpose:
   Let attendees book seats at an event with a fixed capacity, join a waiting list when it is full, and cancel with a refund that depends on how early they cancel.
 
+parameter: capacity
+  type: number
+  unit: seats
+
 rules:
   - An event never has more confirmed bookings than its capacity.
     proved-by: full-event-waits, seat-booked
