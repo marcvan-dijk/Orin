@@ -20,8 +20,8 @@
    without changing the Orin program.
 9. **Readiness**: a check that tells you if the program is complete enough to
    build. Codes such as `ORIN-R001` name what is missing (see
-   [`ONBOARDING.md`](./ONBOARDING.md#what-the-readiness-codes-mean)).
+   [`examples/docs/password-reset.md`](../examples/docs/password-reset.md#what-the-readiness-codes-mean)).
 10. **Outline style**: the standard way to write Orin: short keywords, then an
-    indented list. See [`ORIN-SYNTAX-GUIDE.md`](./ORIN-SYNTAX-GUIDE.md).
+    indented list. See [`LANGUAGE-REFERENCE.md`](LANGUAGE-REFERENCE.md).
 
 Back to [`../README.md`](../README.md).
