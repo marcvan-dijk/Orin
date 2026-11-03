@@ -1,6 +1,7 @@
 import unittest
+import json
 
-from tooling.python.demo_decision_change import run_demo, run_expense, run_shared_tasks
+from tooling.python.demo_decision_change import RATE_LIMIT_CASES, OPTION_A, OPTION_B, run_demo, run_expense, run_shared_tasks
 
 
 class DecisionChangeDemoTests(unittest.TestCase):
@@ -14,8 +15,14 @@ class DecisionChangeDemoTests(unittest.TestCase):
         self.assertTrue(all("RATE_LIMIT_" in l for l in changed))
 
     def test_expected_examples_change(self):
-        self.assertEqual(set(self.out["changed_probes"]), {
-            "fourth-in-10-minutes-same-origin", "fourth-from-different-origin", "fourth-after-20-minutes"})
+        cases = json.loads(RATE_LIMIT_CASES.read_text(encoding="utf-8"))["cases"]
+        expected_changes = {case["id"] for case in cases if case["then"][OPTION_A] != case["then"][OPTION_B]}
+        self.assertTrue(expected_changes)
+        self.assertEqual(set(self.out["changed_rate_limit_cases"]), expected_changes)
+        for label, option in (("A", OPTION_A), ("B", OPTION_B)):
+            self.assertEqual(self.out["rate_limits"][label], {
+                case["id"]: case["then"][option] for case in cases
+            })
 
     def test_shipped_cases_pass_under_both_decisions(self):
         for label in "AB":

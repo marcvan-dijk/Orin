@@ -36,6 +36,33 @@ example `model.unresolved`), not read from stored compilation state.
 
 `password-reset.policies.json` provides lowering-policy variants. A conforming implementation may produce different artifact strategies, but must preserve the same canonical semantics and observable required behavior.
 
+`password-reset.rate-limit.cases.json` provides shared observable cases for the
+two accepted rate-limit options, distinct from lowering-policy variants. Each
+case runs independently under each named policy with fresh state, available
+account storage and message delivery, and permission to request a reset.
+`existingAddresses` identifies registered accounts; requests run in listed order
+at nondecreasing integer seconds. Each policy's `responses`, `resetMessages`,
+and `accountExistenceDisclosed` arrays cover every request in that order.
+
+The options come from `implementations/python/orin_agent_core.py`: five requests
+per 900 seconds for an address/origin pair, or three per 3600 seconds for an
+address across origins. The existing generated password-reset template in
+`implementations/python/codegen/generate.py` supplies the precise rolling-window
+interpretation: retain admitted request timestamps where `now - timestamp <
+window`; reject when the retained count already reaches the limit, without
+recording the rejected attempt. Thus the active window is `(now - window, now]`;
+an attempt exactly one window old expires, but one second younger still counts.
+Admission is counted before account lookup, not by successful message delivery.
+The accepted prose claims do not specify rolling versus fixed windows or the
+exact edge; these cases make the existing implementation interpretation explicit,
+not a newly accepted policy decision. No contradiction with the claims was found.
+
+The ten cases cover exact allowed counts, excess requests (including the fourth
+and sixth requests), both expiry boundaries and just-before boundaries, rolling
+expiry without resetting the whole bucket, rejected attempts not extending the
+window, origin and address isolation, and unknown-account standard confirmation.
+They assert no capacity or resource-management behavior.
+
 `authoring-choices.json` defines a language-neutral consequential question. Options are reviewable proposals; defer keeps behavior unresolved and compile blocked.
 
 `shared-tasks.model.json` and `shared-tasks.cases.json` are an advanced/secondary slice and should not replace password-reset as the primary MVP proof path.
@@ -96,6 +123,7 @@ Language-neutral proof artifacts live in this folder; execution commands stay in
 | Where is the visible ambiguity? | `password-reset.model.json` (`account.password-reset/uncertainty/rate-limit`) | none | The model marks the uncertainty as `consequential: true` and lists it under `unresolved`; tooling computes compilation as `blocked`. |
 | Where is the blocked proof? | `password-reset.cases.json` (`account.password-reset/case/unresolved-rate-limit`), `password-reset.model.json` | `python implementations/python/password_reset_proof.py` | JSON includes `"blockedCompilation": "blocked"`. |
 | Where is the stable behavior proof? | `password-reset.cases.json`, `implementations/python/conformance_runner.py`, `implementations/typescript/src/conformance_runner.ts` | `node --test --experimental-strip-types implementations/typescript/src/password_reset_proof.test.ts` | Test passes, including the password-reset behavior cases. |
+| Where are shared accepted rate-limit expectations? | `password-reset.rate-limit.cases.json` | `python implementations/python/parity_check.py` (intended integrated gate; integration validation pending) | Both policies have explicit full-sequence expectations for all ten cases; the gate must compare generated implementations against these expectations. |
 | Where is the evidence that implementations can differ without changing behavior? | `password-reset.policies.json`, `implementations/python/password_reset_proof.py`, `implementations/typescript/src/password_reset_proof.ts` | `python implementations/python/password_reset_proof.py` | JSON includes `"canonicalMeaningStableAcrossVariants": true` and at least two distinct `variants[*].derivedArtifact` entries. |
 
 ## Model JSON Schema
