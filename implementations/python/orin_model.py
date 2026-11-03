@@ -259,10 +259,51 @@ class SemanticModel:
                 diagnostics.append(Diagnostic("ORIN-E005", f"duplicate module identity: {module_id}", module_id))
             identifiers.add(module_id)
 
+        parameters: dict[str, dict[str, Any]] = {}
+        parameter_owner = module.get("id") if isinstance(module, dict) else None
+        parameter_list_valid = True
+        if isinstance(module, dict) and "parameters" in module:
+            declared_parameters = module["parameters"]
+            if not isinstance(declared_parameters, list):
+                parameter_list_valid = False
+                diagnostics.append(Diagnostic("ORIN-E056", "module parameters must be a list", parameter_owner))
+            else:
+                for parameter in declared_parameters:
+                    if not isinstance(parameter, dict) or not isinstance(parameter.get("name"), str) or not parameter["name"].strip():
+                        diagnostics.append(Diagnostic("ORIN-E056", "module parameter requires a name", parameter_owner))
+                        continue
+                    name = parameter["name"]
+                    if name in parameters:
+                        diagnostics.append(Diagnostic("ORIN-E056", f"duplicate module parameter: {name}", parameter_owner))
+                        continue
+                    parameters[name] = parameter
+                    if parameter.get("type") != "number":
+                        diagnostics.append(Diagnostic("ORIN-E056", f"module parameter {name} must have type number", parameter_owner))
+                    if not isinstance(parameter.get("unit"), str) or not parameter["unit"].strip():
+                        diagnostics.append(Diagnostic("ORIN-E056", f"module parameter {name} requires a unit", parameter_owner))
+
+        try:
+            from .orin_limit import parse_capacity_limit_claim
+        except ImportError:
+            from orin_limit import parse_capacity_limit_claim
+
         for obj in objects:
             if not isinstance(obj, dict):
                 continue
             source_id = obj.get("id")
+            if self._kind_of(obj) == "rule":
+                for claim in obj.get("claims", []) if isinstance(obj.get("claims", []), list) else []:
+                    if not isinstance(claim, str):
+                        continue
+                    limit = parse_capacity_limit_claim(claim)
+                    if limit and parameter_list_valid and limit["parameter"] not in parameters:
+                        diagnostics.append(
+                            Diagnostic(
+                                "ORIN-E056",
+                                f"capacity limit references undeclared module parameter: {limit['parameter']}",
+                                source_id,
+                            )
+                        )
             for field in REFERENCE_FIELDS:
                 references = obj.get(field, [])
                 if not isinstance(references, list):

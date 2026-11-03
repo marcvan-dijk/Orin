@@ -46,3 +46,23 @@ test("two blocking uncertainties and same-slug rules parse with distinct ids", (
   assert.deepEqual(ids.filter((i) => i.includes("/rule/")), ["demo/rule/things-are-done-once-only", "demo/rule/things-are-done-once-only-2"]);
   assert.ok(ids.includes("demo/uncertainty/second"));
 });
+
+test("outline parameters become language-neutral module parameter declarations", () => {
+  const model = new OrinParser().parseOutline(`module: bookings
+
+parameter: capacity
+  type: number
+  unit: seats
+
+rules:
+  - An event never has more confirmed bookings than its capacity.
+`);
+
+  assert.deepEqual(model.document.module.parameters, [
+    { name: "capacity", type: "number", unit: "seats" },
+  ]);
+  assert.deepEqual(
+    model.document.objects.find((object: any) => object.kind === "rule").claims,
+    ["An event never has more confirmed bookings than its capacity."],
+  );
+});

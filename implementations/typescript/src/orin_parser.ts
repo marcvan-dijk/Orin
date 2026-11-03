@@ -442,6 +442,10 @@ function subBlocks(body: Line[]): Record<string, Line[]> {
 function simpleOutlineDocument(sections: Section[]): Doc {
   const name = sections[0].value;
   const mod: Doc = { id: `${name}/module`, kind: "module", name, status: "accepted", source: { line: sections[0].line } };
+  const parameterSections = sections.filter((section) => section.key === "parameter");
+  if (parameterSections.length) {
+    mod.parameters = parameterSections.map((section) => outlineParameter(section));
+  }
   const objects: Doc[] = [];
   const add = (kind: string, objName: string, line: number, extra: Doc = {}): Doc => {
     const obj = { id: `${name}/${kind}/${objName}`, kind, name: objName, status: "accepted", source: { line }, ...extra };
@@ -579,6 +583,10 @@ function uncertaintyFields(name: string, raw: RawLine[], ref: (t: string, k: str
 function fullDocument(sections: Section[]): Doc {
   const name = sections[0].value;
   const mod: Doc = { id: `${name}/module`, kind: "module", name, status: "accepted", source: { line: sections[0].line } };
+  const parameterSections = sections.filter((section) => section.key === "parameter");
+  if (parameterSections.length) {
+    mod.parameters = parameterSections.map((section) => outlineParameter(section));
+  }
   const names: Record<string, Record<string, string>> = {};
   for (const s of sections.slice(1)) {
     const kind = DECLARATION_KINDS[s.key] ?? s.key;
@@ -682,8 +690,20 @@ function findStructuredFixture(path: string): string | null {
   }
 }
 
+function outlineParameter(section: Section): Doc {
+  const parameter: Doc = { name: section.value };
+  for (const node of tree(section.raw)) {
+    if (node.key === "type" || node.key === "unit") parameter[node.key] = nodeText(node);
+  }
+  return parameter;
+}
+
 function attachOutlineLines(document: Doc, sections: Section[]): void {
   (document.module ??= {}).source = { line: sections[0].line };
+  const parameterSections = sections.filter((section) => section.key === "parameter");
+  if (parameterSections.length) {
+    document.module.parameters = parameterSections.map((section) => outlineParameter(section));
+  }
   const linesByKey = new Map<string, number>();
   for (const s of sections) linesByKey.set(`${s.key}\0${s.value}`, s.line);
   const ruleLines = sections.filter((s) => s.key === "rules").flatMap((s) => s.body.map(([n]) => n));

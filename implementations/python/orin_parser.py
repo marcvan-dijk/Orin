@@ -203,6 +203,8 @@ class OrinParser:
             key, value, body = section["key"], section["value"], section["body"]
             if key == "purpose":
                 module["purpose"] = " ".join(([value] if value else []) + [t for _, t in body])
+            elif key == "parameter":
+                module.setdefault("parameters", []).append(self._outline_parameter(section))
             elif key == "rules":
                 last_rule: dict[str, Any] | None = None
                 for number, text in body:
@@ -298,9 +300,20 @@ class OrinParser:
             module["implementationPolicies"] = {n["key"]: self._node_text(n) for n in self._tree(section["raw"]) if n["key"]}
         elif key == "imports":
             module["imports"] = [t[2:].strip() if t.startswith("- ") else t for _, t in section["body"]]
+        elif key == "parameter":
+            module.setdefault("parameters", []).append(self._outline_parameter(section))
         else:
             return False
         return True
+
+    @staticmethod
+    def _outline_parameter(section: dict[str, Any]) -> dict[str, str]:
+        parameter = {"name": section["value"]}
+        for _, text in section["body"]:
+            match = re.match(r"^(type|unit):\s*(.*)$", text)
+            if match:
+                parameter[match.group(1)] = match.group(2).strip()
+        return parameter
 
     def _uncertainty_fields(self, name: str, section: dict[str, Any], ref: Any) -> dict[str, Any]:
         """Question, blocking flag and optional decision data (why-it-matters, affects, rule, options)."""

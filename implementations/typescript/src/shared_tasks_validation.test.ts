@@ -89,6 +89,65 @@ test("rule contradiction diagnostic mirrors Python semantics for structured nega
   assert.equal(model.compilationStatus(), "fail");
 });
 
+test("limit claims require a unique numeric module parameter with a unit", () => {
+  const capacityClaim = "An event never has more confirmed bookings than its capacity.";
+  const makeModel = (parameters: any[]) => new SemanticModel({
+    module: { id: "bookings/module", kind: "module", name: "bookings", parameters },
+    objects: [{
+      id: "bookings/rule/booking-limit",
+      kind: "rule",
+      name: "booking-limit",
+      claims: [capacityClaim],
+    }],
+  });
+  const limitDiagnostics = (parameters: any[]) =>
+    makeModel(parameters).diagnostics().filter((diagnostic) => diagnostic.code === "ORIN-E056");
+
+  assert.deepEqual(limitDiagnostics([{ name: "capacity", type: "number", unit: "seats" }]), []);
+  assert.equal(limitDiagnostics([])[0].message, "limit claim refers to undeclared module parameter: capacity");
+  assert.equal(
+    limitDiagnostics([
+      { name: "capacity", type: "number", unit: "seats" },
+      { name: "capacity", type: "number", unit: "seats" },
+    ])[0].message,
+    "duplicate module parameter: capacity",
+  );
+  assert.equal(
+    limitDiagnostics([{ name: "capacity", type: "text", unit: "seats" }])[0].message,
+    "limit parameter must have type number: capacity",
+  );
+  assert.equal(
+    limitDiagnostics([{ name: "capacity", type: "number", unit: " " }])[0].message,
+    "limit parameter must declare a non-empty unit: capacity",
+  );
+});
+
+test("all module parameter declarations are validated even without rule references", () => {
+  const valid = { name: "capacity", type: "number", unit: "seats" };
+  for (const parameters of [
+    null, {}, "capacity", 1, [null], [[]], ["capacity"], [{}],
+    [{ ...valid, name: "" }], [{ ...valid, name: " " }], [{ ...valid, name: 1 }],
+    [valid, valid], [{ name: "capacity", unit: "seats" }],
+    [{ ...valid, type: "text" }], [{ ...valid, type: "Number" }],
+    [{ name: "capacity", type: "number" }],
+    [{ ...valid, unit: "" }], [{ ...valid, unit: " \t" }], [{ ...valid, unit: 1 }],
+  ]) {
+    const model = new SemanticModel({
+      module: { id: "bookings/module", parameters },
+      objects: [],
+    });
+    const diagnostics = model.diagnostics();
+    assert.ok(diagnostics.length > 0, JSON.stringify(parameters));
+    assert.ok(diagnostics.every((d) => d.code === "ORIN-E056" && d.objectId === "bookings/module"));
+    assert.equal(model.compilationStatus(), "fail");
+  }
+  for (const parameters of [undefined, [], [valid], [valid, { ...valid, name: "standingCapacity" }]]) {
+    const model = new SemanticModel({ module: { parameters }, objects: [] });
+    assert.deepEqual(model.diagnostics(), []);
+    assert.equal(model.compilationStatus(), "eligible");
+  }
+});
+
 test("rule contradiction diagnostics stay deterministic for multi-claim contradictions", () => {
   const model = new SemanticModel({
     modelVersion: "0.1.0",

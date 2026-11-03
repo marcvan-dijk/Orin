@@ -54,7 +54,20 @@
         "purpose": {"type": "string"},
         "context": {"type": "object", "additionalProperties": {"type": "string"}},
         "implementationPolicies": {"type": "object", "additionalProperties": {"type": "string"}},
-        "imports": {"$ref": "#/$defs/strings"}
+        "imports": {"$ref": "#/$defs/strings"},
+        "parameters": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "additionalProperties": false,
+            "properties": {
+              "name": {"$ref": "#/$defs/name"},
+              "type": {"type": "string", "minLength": 1},
+              "unit": {"type": "string", "minLength": 1}
+            }
+          }
+        }
       }
     },
     "object": {
